@@ -1,0 +1,32 @@
+[project]
+name = "airspace-explorer-backend"
+version = "0.1.0"
+description = "Flight data API for Airspace Explorer"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",  # required by FastAPI's TestClient
+    "ruff",
+    "mypy",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B"]
+
+[tool.mypy]
+strict = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
