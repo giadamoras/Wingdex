@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
 import { POLL_INTERVAL_MS } from './useFlights'
@@ -48,6 +48,57 @@ test('polls /flights on an interval', async () => {
   render(<App />)
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
   expect(fetchMock).toHaveBeenCalledTimes(2)
+})
+
+const second = {
+  ...flights[0],
+  id: 'f2',
+  callsign: 'TST2',
+  aircraft_type: 'B748',
+}
+const two = () =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([...flights, second]),
+  })
+
+test('clicking a dot opens a card with details and a fact', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(screen.getByRole('heading', { name: 'TST1' })).toBeTruthy()
+  expect(screen.getByText(/36,000 ft/)).toBeTruthy()
+  expect(screen.getByText(/digital fly-by-wire/)).toBeTruthy()
+})
+
+test('selecting another dot replaces the card; Catch closes it', async () => {
+  vi.stubGlobal('fetch', vi.fn(two))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByTitle('TST2'))
+  expect(screen.queryByRole('heading', { name: 'TST1' })).toBeNull()
+  expect(screen.getByRole('heading', { name: 'TST2' })).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.queryByRole('heading', { name: 'TST2' })).toBeNull()
+})
+
+test('a flight that leaves the feed stays on the map until dismissed', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockImplementationOnce(two).mockImplementation(ok),
+  )
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST2'))
+  await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
+  expect(screen.getByTitle('TST2')).toBeTruthy()
+  expect(screen.getByText(/Signal lost/)).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.queryByTitle('TST2')).toBeNull()
 })
 
 test('shows an error if the first load fails', async () => {

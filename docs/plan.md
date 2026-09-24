@@ -1,6 +1,6 @@
 # Airspace Explorer — Product & Technical Plan
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is in progress: steps 1–3 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots); next up is step 4.
+**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is in progress: steps 1–4 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card); next up is step 5.
 
 ## Context
 
@@ -85,7 +85,7 @@ Aviation-curious people without deep aviation background — including the creat
 1. ✅ Done. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work. (The frontend's `/health` display was later replaced by `/flights` loading/error states; the backend `/health` endpoint is kept.)
 2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
 3. ✅ Done. Frontend: poll `/flights` every 5 seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling over fixed Europe/North Atlantic bounds — no map library, no art yet). A failed poll keeps the last good flights on screen.
-4. Frontend: click a dot → card showing callsign/altitude + one fact from a small hardcoded lookup, with a "Catch" button.
+4. ✅ Done. Frontend: click a dot → card in a fixed panel below the map showing callsign/altitude + one deterministic fact per aircraft type from a small hardcoded lookup (`facts.ts`; randomized pick from a fact pool comes later), with a "Catch" button. Clicking another dot swaps the card; clicking the selected dot or the map deselects. If the selected flight drops out of the feed it stays at its last known position, flagged "signal lost", until caught or deselected. "Catch" is a stub that only closes the card until step 6.
 5. Frontend: display one hardcoded quest (e.g. "Today: catch something above 30,000 ft") and flag when a catch matches it — no reset logic, no template system yet.
 6. Frontend: "Catch" appends the flight+fact to a Journal array in Context state, persisted to localStorage, rendered as a plain list.
 

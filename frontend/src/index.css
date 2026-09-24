@@ -18,8 +18,23 @@ body {
   height: 12px;
   border-radius: 50%;
   background: #e4572e;
+  border: none;
+  padding: 0;
+  cursor: pointer;
   transform: translate(-50%, -50%);
   transition:
     left 1s linear,
     top 1s linear;
+}
+
+.dot.selected {
+  outline: 3px solid #1b3a4b;
+}
+
+/* Fixed-position panel below the map. */
+.card {
+  max-width: 1000px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  border: 1px solid #1b3a4b;
 }
