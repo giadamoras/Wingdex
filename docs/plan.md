@@ -1,6 +1,6 @@
 # Airspace Explorer — Product & Technical Plan
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Next step: implement Milestone 1.
+**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is in progress: steps 1–3 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots); next up is step 4.
 
 ## Context
 
@@ -44,25 +44,24 @@ Aviation-curious people without deep aviation background — including the creat
 
 **Nice-to-have (loop survives without it at launch):**
 - A streak counter for daily quests.
-- A collection-progress view (e.g. dex-style completion percentage) inside the Collection screen.
 - A richer mascot personality/dialogue beyond onboarding.
 - Larger fact pools / more attribute categories over time.
 
 **Out (explicitly deferred, not MVP):**
 - GPS/location-based "look up, that's above you" mode.
 - Pattern-based live event detection that requires historical track analysis (holding patterns, diversions, weather reroutes) — these need continuous polling and track history, unlike the snapshot-derivable quests above, and are a reasonable fast-follow rather than a launch requirement.
-- A full illustrated aircraft/airport encyclopedia beyond per-catch facts.
-- 3D aircraft models and a 3D globe view — the plan is to start with a 2D map and expand to 3D later, once the 2D version is validated.
+- A full illustrated aircraft/airport/aviation encyclopedia beyond per-catch facts.
+- 3D aircraft models in the flight card.
 - Weather forecasting/simulation — only current (or mock) snapshot conditions, not prediction.
-- Accounts, social features, multiplayer.
+- Accounts, social features, rankings.
 
 ## Open items for future planning passes
 
-- ~~The specific free, personal-development-tier flight-data API to eventually integrate.~~ **Decided:** [OpenSky Network](https://openskynetwork.github.io/opensky-api/rest.html) — free live ADS-B state vectors (position, altitude, velocity, heading, callsign) for non-commercial/research use, OAuth2 client-credentials auth as of 2026. The mock data's attribute structure should mirror OpenSky's state-vector fields. Still open: the exact field-by-field schema mapping and auth setup — and free-tier request limits should be re-verified on OpenSky's own docs immediately before integration, since third-party sources disagreed on the exact daily allowance during research (reports ranged ~1,000–4,000 requests/day for authenticated accounts).
+- [OpenSky Network](https://openskynetwork.github.io/opensky-api/rest.html) — free live ADS-B state vectors (position, altitude, velocity, heading, callsign) for non-commercial/research use, OAuth2 client-credentials auth as of 2026. The mock data's attribute structure should mirror OpenSky's state-vector fields. Still open: the exact field-by-field schema mapping and auth setup — and free-tier request limits should be re-verified on OpenSky's own docs immediately before integration, since third-party sources disagreed on the exact daily allowance during research (reports ranged ~1,000–4,000 requests/day for authenticated accounts).
 - The concrete quest template parameters (exact thresholds per template) — the templated system itself is a later milestone; Milestone 1 ships with a single hardcoded quest condition instead.
 - The concrete fact-pool content per attribute category (aircraft type, airline, altitude band, region, time-of-day, weather) for aircraft, flights, and airports.
 - How mock weather data is represented/sourced before any real weather integration.
-- Build tooling (a standard modern React setup, e.g. Vite, is the expected default) and hosting/deployment target (a free static host — Vercel, Netlify, or GitHub Pages are all viable for a portfolio piece) — not yet formally decided.
+- Hosting/deployment target (a free static host — Vercel, Netlify, or GitHub Pages are all viable for a portfolio piece, plus somewhere to run the FastAPI backend) — not yet decided. Build tooling is settled (see Technical direction).
 - The concrete screen/component breakdown.
 - Visual/character design direction for the "kawaii" aircraft, mascot, and weather-icon representation.
 
@@ -70,11 +69,12 @@ Aviation-curious people without deep aviation background — including the creat
 
 - **Architecture: two-part monorepo** — `frontend/` (React + TypeScript + Vite) and `backend/` (Python + FastAPI) in one repository. Introducing a real backend from the start (rather than deferring it) is motivated by a concrete need, not "real apps have backends": OpenSky's OAuth2 flow requires a client secret that must never reach the browser, and pooling/caching requests against OpenSky's shared daily quota also needs a server-side layer — both are real requirements once live data is integrated, so the boundary is worth having early.
 - **Backend responsibility boundary:** the backend owns *world/flight data* only — serving it (mock now, real later) through a stable domain model. It never owns user-specific data. The frontend owns everything user-scoped — Journal, Badges, active quest state — consistent with the decision that persistence is local-only (no accounts, no cloud sync).
-- **Backend data model (minimal for now):** a single flat `Flight` — id, callsign, aircraft type (plain string for now), latitude, longitude, altitude, heading, and **flight duration** (included from the start to support a future distance-based quest template even though that quest is a later milestone). Richer models (`AircraftType`, `Airport`, `WeatherCondition` as their own structured types) are deliberately deferred until the features that need them are actually being built.
+- **Backend data model (minimal for now):** a single flat `Flight` — id, callsign, aircraft type (plain string for now), latitude, longitude, altitude, heading, and **flight duration** (included from the start to support a future distance-based quest template even though that quest is a later milestone). As implemented, fields are `id`, `callsign`, `aircraft_type`, `latitude`/`longitude` (degrees), `altitude_ft` (feet, matching how pilots and the quests express altitude), `heading` (degrees, 0–360) and `duration_min` (minutes), validated with pydantic. OpenSky reports altitude in metres, so the eventual provider converts to these units. Richer models (`AircraftType`, `Airport`, `WeatherCondition` as their own structured types) are deliberately deferred until the features that need them are actually being built.
 - **No formal provider abstraction yet:** a plain function (e.g. `get_mock_flights()`) generates mock data. A shared interface for multiple providers (mock vs. OpenSky) is deferred until there's an actual second implementation to satisfy — introducing it now, with only one real implementation, would be premature abstraction.
 - **Minimal API surface:** one endpoint, `GET /flights`, returning the normalized `Flight` list. No POST endpoints — the backend stores nothing user-specific. Fact-pool content is a static file bundled into the frontend, not a backend endpoint, since it's content rather than something requiring server computation.
 - **Live data source: OpenSky Network** (see Open Items) — the intended eventual real provider; mock data's structure mirrors what OpenSky-normalized data would look like, so swapping providers later changes only the backend's internal implementation, never the `/flights` contract or the frontend.
 - **World/map rendering: custom illustrated world, decoupled from mechanics** — pan/zoom and lat/lon-to-screen placement are built and proven against a plain placeholder background first; the final retro-poster illustrated art is a later visual pass on top of already-working mechanics, not a prerequisite for a playable version.
+- **Tooling (settled in the scaffold):** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, and `tsc` for type checking; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`. Hosting is still open.
 - **Animation: Framer Motion** — the eventual choice for the MVP's bouncy/springy interactions; not needed until after the core loop works. GSAP was considered for more elaborate showcase moments but deferred to keep the animation surface manageable for a first project.
 - **State & persistence: React Context/hooks + browser localStorage** — simplest setup, adequate for MVP-scale Journal/quest data.
 - **Quest logic for now:** a single hardcoded quest condition (no template engine) proves the loop first; the parameterized quest-template system described above is a deliberate later generalization, not part of the first implementation milestone.
@@ -82,9 +82,9 @@ Aviation-curious people without deep aviation background — including the creat
 ## Implementation roadmap
 
 **Milestone 1 — walking skeleton with one playable loop (current target):**
-1. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work.
-2. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning ~8–10 flights with slightly randomized positions; `GET /flights` returning them as JSON.
-3. Frontend: poll `/flights` every few seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling — no map library, no art yet).
+1. ✅ Done. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work. (The frontend's `/health` display was later replaced by `/flights` loading/error states; the backend `/health` endpoint is kept.)
+2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
+3. ✅ Done. Frontend: poll `/flights` every 5 seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling over fixed Europe/North Atlantic bounds — no map library, no art yet). A failed poll keeps the last good flights on screen.
 4. Frontend: click a dot → card showing callsign/altitude + one fact from a small hardcoded lookup, with a "Catch" button.
 5. Frontend: display one hardcoded quest (e.g. "Today: catch something above 30,000 ft") and flag when a catch matches it — no reset logic, no template system yet.
 6. Frontend: "Catch" appends the flight+fact to a Journal array in Context state, persisted to localStorage, rendered as a plain list.
