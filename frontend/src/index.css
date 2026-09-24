@@ -2,3 +2,24 @@ body {
   margin: 0;
   font-family: system-ui, sans-serif;
 }
+
+/* Plain placeholder background until the illustrated map arrives. */
+.map {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  aspect-ratio: 7 / 3;
+  background: #cfe8f3;
+}
+
+.dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #e4572e;
+  transform: translate(-50%, -50%);
+  transition:
+    left 1s linear,
+    top 1s linear;
+}
