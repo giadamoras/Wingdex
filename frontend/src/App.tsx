@@ -22,7 +22,7 @@ function App() {
 
   return (
     <main>
-      <h1>Airspace Explorer</h1>
+      <h1>✈ Airspace Explorer</h1>
       {flights === null ? (
         <p>{error ? 'Could not load flights.' : 'Loading flights...'}</p>
       ) : (

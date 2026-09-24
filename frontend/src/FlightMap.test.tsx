@@ -33,6 +33,18 @@ test('renders one dot per flight at its projected position', () => {
   expect(screen.getByTitle('CS2')).toBeTruthy()
 })
 
+test('rotates each plane to its heading', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const icon = screen.getByTitle('CS1').querySelector('svg')!
+  expect(icon.style.transform).toBe('rotate(90deg)')
+})
+
 test('clicking a dot selects it, clicking the selected dot deselects', () => {
   const onSelect = vi.fn()
   const { rerender } = render(

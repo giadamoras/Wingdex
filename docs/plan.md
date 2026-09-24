@@ -11,18 +11,21 @@ This is a first serious AI-assisted coding project and first portfolio piece. Th
 **One-line pitch:** A kawaii, live-data-powered "spot & collect" exploration experience built on real flight traffic — users hunt for real, live aviation moments (not just track blips on a dashboard), collect them into a personal journal, and pick up bite-size aviation knowledge along the way, while deliberately avoiding the look and feel of a flight-tracking dashboard like FlightRadar24.
 
 ### Target user
+
 Aviation-curious people without deep aviation background — including the creator, who is preparing for a PPL — who want a playful, low-pressure way to build intuition about aviation. Secondary audience: casual users who enjoy cozy collection/spotting games and might discover an interest in aviation through play.
 
 ### Core loop
+
 1. Explore a 2D map of flying aircraft (pan/zoom, Google Maps-style interaction). MVP starts on mock flight data, but that mock data is deliberately modeled on the attributes/structure a real flight-data source would provide, so the experience is designed around the eventual real-data version and the source stays swappable later (a free, personal-development-tier API is the intended eventual source).
-2. Each day — a **personal** day, resetting on the user's own local calendar day, not a globally shared/synchronized challenge — the app surfaces **one** active quest (not a pool or a rotating list) — e.g. "spot something above 30,000 ft," "catch a flight heading over open ocean," "spot a flight flying through a storm system." Quests are built from a small set of parameterized *quest templates* (altitude, aircraft category, region/geography, weather condition, time-of-day) rather than hand-authored one by one, which is what makes "one per day" sustainable content-wise. Flight duration is included in the Flight data model from the start, which unlocks a distance-based template once the templated quest system itself is built — the template system, including this one, is a later milestone, not part of the first implementation.
+2. Each day — a **personal** day, resetting on the user's own local calendar day, not a globally shared/synchronized challenge — the app surfaces **one** active quest (not a pool or a rotating list) — e.g. "spot something above 30,000 ft," "catch a flight heading over open ocean," "spot a flight flying through a storm system." Quests are built from a small set of parameterized _quest templates_ (altitude, aircraft category, region/geography, weather condition, time-of-day) rather than hand-authored one by one, which is what makes "one per day" sustainable content-wise. Flight duration is included in the Flight data model from the start, which unlocks a distance-based template once the templated quest system itself is built — the template system, including this one, is a later milestone, not part of the first implementation.
 3. Outside the daily quest, a small set of "featured" flights are highlighted directly on the map each session, so there's always something worth catching even without an active quest — this is what keeps the experience from being an open, blank search/filter dashboard.
-4. The user taps/catches a flight — from the daily quest or a featured pick or free exploration. A card appears showing the flight and **one** fact, pulled from small tagged fact-pools keyed to that catch's real attributes (aircraft type, airline, altitude band, destination/region, time-of-day, weather). The same fact system covers aircraft, specific flights, *and* airports — airports are never a separately catchable thing; airport facts surface through the destination/region tag attached to a caught flight.
-5. Caught flights are saved into a **Journal**. Completing the daily quest triggers a bigger celebration plus a fact that explains the underlying *concept* (why planes cruise at that altitude, why routes avoid storms, etc.), not just trivia about the aircraft.
+4. The user taps/catches a flight — from the daily quest or a featured pick or free exploration. A card appears showing the flight and **one** fact, pulled from small tagged fact-pools keyed to that catch's real attributes (aircraft type, airline, altitude band, destination/region, time-of-day, weather). The same fact system covers aircraft, specific flights, _and_ airports — airports are never a separately catchable thing; airport facts surface through the destination/region tag attached to a caught flight.
+5. Caught flights are saved into a **Journal**. Completing the daily quest triggers a bigger celebration plus a fact that explains the underlying _concept_ (why planes cruise at that altitude, why routes avoid storms, etc.), not just trivia about the aircraft.
 6. Badge/achievement unlocks are signaled with a lightweight popup on the map view, but live in their own space — Journal and Badges are two tabs/sections inside one shared **Collection** screen, reached from the main map. Collection/progress persists locally on the user's device across sessions in the MVP — no accounts or cloud sync.
 7. Weather is represented on the map with icons for atmosphere ("imagine being on this flight"), and is also a functional attribute — it can define quest conditions and influence which facts get selected, tying directly back to real aviation concepts (turbulence, why routes avoid storms, etc.).
 
 ### Differentiation from flight-tracker dashboards (e.g. FlightRadar24)
+
 - Framed as a curated discovery/collection experience, not a raw search-and-filter utility.
 - Success is measured by "moments caught" and facts learned, not by exhaustive data density.
 - Visual identity is playful/kawaii throughout — not a technical/utilitarian dashboard look.
@@ -31,6 +34,7 @@ Aviation-curious people without deep aviation background — including the creat
 ## MVP scope
 
 **Essential:**
+
 - Pannable/zoomable 2D map with multiple moving flight icons, driven by mock data whose attribute structure mirrors a real flight-data API so the source can be swapped later without redesign.
 - Tap-to-catch interaction: a card showing one fact pulled from tagged fact-pools (attributes: aircraft type, airline, altitude band, destination/region, time-of-day, weather) — covering aircraft, specific flights, and airports (airport facts surface via the destination/region tag, not a separate catching action).
 - The catch action plus a satisfying catch animation.
@@ -43,11 +47,13 @@ Aviation-curious people without deep aviation background — including the creat
 - Kawaii-first visual style applied to the map, icons, and cards.
 
 **Nice-to-have (loop survives without it at launch):**
+
 - A streak counter for daily quests.
 - A richer mascot personality/dialogue beyond onboarding.
 - Larger fact pools / more attribute categories over time.
 
 **Out (explicitly deferred, not MVP):**
+
 - GPS/location-based "look up, that's above you" mode.
 - Pattern-based live event detection that requires historical track analysis (holding patterns, diversions, weather reroutes) — these need continuous polling and track history, unlike the snapshot-derivable quests above, and are a reasonable fast-follow rather than a launch requirement.
 - A full illustrated aircraft/airport/aviation encyclopedia beyond per-catch facts.
@@ -68,7 +74,7 @@ Aviation-curious people without deep aviation background — including the creat
 ## Technical direction
 
 - **Architecture: two-part monorepo** — `frontend/` (React + TypeScript + Vite) and `backend/` (Python + FastAPI) in one repository. Introducing a real backend from the start (rather than deferring it) is motivated by a concrete need, not "real apps have backends": OpenSky's OAuth2 flow requires a client secret that must never reach the browser, and pooling/caching requests against OpenSky's shared daily quota also needs a server-side layer — both are real requirements once live data is integrated, so the boundary is worth having early.
-- **Backend responsibility boundary:** the backend owns *world/flight data* only — serving it (mock now, real later) through a stable domain model. It never owns user-specific data. The frontend owns everything user-scoped — Journal, Badges, active quest state — consistent with the decision that persistence is local-only (no accounts, no cloud sync).
+- **Backend responsibility boundary:** the backend owns _world/flight data_ only — serving it (mock now, real later) through a stable domain model. It never owns user-specific data. The frontend owns everything user-scoped — Journal, Badges, active quest state — consistent with the decision that persistence is local-only (no accounts, no cloud sync).
 - **Backend data model (minimal for now):** a single flat `Flight` — id, callsign, aircraft type (plain string for now), latitude, longitude, altitude, heading, and **flight duration** (included from the start to support a future distance-based quest template even though that quest is a later milestone). As implemented, fields are `id`, `callsign`, `aircraft_type`, `latitude`/`longitude` (degrees), `altitude_ft` (feet, matching how pilots and the quests express altitude), `heading` (degrees, 0–360) and `duration_min` (minutes), validated with pydantic. OpenSky reports altitude in metres, so the eventual provider converts to these units. Richer models (`AircraftType`, `Airport`, `WeatherCondition` as their own structured types) are deliberately deferred until the features that need them are actually being built.
 - **No formal provider abstraction yet:** a plain function (e.g. `get_mock_flights()`) generates mock data. A shared interface for multiple providers (mock vs. OpenSky) is deferred until there's an actual second implementation to satisfy — introducing it now, with only one real implementation, would be premature abstraction.
 - **Minimal API surface:** one endpoint, `GET /flights`, returning the normalized `Flight` list. No POST endpoints — the backend stores nothing user-specific. Fact-pool content is a static file bundled into the frontend, not a backend endpoint, since it's content rather than something requiring server computation.
@@ -82,6 +88,7 @@ Aviation-curious people without deep aviation background — including the creat
 ## Implementation roadmap
 
 **Milestone 1 — walking skeleton with one playable loop (current target):**
+
 1. ✅ Done. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work. (The frontend's `/health` display was later replaced by `/flights` loading/error states; the backend `/health` endpoint is kept.)
 2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
 3. ✅ Done. Frontend: poll `/flights` every 5 seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling over fixed Europe/North Atlantic bounds — no map library, no art yet). A failed poll keeps the last good flights on screen.
@@ -92,6 +99,8 @@ Aviation-curious people without deep aviation background — including the creat
 **Later milestones (rough order, not yet started):** generalize the hardcoded quest into the parameterized template system; build the real illustrated map art and swap in the placeholder; add the Collection screen (Journal + Badges tabs) and badge unlocks; author the tagged fact-pool content; apply the retro-poster visual/mascot/onboarding pass and Framer Motion polish; implement the real `OpenSkyProvider` and swap it in behind the existing `/flights` contract; add weather (atmospheric, then functional); add streaks/collection-progress view and other Nice-to-have items.
 
 ## Visual & interaction direction
+
+A small visual foundation slice (tokens, fonts, plane markers, placeholder land, ticket card) was pulled ahead of step 5 — see `docs/ui-foundation.md`. The full visual pass below is still a later milestone.
 
 - **Overall style: Retro travel-poster kawaii** — vintage mid-century aviation travel-poster palettes and shapes, combined with cuteness, rather than generic cartoon cuteness. This is meant to be aviation-flavored kawaii specifically, a differentiator in its own right.
 - **Mascot:** kept, rendered in the same poster style (e.g. a stylized paper-airplane or pilot figure), still carrying onboarding and daily-quest prompts.
