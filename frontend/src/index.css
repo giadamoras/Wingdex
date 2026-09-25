@@ -42,6 +42,62 @@ h1 {
   text-transform: uppercase;
 }
 
+/* Quest strip: a slim ticket above the map, same paper/border/shadow as the card. */
+.quest {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+}
+
+.quest-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.quest h2 {
+  margin-right: auto; /* pushes the stamp to the right edge */
+  font-size: 1.2rem;
+}
+
+/* Small inverted "QUEST" tag, like a ticket stub label. */
+.quest-label {
+  padding: 2px 10px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 6px;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* Rubber stamp: coral ink, double border, slight tilt, thumps down on appear. */
+.stamp {
+  padding: 2px 12px;
+  color: var(--accent);
+  border: 4px double var(--accent);
+  border-radius: 8px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  animation: stamp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Concept fact under a dashed tear line, echoing the card header. */
+.quest-fact {
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 2px dashed var(--ink);
+  line-height: 1.4;
+}
+
 /* Sea background, thick poster border and a soft flat shadow. */
 .map {
   position: relative;
@@ -189,9 +245,23 @@ h1 {
   }
 }
 
+/* Starts big and fades in, then lands at its tilt (the rotation must be
+   repeated here, or the animation would override it). */
+@keyframes stamp {
+  from {
+    transform: rotate(-8deg) scale(1.8);
+    opacity: 0;
+  }
+  to {
+    transform: rotate(-8deg) scale(1);
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .plane.selected::after,
-  .card {
+  .card,
+  .stamp {
     animation: none;
   }
 }

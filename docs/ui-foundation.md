@@ -10,10 +10,11 @@ Small visual slice pulled ahead of Milestone 1 step 5. It follows the "retro tra
 - **Placeholder map**: sea colour, dashed 10-degree graticule and rough flat land shapes (`EuropeLand.tsx`), positioned with the existing `project()`.
 - **Card**: ticket look with callsign, aircraft-type and altitude chips, the fact in a speech-bubble block and a coral Catch button.
 - **Motion**: CSS-only pop on selection and card appearance, disabled under `prefers-reduced-motion`.
+- **Quest strip** (added with Milestone 1 step 5): a slim ticket above the map, using the card's paper, border and shadow, with an inverted "QUEST" label. On completion, a coral rubber stamp ("Done!", double border, tilted -8deg) lands with its own `stamp` keyframes. The keyframes repeat the tilt, because a `transform` animation replaces the element's own `transform`. The concept fact appears below a dashed tear line.
 
 ## Out of scope (deferred per plan.md)
 
-Pan/zoom, real map art, mascot/onboarding, Framer Motion, per-type aircraft silhouettes, palette shifting by region/time/weather, quest UI.
+Pan/zoom, real map art, mascot/onboarding, Framer Motion, per-type aircraft silhouettes, palette shifting by region/time/weather.
 
 ## Notes
 
@@ -21,7 +22,7 @@ Pan/zoom, real map art, mascot/onboarding, Framer Motion, per-type aircraft silh
 
 ## Deferred idea: passport card and catch stamp
 
-Not built yet. It ties into the catch action and the Journal (Milestone 1 steps 5-6, later the Collection screen), so it should be unpacked and decided when we get there.
+Not built yet. It ties into the catch action and the Journal (Milestone 1 step 6, later the Collection screen), so it should be unpacked and decided when we get there. The quest strip's `.stamp` already sets the stamp look, so the catch stamp should extend that style rather than introduce a second one.
 
 **Concept:** the flight card becomes a passport page, and Catch becomes stamping it, to mimic the travelling vibe (and fit the "spot & collect" Journal).
 

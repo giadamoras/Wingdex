@@ -119,3 +119,32 @@ test('keeps the last flights when a later poll fails', async () => {
   expect(screen.getByTitle('TST1')).toBeTruthy()
   expect(screen.getByText('Connection lost, retrying...')).toBeTruthy()
 })
+
+const longHaul = {
+  ...flights[0],
+  id: 'f3',
+  callsign: 'TST3',
+  duration_min: 500,
+}
+
+const withLongHaul = () =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([...flights, longHaul]),
+  })
+
+test('catching a long-haul flight completes the quest', async () => {
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  // Short flight: no stamp
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.queryByText('Done!')).toBeNull()
+
+  // Long-haul flight: stamp appears
+  fireEvent.click(screen.getByTitle('TST3'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.getByText('Done!')).toBeTruthy()
+})

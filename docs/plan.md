@@ -1,6 +1,6 @@
 # Airspace Explorer — Product & Technical Plan
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is in progress: steps 1–4 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card); next up is step 5.
+**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is in progress: steps 1–5 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card, hardcoded quest); next up is step 6.
 
 ## Context
 
@@ -93,7 +93,7 @@ Aviation-curious people without deep aviation background — including the creat
 2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
 3. ✅ Done. Frontend: poll `/flights` every 5 seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling over fixed Europe/North Atlantic bounds — no map library, no art yet). A failed poll keeps the last good flights on screen.
 4. ✅ Done. Frontend: click a dot → card in a fixed panel below the map showing callsign/altitude + one deterministic fact per aircraft type from a small hardcoded lookup (`facts.ts`; randomized pick from a fact pool comes later), with a "Catch" button. Clicking another dot swaps the card; clicking the selected dot or the map deselects. If the selected flight drops out of the feed it stays at its last known position, flagged "signal lost", until caught or deselected. "Catch" is a stub that only closes the card until step 6.
-5. Frontend: display one hardcoded quest (e.g. "Today: catch something above 30,000 ft") and flag when a catch matches it — no reset logic, no template system yet.
+5. ✅ Done. Frontend: one hardcoded quest, "Catch a long-haul flight (over 6 hours)" (`duration_min > 360`, defined in `quest.ts`; 4 of the 10 mock flights match). It is shown in a ticket-style strip above the map (`QuestBanner.tsx`). The first matching catch stamps the strip with an animated "Done!" stamp and reveals a concept fact (great-circle routes) that stays visible; later matches change nothing. Completion lives in memory only, so a reload resets it until step 6 adds persistence. There is no daily reset and no template system. To make the quest playable, the card also shows a duration chip (`format.ts`).
 6. Frontend: "Catch" appends the flight+fact to a Journal array in Context state, persisted to localStorage, rendered as a plain list.
 
 **Later milestones (rough order, not yet started):** generalize the hardcoded quest into the parameterized template system; build the real illustrated map art and swap in the placeholder; add the Collection screen (Journal + Badges tabs) and badge unlocks; author the tagged fact-pool content; apply the retro-poster visual/mascot/onboarding pass and Framer Motion polish; implement the real `OpenSkyProvider` and swap it in behind the existing `/flights` contract; add weather (atmospheric, then functional); add streaks/collection-progress view and other Nice-to-have items.
