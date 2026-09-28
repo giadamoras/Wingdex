@@ -250,9 +250,19 @@ h1 {
   line-height: 1.4;
 }
 
-/* Replay ghost: a see-through copy of the plane, moved every frame. */
+/* Full-layer box moved every frame by RouteLayer, so translate percentages
+   are relative to the whole map layer. The ghost sits at its top-left corner. */
+.ghost-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Replay ghost: a see-through copy of the plane. */
 .ghost {
   position: absolute;
+  left: 0;
+  top: 0;
   width: 28px;
   height: 28px;
   transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));

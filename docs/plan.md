@@ -116,6 +116,12 @@ Aviation-curious people without deep aviation background — including the creat
   - **Replay.** "See the journey" glides the camera to fit the route. Then a ghost plane flies origin → destination, leaving a solid trail, at about 1 s per hour of flight kept between 3 and 10 s (`replay.ts`).
   - **Controls.** The button becomes "Stop", then "Replay journey". Closing the card or selecting another flight cancels a replay, and reduced motion skips the ghost.
 - **Deferred idea.** Make the mock behave like real traffic: park the plane at its destination and fade it out, then a new flight appears at the origin. This needs a "recently left the feed" state.
+- **Fixed: the replay ghost jittered.** The ghost moved in small hops and wobbled sideways in both Edge and Firefox. It is smooth in both now (confirmed by eye).
+  - **Cause.** The ghost was placed with `left`/`top` percentages inside the zoomed `.map-world` layer. Browsers round those to whole layer pixels _before_ the zoom is applied, so at 4–5× it moved in ~4–5 px steps, and x and y rounded independently (a staircase on diagonal routes). Measured in Edge by screenshots of the real ghost markup moved in sub-pixel steps: `left`/`top` changed on screen in 6 of 20 steps, in irregular clumps, while `transform` changed on all 20.
+  - **Fix.** The ghost is moved with `transform: translate(x%, y%)` on a full-layer wrapper (`.ghost-track` in `RouteLayer.tsx`). The wrapper must stay exactly the size of the layer, because the percentages are relative to it.
+  - **Wrong guess.** Firefox's jitter was first suspected to be a low frame rate, since it rounds differently. It wasn't: the same fix cured it. So the frame rate is fine for now (a replay ran at a steady 60 fps), and re-rendering `App` every frame isn't a problem yet.
+  - **Measuring gotcha.** `getBoundingClientRect` reports layout positions and hides this rounding. Only screenshots (painted pixels) reveal it.
+  - **Same rule elsewhere.** Anything that moves continuously inside the zoomed layer should use `transform`, not `left`/`top`. Live planes and endpoint chips still use `left`/`top`, which is fine while they move well under one layer pixel per poll.
 
 **Next milestones (ordered, not yet started).** Finish the MVP mechanics first (daily variety, a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state.
 

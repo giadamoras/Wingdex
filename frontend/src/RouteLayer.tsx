@@ -20,6 +20,14 @@ const placeAt = (p: Point) => {
   return { left: `${x}%`, top: `${y}%` }
 }
 
+// Position for a continuously moving element, as a transform on a full-layer
+// wrapper (percentages of the layer). Unlike left/top, browsers don't round it
+// to whole layer pixels before the map's zoom, which made the ghost hop.
+const trackAt = (p: Point) => {
+  const { x, y } = project(p.latitude, p.longitude)
+  return { transform: `translate(${x}%, ${y}%)` }
+}
+
 function Endpoint({ airport }: { airport: Airport }) {
   return (
     <div className="route-end" style={placeAt(airport)} title={airport.name}>
@@ -92,12 +100,13 @@ export function RouteLayer({
       <Endpoint airport={origin} />
       <Endpoint airport={destination} />
       {ghostAt && ghostHeading !== null && (
-        <div
-          className={landing ? 'ghost fading' : 'ghost'}
-          style={placeAt(ghostAt)}
-          aria-hidden="true"
-        >
-          <PlaneIcon heading={ghostHeading} />
+        <div className="ghost-track" style={trackAt(ghostAt)}>
+          <div
+            className={landing ? 'ghost fading' : 'ghost'}
+            aria-hidden="true"
+          >
+            <PlaneIcon heading={ghostHeading} />
+          </div>
         </div>
       )}
     </>
