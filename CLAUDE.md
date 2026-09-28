@@ -4,7 +4,7 @@ Read `docs/plan.md` before making significant changes. It is the source of truth
 
 ## Current scope
 
-We are implementing **Milestone 2 (Living map)** only. Do not implement later milestones unless explicitly asked.
+Milestones 1 and 2 are complete. The next milestone has not been started: do not implement Milestone 3 or later unless explicitly asked.
 
 ## Development principles
 

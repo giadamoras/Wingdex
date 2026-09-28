@@ -3,18 +3,33 @@ import { formatDuration } from './format'
 import { getFact } from './facts'
 
 // Ticket-style card for the selected flight. `lost` means it dropped out of
-// the feed and is shown at its last known position.
+// the feed and is shown at its last known position. The journey button
+// replays the route on the map (only when the route is known).
 export function FlightCard({
   flight,
   lost,
   caught,
+  replaying,
+  replayed,
   onCatch,
+  onReplay,
+  onStopReplay,
 }: {
   flight: Flight
   lost: boolean
   caught: boolean
+  replaying: boolean
+  replayed: boolean
   onCatch: () => void
+  onReplay: () => void
+  onStopReplay: () => void
 }) {
+  const hasRoute = flight.origin !== null && flight.destination !== null
+  const journeyLabel = replaying
+    ? 'Stop'
+    : replayed
+      ? 'Replay journey'
+      : 'See the journey'
   return (
     <section className="card">
       <header className="card-head">
@@ -39,13 +54,23 @@ export function FlightCard({
         <p className="lost">Signal lost - showing last known position.</p>
       )}
       <p className="fact">{getFact(flight)}</p>
-      {caught ? (
-        <span className="stamp">Caught today ✓</span>
-      ) : (
-        <button className="catch" onClick={onCatch}>
-          Catch
-        </button>
-      )}
+      <div className="card-actions">
+        {caught ? (
+          <span className="stamp">Caught today ✓</span>
+        ) : (
+          <button className="catch" onClick={onCatch}>
+            Catch
+          </button>
+        )}
+        {hasRoute && (
+          <button
+            className="journey"
+            onClick={replaying ? onStopReplay : onReplay}
+          >
+            {journeyLabel}
+          </button>
+        )}
+      </div>
     </section>
   )
 }

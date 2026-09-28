@@ -2,9 +2,11 @@ import { expect, test } from 'vitest'
 import {
   centredOn,
   clampView,
+  fitBounds,
   MAX_ZOOM,
   MIN_ZOOM,
   panBy,
+  viewBetween,
   zoomAt,
 } from './panzoom'
 
@@ -56,4 +58,24 @@ test('centredOn puts the world point in the middle of the box', () => {
 
 test('centredOn near an edge stops at the edge', () => {
   expect(centredOn(0, 0, 5)).toEqual({ zoom: 5, x: 0, y: 0 })
+})
+
+test('fitBounds shows the whole box with a margin, centred', () => {
+  // A box 0.2 wide and 0.1 tall: width limits the zoom to (1 - 2 * 0.1) / 0.2.
+  const view = fitBounds(0.4, 0.4, 0.6, 0.5, 0.1)
+  expect(view.zoom).toBeCloseTo(4)
+  expect(screenX(view, 0.4)).toBeCloseTo(0.1) // left edge sits at the margin
+  expect(screenX(view, 0.6)).toBeCloseTo(0.9)
+})
+
+test('fitBounds on a tiny route stops at the max zoom', () => {
+  expect(fitBounds(0.5, 0.5, 0.501, 0.501).zoom).toBe(MAX_ZOOM)
+})
+
+test('viewBetween starts at a, ends at b, and zooms geometrically', () => {
+  const a = centredOn(0.5, 0.5, 2)
+  const b = centredOn(0.5, 0.5, 8)
+  expect(viewBetween(a, b, 0)).toEqual(a)
+  expect(viewBetween(a, b, 1).zoom).toBeCloseTo(8)
+  expect(viewBetween(a, b, 0.5).zoom).toBeCloseTo(4) // halfway in log scale
 })

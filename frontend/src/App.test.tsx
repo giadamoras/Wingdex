@@ -99,10 +99,63 @@ test('the card hides the route when the source does not know it', async () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve([noRoute]) }),
     ),
   )
-  render(<App />)
+  const { container } = render(<App />)
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   expect(screen.queryByText(/→/)).toBeNull()
+  // No route: no journey button and no route line on the map.
+  expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
+  expect(container.querySelector('.route-lines')).toBeNull()
+})
+
+test('selecting a flight draws its route with both airport codes', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(container.querySelector('.route-lines')).toBeNull()
+
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(container.querySelector('.route-flown')).toBeTruthy()
+  expect(container.querySelector('.route-ahead')).toBeTruthy()
+  expect(screen.getByText('LHR')).toBeTruthy()
+  expect(screen.getByText('CDG')).toBeTruthy()
+})
+
+test('the journey replay flies a ghost, then offers to replay', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'See the journey' }))
+
+  // 95 min flight: 3 s of flying (the minimum), plus fitting and landing.
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  expect(screen.getByRole('button', { name: 'Stop' })).toBeTruthy()
+  expect(container.querySelector('.ghost')).toBeTruthy()
+  expect(container.querySelector('.route-trail')).toBeTruthy()
+
+  await act(() => vi.advanceTimersByTimeAsync(3500))
+  expect(container.querySelector('.ghost')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Replay journey' })).toBeTruthy()
+})
+
+test('Stop and selecting another flight both end the replay', async () => {
+  vi.stubGlobal('fetch', vi.fn(two))
+  const { container } = render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+
+  fireEvent.click(screen.getByRole('button', { name: 'See the journey' }))
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  fireEvent.click(screen.getByRole('button', { name: 'Stop' }))
+  expect(container.querySelector('.ghost')).toBeNull()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Replay journey' }))
+  await act(() => vi.advanceTimersByTimeAsync(1000))
+  fireEvent.click(screen.getByTitle('TST2'))
+  expect(container.querySelector('.ghost')).toBeNull()
+  // A fresh flight starts with the first-time label.
+  expect(screen.getByRole('button', { name: 'See the journey' })).toBeTruthy()
 })
 
 test('a flight that jumps between polls snaps instead of sliding', async () => {

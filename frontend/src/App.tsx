@@ -5,6 +5,7 @@ import { FlightMap } from './FlightMap'
 import { JournalList } from './JournalList'
 import { QUEST } from './quest'
 import { QuestBanner } from './QuestBanner'
+import { useReplay } from './replay'
 import type { Flight } from './types'
 import { useFlights } from './useFlights'
 import { useJournal } from './useJournal'
@@ -12,6 +13,7 @@ import { useJournal } from './useJournal'
 function App() {
   const { flights, jumped, error } = useFlights()
   const { journal, addCatch } = useJournal()
+  const { replay, playedId, start, stop } = useReplay()
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.
   const [selected, setSelected] = useState<Flight | null>(null)
@@ -20,13 +22,17 @@ function App() {
   const live = selected && flights?.find((f) => f.id === selected.id)
   if (live && live !== selected) setSelected(live)
 
-  const select = (id: string | null) =>
+  // Selecting another flight or closing the card cancels a replay.
+  const select = (id: string | null) => {
+    stop()
     setSelected(flights?.find((f) => f.id === id) ?? null)
+  }
 
   // Catch button: records the flight in the Journal, then closes the card.
   // The quest completes by itself once a matching catch is in today's entries.
   const catchFlight = () => {
     if (selected) addCatch(selected)
+    stop()
     setSelected(null)
   }
 
@@ -52,6 +58,7 @@ function App() {
             flights={mapFlights}
             selectedId={selected?.id ?? null}
             jumped={jumped}
+            replay={replay}
             onSelect={select}
           />
           {selected && (
@@ -59,7 +66,11 @@ function App() {
               flight={selected}
               lost={lost}
               caught={caughtToday}
+              replaying={replay?.flight.id === selected.id}
+              replayed={playedId === selected.id}
               onCatch={catchFlight}
+              onReplay={() => start(selected)}
+              onStopReplay={stop}
             />
           )}
         </>

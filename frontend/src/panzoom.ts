@@ -39,3 +39,43 @@ export function panBy(view: View, dx: number, dy: number): View {
 export function centredOn(px: number, py: number, zoom: number): View {
   return clampView({ zoom, x: 0.5 - px * zoom, y: 0.5 - py * zoom })
 }
+
+// The closest view showing the whole world box (min..max), with `margin` of
+// the map box left free on each side.
+export function fitBounds(
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number,
+  margin = 0.12,
+): View {
+  const room = 1 - 2 * margin
+  const zoom = clamp(
+    Math.min(
+      room / Math.max(maxX - minX, 1e-6),
+      room / Math.max(maxY - minY, 1e-6),
+    ),
+    MIN_ZOOM,
+    MAX_ZOOM,
+  )
+  return centredOn((minX + maxX) / 2, (minY + maxY) / 2, zoom)
+}
+
+// World point at the centre of the box for a view.
+const centreOf = (v: View) => ({
+  px: (0.5 - v.x) / v.zoom,
+  py: (0.5 - v.y) / v.zoom,
+})
+
+// The view `t` (0..1) of the way from `a` to `b`, for camera animations. Zoom
+// changes geometrically and the centre glides, so it feels like one move.
+export function viewBetween(a: View, b: View, t: number): View {
+  const ca = centreOf(a)
+  const cb = centreOf(b)
+  const zoom = a.zoom * (b.zoom / a.zoom) ** t
+  return centredOn(
+    ca.px + (cb.px - ca.px) * t,
+    ca.py + (cb.py - ca.py) * t,
+    zoom,
+  )
+}

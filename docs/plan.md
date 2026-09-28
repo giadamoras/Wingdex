@@ -1,6 +1,9 @@
 # Airspace Explorer — Product & Technical Plan
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is complete: steps 1–6 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card, hardcoded quest, persisted Journal). Milestones 2–7 are ordered in the Implementation roadmap, and Milestone 2 (Living map) is in progress.
+**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
+
+- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop) and Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay). Both are summarized in the Implementation roadmap.
+- **Next.** Milestones 3–7 are ordered there, and Milestone 3 (daily variety) is next in line. None of them has been started.
 
 ## Context
 
@@ -89,31 +92,32 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Implementation roadmap
 
-**Milestone 1 — walking skeleton with one playable loop (done):**
+**Completed milestones.** Summaries only. The step-by-step history is in the git log.
 
-1. ✅ Done. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work. (The frontend's `/health` display was later replaced by `/flights` loading/error states; the backend `/health` endpoint is kept.)
-2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
-3. ✅ Done. Frontend: poll `/flights` every 5 seconds, render each as a simple dot positioned over a plain placeholder background (basic linear lat/lon-to-x/y scaling over fixed Europe/North Atlantic bounds — no map library, no art yet). A failed poll keeps the last good flights on screen.
-4. ✅ Done. Frontend: click a dot → card in a fixed panel below the map showing callsign/altitude + one deterministic fact per aircraft type from a small hardcoded lookup (`facts.ts`; randomized pick from a fact pool comes later), with a "Catch" button. Clicking another dot swaps the card; clicking the selected dot or the map deselects. If the selected flight drops out of the feed it stays at its last known position, flagged "signal lost", until caught or deselected. "Catch" is a stub that only closes the card until step 6.
-5. ✅ Done. Frontend: one hardcoded quest, "Catch a long-haul flight (over 6 hours)" (`duration_min > 360`, defined in `quest.ts`; 4 of the 10 mock flights match). It is shown in a ticket-style strip above the map (`QuestBanner.tsx`). The first matching catch stamps the strip with an animated "Done!" stamp and reveals a concept fact (great-circle routes) that stays visible; later matches change nothing. Completion was in-memory only in this step; step 6 replaced it with completion derived from today's Journal entries. There is no template system. To make the quest playable, the card also shows a duration chip (`format.ts`).
-6. ✅ Done. Frontend: "Catch" appends an entry to a Journal persisted to localStorage (versioned key, and corrupt or missing data loads as an empty Journal). Each entry holds the flight snapshot, the fact text shown (stored so it survives facts becoming random picks later) and an ISO `caughtAt` timestamp. It is rendered as a plain list below the map, newest first (`JournalList.tsx`). Three deliberate changes from the original step:
-   - **A custom hook instead of Context.** The state lives in `useJournal` rather than React Context, because only `App` uses it so far. Context arrives with the Collection screen.
-   - **One catch per flight per local day.** A flight already caught today shows a "Caught today ✓" stamp instead of the Catch button.
-   - **A minimal daily reset, pulled forward.** Quest completion is no longer stored. It is derived from _today's_ catches, so older catches don't count and the quest resets at the user's local midnight. This implements the "personal day" rule from the core loop for the single hardcoded quest.
+**Milestone 1 — Walking skeleton (done).** One playable loop end to end:
 
-**Later milestones (ordered, not yet started).** Finish the MVP mechanics first (a living map, daily variety, a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state. Two MVP "Essential" items are still missing after Milestone 1: pan/zoom, and flights that actually move (the mock only jitters them by ±0.5°).
+- **Backend and data.** A FastAPI backend serves mock flights on `GET /flights` (plus `/health`), and the frontend polls it every 5 s. A failed poll keeps the last good data on screen.
+- **Map and card.** Planes on a placeholder map. Clicking one opens a ticket-style card with its details, one fact per aircraft type (`facts.ts`) and a Catch button. A selected flight that drops out of the feed stays at its last position, flagged "signal lost".
+- **Quest.** One hardcoded quest, "Catch a long-haul flight (over 6 hours)" (`quest.ts`), shown in a ticket strip that gets a "Done!" stamp and a concept fact (great-circle routes) when completed.
+- **Journal.** Catches go into a Journal persisted to localStorage under a versioned key; corrupt or missing data loads as empty. Each entry stores the flight snapshot, the fact text shown and a `caughtAt` timestamp.
+- **Rules that still hold:**
+  - A flight can be caught once per local day.
+  - Quest completion is never stored: it is derived from _today's_ catches, so the quest resets at local midnight (the "personal day" rule).
+  - Journal state lives in the `useJournal` hook; React Context arrives with the Collection screen.
 
-**Milestone 2 — Living map (current target):** the map feels like real airspace you can explore. Flights move at **real speed**, the way flight trackers show them. Zoomed out that movement is barely visible, so a "See the journey" replay supplies the visible motion. This is our version of the route line and playback that FlightRadar24-style apps offer.
+**Milestone 2 — Living map (done).** The map feels like real airspace you can explore, and the two MVP gaps left by Milestone 1 (moving flights, pan/zoom) are closed:
 
-1. ✅ Done. Backend: flights on real routes at real speed. A minimal `Airport` model, plus optional `origin`/`destination` and a `speed_kt` field on `Flight`. There are ~25–30 mock flights between ~15 real airports. Each one's position is interpolated along the great-circle route from origin to destination according to elapsed server time. `duration_min` is the scheduled gate-to-gate time: distance ÷ average speed, plus 25 min for taxi, take-off and landing (the mock loop itself covers only the airborne part). Speeds and altitudes are believable rather than exact: lower on short hops, headwinds westbound, one turboprop. A flight that arrives departs again with the same `id`. Small great-circle helpers live in `geo.py`.
-2. ✅ Done. Frontend: mirror the new fields, show the route ("FRA → JFK", hidden when unknown) and a speed chip on the card, and let planes glide between polls with a 5 s CSS transition. Planes fade in when they first appear. The rule for jumps doesn't depend on the data source: `jumpedFlightIds` (`motion.ts`) flags any flight that moved further than twice what its speed allows since the previous response, and the map snaps those planes instead of sliding them. This covers the mock restarting a route and, later, real flights reappearing after a coverage gap. _Later idea:_ make the mock behave like real traffic, parking the plane at its destination and fading it out, then a new flight appearing at the origin. This needs a "recently left the feed" state, so it's deferred.
-3. ✅ Done. Frontend: world map and pan/zoom (moved ahead of the replay, because long routes run to JFK, BOS, DXB and SIN, off the old Europe-only map).
-   - **World map.** `MAP_BOUNDS` covers the whole world except Antarctica (180°W–180°E, 60°S–80°N), with an 18:7 map box so a degree is as wide as it is tall.
-   - **Coastlines.** Natural Earth 1:110m (public domain) replace the hand-drawn Europe shapes. `scripts/build-land.mjs` generates them once into `worldLandData.ts`, drawn by `WorldLand.tsx`.
-   - **Pan/zoom.** Hand-rolled with no map library. One world layer is translated and scaled, and planes undo the zoom through a `--zoom` CSS variable so they keep their size.
-   - **Controls.** Drag, wheel zoom at the cursor, two-finger pinch, and +/−/reset buttons. Zoom runs from 1× (whole world) to 16×, and the map opens at 5× on Europe. The view is clamped to the edges, and a drag never counts as a click.
-   - **Code.** The maths is in `panzoom.ts` (tested) and the gestures in `usePanZoom.ts`. `vector-effect: non-scaling-stroke` ignores the CSS zoom, so coastline and grid stroke widths are divided by `--zoom` to stay constant on screen.
-4. Frontend: "See the journey". Selecting a flight always draws its dashed great-circle route, like flight trackers do. A card button (hidden when the route is unknown) replays the trip: a semi-transparent ghost plane flies from origin to destination and leaves a solid trail over the dashed line, while the live plane stays put. The replay pace is proportional to flight length (about 1 s per hour of flight), kept between ~3 and ~10 s. Closing the card or selecting another flight cancels it, and under reduced motion only the route line is shown.
+- **Real routes at real speed (backend).** A minimal `Airport` model, plus optional `origin`/`destination` and `speed_kt` on `Flight`. The 26 mock flights between 23 real airports move along great-circle routes by elapsed server time (`geo.py`) and restart from their origin on arrival with the same `id`. `duration_min` is the scheduled gate-to-gate time (air time + 25 min). Speeds and altitudes are believable rather than exact.
+- **Smooth motion (frontend).** Planes glide between polls (5 s CSS transition) and fade in when they appear. A data-source-independent rule (`jumpedFlightIds` in `motion.ts`) snaps any plane that moved further than its speed allows, e.g. after a route restart or, later, a real coverage gap.
+- **World map with pan/zoom.** The whole world except Antarctica, in an 18:7 box with Natural Earth 1:110m coastlines. They are generated once by `scripts/build-land.mjs` into `worldLandData.ts`.
+  - **Pan/zoom.** Hand-rolled with no map library: drag, wheel, pinch and +/−/reset buttons, 1×–16×, opening at 5× on Europe (`panzoom.ts`, `usePanZoom.ts`).
+  - **Constant sizes.** Planes and line widths undo the zoom through a `--zoom` CSS variable, because `non-scaling-stroke` ignores CSS scaling.
+- **Route and journey replay.** Selecting a flight draws its great-circle route: solid where flown, dashed ahead, with IATA chips at both airports (`RouteLayer.tsx`, `geo.ts` mirroring `geo.py`).
+  - **Replay.** "See the journey" glides the camera to fit the route. Then a ghost plane flies origin → destination, leaving a solid trail, at about 1 s per hour of flight kept between 3 and 10 s (`replay.ts`).
+  - **Controls.** The button becomes "Stop", then "Replay journey". Closing the card or selecting another flight cancels a replay, and reduced motion skips the ghost.
+- **Deferred idea.** Make the mock behave like real traffic: park the plane at its destination and fade it out, then a new flight appears at the origin. This needs a "recently left the feed" state.
+
+**Next milestones (ordered, not yet started).** Finish the MVP mechanics first (daily variety, a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state.
 
 **Milestone 3 — Daily variety (facts, quest templates, featured flights):** a new reason to come back each day.
 
@@ -151,7 +155,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Visual & interaction direction
 
-A small visual foundation slice (tokens, fonts, plane markers, placeholder land, ticket card) was pulled ahead of step 5 — see `docs/ui-foundation.md`. The full visual pass below is still a later milestone.
+A small visual foundation slice (tokens, fonts, plane markers, placeholder land, ticket card) was pulled ahead of the Milestone 1 quest work — see `docs/ui-foundation.md`. The full visual pass below is still a later milestone.
 
 - **Overall style: Retro travel-poster kawaii** — vintage mid-century aviation travel-poster palettes and shapes, combined with cuteness, rather than generic cartoon cuteness. This is meant to be aviation-flavored kawaii specifically, a differentiator in its own right.
 - **Mascot:** kept, rendered in the same poster style (e.g. a stylized paper-airplane or pilot figure), still carrying onboarding and daily-quest prompts.
