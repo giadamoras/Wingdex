@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
+import { saveJournal } from './journal'
 import { POLL_INTERVAL_MS } from './useFlights'
 
 const flights = [
@@ -24,6 +25,7 @@ afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  localStorage.clear() // the Journal persists, so wipe it between tests
 })
 
 test('shows a loading message until the first response', () => {
@@ -147,4 +149,71 @@ test('catching a long-haul flight completes the quest', async () => {
   fireEvent.click(screen.getByTitle('TST3'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
   expect(screen.getByText('Done!')).toBeTruthy()
+})
+
+test('a flight caught today cannot be caught again', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  // Reopening the card shows the caught marker instead of the button.
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(screen.queryByRole('button', { name: 'Catch' })).toBeNull()
+  expect(screen.getByText('Caught today ✓')).toBeTruthy()
+})
+
+test('catches appear in the Journal, newest first', async () => {
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText(/No catches yet/)).toBeTruthy()
+
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  fireEvent.click(screen.getByTitle('TST3'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  expect(screen.getByRole('heading', { name: 'Journal (2)' })).toBeTruthy()
+  const items = screen.getAllByRole('listitem')
+  expect(items).toHaveLength(2)
+  expect(items[0].textContent).toContain('TST3')
+  expect(items[1].textContent).toContain('TST1')
+})
+
+test('catches and the quest stamp survive a reload', async () => {
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST3'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  // Unmount and render a fresh App: state is gone, only localStorage remains.
+  cleanup()
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Done!')).toBeTruthy()
+  fireEvent.click(screen.getByTitle('TST3'))
+  expect(screen.getByText('Caught today ✓')).toBeTruthy()
+})
+
+test("yesterday's catches don't count for today", async () => {
+  // Pin the clock so "yesterday" is exact, whatever day the tests run.
+  vi.setSystemTime(new Date(2026, 8, 28, 12, 0))
+  saveJournal([
+    {
+      flight: longHaul,
+      fact: 'A test fact.',
+      caughtAt: new Date(2026, 8, 27, 12, 0).toISOString(),
+    },
+  ])
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  // The quest isn't done, and the flight can be caught again today.
+  expect(screen.queryByText('Done!')).toBeNull()
+  fireEvent.click(screen.getByTitle('TST3'))
+  expect(screen.getByRole('button', { name: 'Catch' })).toBeTruthy()
 })

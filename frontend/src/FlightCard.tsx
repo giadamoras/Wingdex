@@ -7,10 +7,12 @@ import { getFact } from './facts'
 export function FlightCard({
   flight,
   lost,
+  caught,
   onCatch,
 }: {
   flight: Flight
   lost: boolean
+  caught: boolean
   onCatch: () => void
 }) {
   return (
@@ -27,9 +29,13 @@ export function FlightCard({
         <p className="lost">Signal lost - showing last known position.</p>
       )}
       <p className="fact">{getFact(flight)}</p>
-      <button className="catch" onClick={onCatch}>
-        Catch
-      </button>
+      {caught ? (
+        <span className="stamp">Caught today ✓</span>
+      ) : (
+        <button className="catch" onClick={onCatch}>
+          Catch
+        </button>
+      )}
     </section>
   )
 }

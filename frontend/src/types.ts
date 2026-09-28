@@ -9,3 +9,9 @@ export interface Flight {
   heading: number // degrees clockwise from north
   duration_min: number
 }
+
+export interface JournalEntry {
+  flight: Flight
+  fact: string
+  caughtAt: string // ISO timestamp, e.g. "2026-09-25T14:03:00.000Z"
+}

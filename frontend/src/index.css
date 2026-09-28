@@ -78,6 +78,8 @@ h1 {
 
 /* Rubber stamp: coral ink, double border, slight tilt, thumps down on appear. */
 .stamp {
+  /* inline-block: rotate/scale are ignored on plain inline text (e.g. in the card) */
+  display: inline-block;
   padding: 2px 12px;
   color: var(--accent);
   border: 4px double var(--accent);
@@ -234,6 +236,74 @@ h1 {
   box-shadow: 1px 1px 0 var(--ink);
 }
 
+/* "Caught today" stamp in the card, where the Catch button would be. */
+.card .stamp {
+  margin: 4px 0 2px 6px;
+}
+
+/* Journal: a stack of small ticket stubs below the map. */
+.journal {
+  margin-top: 28px;
+}
+
+.journal h2 {
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+}
+
+.journal-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.journal ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Ticket stub: mint strip on the left like a torn-off coupon edge. */
+.journal-entry {
+  padding: 10px 14px;
+  background: #fffaf0;
+  border: 2px solid var(--ink);
+  border-left: 10px solid var(--mint);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 rgb(31 58 74 / 20%);
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.journal-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.journal-head strong {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.journal-head .chip {
+  padding: 0 10px;
+  font-size: 0.85rem;
+}
+
+.journal-head time {
+  margin-left: auto; /* pushes the time to the right edge */
+  font-size: 0.9rem;
+  opacity: 0.7;
+}
+
+.journal-entry p {
+  margin: 6px 0 0;
+  line-height: 1.4;
+}
+
 @keyframes pop {
   from {
     transform: scale(0.6);
@@ -261,7 +331,8 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .plane.selected::after,
   .card,
-  .stamp {
+  .stamp,
+  .journal-entry {
     animation: none;
   }
 }
