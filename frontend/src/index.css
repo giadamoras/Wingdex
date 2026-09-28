@@ -145,9 +145,16 @@ h1 {
   background: none;
   cursor: pointer;
   transform: translate(-50%, -50%);
+  /* Glide for one poll interval (5 s, POLL_INTERVAL_MS) so movement looks continuous. */
   transition:
-    left 1s linear,
-    top 1s linear;
+    left 5s linear,
+    top 5s linear;
+  animation: fade-in 0.6s ease-out; /* only when a plane first appears */
+}
+
+/* Moved further than it could fly (route restart, coverage gap): snap, don't slide. */
+.plane.jump {
+  transition: none;
 }
 
 .plane-icon {
@@ -211,6 +218,14 @@ h1 {
   border: 2px solid var(--ink);
   border-radius: 14px;
   line-height: 1.4;
+}
+
+/* Route line under the card header, e.g. "LHR → JFK". */
+.route {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
 }
 
 .lost {
@@ -315,6 +330,16 @@ h1 {
   }
 }
 
+/* Opacity only: a transform here would replace the plane's centring translate. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* Starts big and fades in, then lands at its tilt (the rotation must be
    repeated here, or the animation would override it). */
 @keyframes stamp {
@@ -329,6 +354,7 @@ h1 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .plane,
   .plane.selected::after,
   .card,
   .stamp,

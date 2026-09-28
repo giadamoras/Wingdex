@@ -9,6 +9,7 @@ const FACTS: Record<string, string> = {
   A333: 'Twin-engine jets like the A330 are certified to fly hours from the nearest airport, which is why they can cross the Atlantic.',
   A359: "More than half of the A350's structure is carbon-fibre composite rather than aluminium.",
   A388: "The A380 is the world's largest passenger airliner and the only full-length double-deck jet airliner. It was designed to fit within an 80 m-wide box, the biggest size airports allow.",
+  AT76: 'The ATR 72 is a turboprop: jet turbines spin its propellers. On short hops that burns much less fuel than a jet, which is why it flies routes like Copenhagen to Oslo.',
   B738: 'Many early 737s had "eyebrow windows" above the cockpit windows. They gave pilots better visibility in turns and made it easier to navigate by the stars.',
   B748: 'At about 76 m, the 747-8 is the longest passenger airliner in service.',
   B77W: "The 777-300ER's engines are among the largest and most powerful jet engines flying, with fans over 3 m across.",

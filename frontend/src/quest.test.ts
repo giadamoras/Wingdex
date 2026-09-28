@@ -9,7 +9,10 @@ const flight = {
   longitude: 0,
   altitude_ft: 36000,
   heading: 90,
+  speed_kt: 450,
   duration_min: 95,
+  origin: null,
+  destination: null,
 }
 
 test('does not match a flight of exactly 6 hours', () => {

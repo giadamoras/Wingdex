@@ -23,8 +23,18 @@ export function FlightCard({
         <span className="chip">
           {flight.altitude_ft.toLocaleString('en-US')} ft
         </span>
+        <span className="chip">{flight.speed_kt} kt</span>
         <span className="chip">{formatDuration(flight.duration_min)}</span>
       </header>
+      {/* Route only when the data source knows it. */}
+      {flight.origin && flight.destination && (
+        <p
+          className="route"
+          title={`${flight.origin.name} → ${flight.destination.name}`}
+        >
+          {flight.origin.iata} → {flight.destination.iata}
+        </p>
+      )}
       {lost && (
         <p className="lost">Signal lost - showing last known position.</p>
       )}

@@ -4,7 +4,14 @@ from pydantic import ValidationError
 
 from app.geo import distance_nm, initial_bearing
 from app.main import app
-from app.mock_flights import AIRPORTS, EPOCH, MOCK_FLIGHTS, get_mock_flights, route_minutes
+from app.mock_flights import (
+    AIRPORTS,
+    EPOCH,
+    GROUND_MIN,
+    MOCK_FLIGHTS,
+    get_mock_flights,
+    route_minutes,
+)
 from app.models import Flight
 
 client = TestClient(app)
@@ -75,7 +82,7 @@ def test_duration_matches_distance_and_speed() -> None:
             (flight.origin.latitude, flight.origin.longitude),
             (flight.destination.latitude, flight.destination.longitude),
         )
-        assert flight.duration_min == round(distance / flight.speed_kt * 60)
+        assert flight.duration_min == round(distance / flight.speed_kt * 60 + GROUND_MIN)
 
 
 def test_flights_move_at_real_speed() -> None:

@@ -13,7 +13,22 @@ const flights = [
     longitude: 0,
     altitude_ft: 36000,
     heading: 90,
+    speed_kt: 450,
     duration_min: 95,
+    origin: {
+      icao: 'EGLL',
+      iata: 'LHR',
+      name: 'London Heathrow',
+      latitude: 51.47,
+      longitude: -0.45,
+    },
+    destination: {
+      icao: 'LFPG',
+      iata: 'CDG',
+      name: 'Paris Charles de Gaulle',
+      latitude: 49.01,
+      longitude: 2.55,
+    },
   },
 ]
 
@@ -72,6 +87,41 @@ test('clicking a dot opens a card with details and a fact', async () => {
   expect(screen.getByRole('heading', { name: 'TST1' })).toBeTruthy()
   expect(screen.getByText(/36,000 ft/)).toBeTruthy()
   expect(screen.getByText(/digital fly-by-wire/)).toBeTruthy()
+  expect(screen.getByText('450 kt')).toBeTruthy()
+  expect(screen.getByText('LHR → CDG')).toBeTruthy()
+})
+
+test('the card hides the route when the source does not know it', async () => {
+  const noRoute = { ...flights[0], origin: null, destination: null }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve([noRoute]) }),
+    ),
+  )
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(screen.queryByText(/→/)).toBeNull()
+})
+
+test('a flight that jumps between polls snaps instead of sliding', async () => {
+  // Second poll: the flight is back near its origin, far from where it was.
+  const restarted = { ...flights[0], latitude: 40, longitude: -10 }
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockImplementationOnce(ok)
+      .mockImplementation(() =>
+        Promise.resolve({ ok: true, json: () => Promise.resolve([restarted]) }),
+      ),
+  )
+  render(<App />)
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByTitle('TST1').classList.contains('jump')).toBe(false)
+  await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
+  expect(screen.getByTitle('TST1').classList.contains('jump')).toBe(true)
 })
 
 test('selecting another dot replaces the card; Catch closes it', async () => {

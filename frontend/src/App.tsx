@@ -10,7 +10,7 @@ import { useFlights } from './useFlights'
 import { useJournal } from './useJournal'
 
 function App() {
-  const { flights, error } = useFlights()
+  const { flights, jumped, error } = useFlights()
   const { journal, addCatch } = useJournal()
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.
@@ -51,6 +51,7 @@ function App() {
           <FlightMap
             flights={mapFlights}
             selectedId={selected?.id ?? null}
+            jumped={jumped}
             onSelect={select}
           />
           {selected && (

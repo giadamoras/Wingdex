@@ -58,47 +58,57 @@ class MockFlight(NamedTuple):
     origin: str  # IATA code in AIRPORTS
     destination: str
     altitude_ft: int
-    speed_kt: int
+    speed_kt: int  # average ground speed: lower on short hops, lower westbound (headwinds)
     start_progress: float  # fraction of the route already flown when the server starts
 
 
 # Mostly European routes (always on the map) plus a few long-hauls (over 6 hours)
-# that are only on the map for part of their trip. Altitudes mix above/below 30,000 ft.
+# that are only on the map for part of their trip. Big jets cruise at 33,000-39,000 ft;
+# short hops and the turboprop fly lower, so altitudes mix above/below 30,000 ft.
 MOCK_FLIGHTS: list[MockFlight] = [
-    MockFlight("f01", "BAW117", "B77W", "LHR", "JFK", 37000, 480, 0.10),
-    MockFlight("f02", "AFR1234", "A321", "CDG", "FCO", 34000, 450, 0.30),
-    MockFlight("f03", "DLH400", "B748", "FRA", "JFK", 38000, 490, 0.12),
-    MockFlight("f04", "KLM835", "B77W", "AMS", "SIN", 41000, 490, 0.03),
-    MockFlight("f05", "RYR8821", "B738", "MXP", "LIS", 28000, 440, 0.40),
-    MockFlight("f06", "IBE6165", "A359", "MAD", "BOS", 33000, 470, 0.08),
-    MockFlight("f07", "EZY45AB", "A319", "MXP", "VIE", 12000, 300, 0.20),
-    MockFlight("f08", "VIR11", "A333", "LHR", "BOS", 37000, 480, 0.15),
-    MockFlight("f09", "SAS1590", "E190", "ARN", "CPH", 24000, 400, 0.50),
-    MockFlight("f10", "THY1", "B77W", "IST", "JFK", 35000, 480, 0.10),
-    MockFlight("f11", "UAE5", "A388", "DXB", "LHR", 39000, 490, 0.72),
-    MockFlight("f12", "EIN105", "A333", "DUB", "JFK", 36000, 480, 0.05),
+    # Long-haul, westbound into headwinds
+    MockFlight("f01", "BAW117", "B77W", "LHR", "JFK", 37000, 440, 0.10),
+    MockFlight("f03", "DLH400", "B748", "FRA", "JFK", 36000, 440, 0.12),
+    MockFlight("f06", "IBE6165", "A359", "MAD", "BOS", 38000, 440, 0.08),
+    MockFlight("f08", "VIR11", "A333", "LHR", "BOS", 37000, 440, 0.15),
+    MockFlight("f10", "THY1", "B77W", "IST", "JFK", 35000, 440, 0.10),
+    MockFlight("f12", "EIN105", "A333", "DUB", "JFK", 36000, 440, 0.05),
+    # Long-haul, east/southbound
+    MockFlight("f04", "KLM835", "B77W", "AMS", "SIN", 35000, 480, 0.03),
+    MockFlight("f11", "UAE5", "A388", "DXB", "LHR", 39000, 460, 0.72),
+    # Medium-haul (2-4 hours)
+    MockFlight("f05", "RYR8821", "B738", "MXP", "LIS", 37000, 430, 0.40),
     MockFlight("f13", "ICE204", "B738", "KEF", "CPH", 35000, 450, 0.40),
-    MockFlight("f14", "BAW302", "A320", "LHR", "CDG", 24000, 380, 0.50),
-    MockFlight("f15", "DLH1810", "A321", "MUC", "BCN", 36000, 450, 0.35),
-    MockFlight("f16", "KLM1101", "E190", "AMS", "OSL", 33000, 420, 0.60),
-    MockFlight("f17", "ITY304", "A320", "FCO", "LIS", 35000, 450, 0.45),
-    MockFlight("f18", "AEE603", "A320", "ATH", "VIE", 34000, 450, 0.30),
-    MockFlight("f19", "AUA371", "A320", "VIE", "AMS", 36000, 450, 0.55),
+    MockFlight("f17", "ITY304", "A320", "FCO", "LIS", 35000, 440, 0.45),
     MockFlight("f20", "NAX1234", "B738", "OSL", "MAD", 37000, 450, 0.25),
-    MockFlight("f21", "TAP1350", "A321", "LIS", "LHR", 35000, 450, 0.65),
+    MockFlight("f21", "TAP1350", "A321", "LIS", "LHR", 35000, 440, 0.65),
     MockFlight("f22", "EZY8765", "A320", "EDI", "ATH", 36000, 450, 0.20),
-    MockFlight("f23", "VLG8302", "A320", "BCN", "AMS", 34000, 450, 0.70),
-    MockFlight("f24", "RYR44", "B738", "DUB", "FCO", 26000, 430, 0.35),
-    MockFlight("f25", "THY1633", "A359", "IST", "FRA", 39000, 470, 0.50),
-    MockFlight("f26", "EWG9AB", "A319", "CPH", "MUC", 18000, 360, 0.30),
+    MockFlight("f24", "RYR44", "B738", "DUB", "FCO", 37000, 440, 0.35),
+    MockFlight("f25", "THY1633", "A359", "IST", "FRA", 39000, 450, 0.50),
+    # Short-haul (1-2 hours)
+    MockFlight("f02", "AFR1234", "A321", "CDG", "FCO", 34000, 420, 0.30),
+    MockFlight("f15", "DLH1810", "A321", "MUC", "BCN", 36000, 430, 0.35),
+    MockFlight("f16", "KLM1101", "E190", "AMS", "OSL", 33000, 400, 0.60),
+    MockFlight("f18", "AEE603", "A320", "ATH", "VIE", 34000, 430, 0.30),
+    MockFlight("f19", "AUA371", "A320", "VIE", "AMS", 36000, 420, 0.55),
+    MockFlight("f23", "VLG8302", "A320", "BCN", "AMS", 34000, 430, 0.70),
+    MockFlight("f26", "EWG9AB", "A319", "CPH", "MUC", 33000, 400, 0.30),
+    # Short hops: they spend most of the trip climbing or descending, so they stay lower
+    MockFlight("f09", "SAS1590", "E190", "ARN", "CPH", 25000, 360, 0.50),
+    MockFlight("f14", "BAW302", "A320", "LHR", "CDG", 22000, 330, 0.50),
+    MockFlight("f07", "SAS4403", "AT76", "CPH", "OSL", 17000, 260, 0.20),  # turboprop
 ]
+
+# Taxi, take-off and landing time on top of the time in the air: schedules count
+# gate to gate, so LHR->CDG is about an hour even though the flying takes ~35 min.
+GROUND_MIN = 25
 
 # Clock origin: at server start each flight is at its start_progress.
 EPOCH = time.time()
 
 
 def route_minutes(flight: MockFlight) -> float:
-    """Exact time (minutes) to fly the great-circle route at the flight's speed."""
+    """Exact airborne time (minutes) to fly the great-circle route at the flight's speed."""
     origin, dest = AIRPORTS[flight.origin], AIRPORTS[flight.destination]
     distance = distance_nm((origin.latitude, origin.longitude), (dest.latitude, dest.longitude))
     return distance / flight.speed_kt * 60
@@ -121,7 +131,8 @@ def _position_at(flight: MockFlight, elapsed_min: float) -> Flight:
         # On a great circle the heading changes along the way, so aim at the destination.
         heading=initial_bearing((latitude, longitude), b),
         speed_kt=flight.speed_kt,
-        duration_min=round(duration),
+        # Scheduled gate-to-gate time. The mock loop itself only covers the airborne part.
+        duration_min=round(duration + GROUND_MIN),
         origin=origin,
         destination=dest,
     )

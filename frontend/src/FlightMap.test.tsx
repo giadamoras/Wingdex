@@ -14,7 +14,10 @@ const flight = (id: string, latitude: number, longitude: number): Flight => ({
   longitude,
   altitude_ft: 30000,
   heading: 90,
+  speed_kt: 450,
   duration_min: 60,
+  origin: null,
+  destination: null,
 })
 
 test('renders one dot per flight at its projected position', () => {
@@ -43,6 +46,19 @@ test('rotates each plane to its heading', () => {
   )
   const icon = screen.getByTitle('CS1').querySelector('svg')!
   expect(icon.style.transform).toBe('rotate(90deg)')
+})
+
+test('only jumped planes get the snap class', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 49, 5)]}
+      selectedId={null}
+      jumped={new Set(['2'])}
+      onSelect={() => {}}
+    />,
+  )
+  expect(screen.getByTitle('CS1').classList.contains('jump')).toBe(false)
+  expect(screen.getByTitle('CS2').classList.contains('jump')).toBe(true)
 })
 
 test('clicking a dot selects it, clicking the selected dot deselects', () => {
