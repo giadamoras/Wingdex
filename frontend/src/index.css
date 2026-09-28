@@ -181,6 +181,17 @@ h1 {
   filter: drop-shadow(1px 2px 0 rgb(31 58 74 / 35%));
 }
 
+/* Featured flight: a dashed paper ring that gently pulses. Sits before the
+   selected rule so a selected featured plane shows the solid mustard ring. */
+.plane.featured::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px dashed var(--paper);
+  border-radius: 50%;
+  animation: featured-pulse 1.8s ease-in-out infinite;
+}
+
 /* Mustard ring that pops in when a plane is selected. */
 .plane.selected::after {
   content: '';
@@ -485,6 +496,14 @@ h1 {
   }
 }
 
+/* The ring is a pseudo-element, so it may use transform. */
+@keyframes featured-pulse {
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+}
+
 /* Opacity only: a transform here would replace the plane's centring translate. */
 @keyframes fade-in {
   from {
@@ -517,6 +536,7 @@ h1 {
 @media (prefers-reduced-motion: reduce) {
   .plane,
   .plane.selected::after,
+  .plane.featured::after,
   .card,
   .stamp,
   .journal-entry {

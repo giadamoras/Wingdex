@@ -11,6 +11,7 @@ import { usePanZoom } from './usePanZoom'
 import { WorldLand } from './WorldLand'
 
 const NO_JUMPS = new Set<string>()
+const NO_FEATURED = new Set<string>()
 
 // Opening view: zoomed in on Europe, roughly the old Europe-only map.
 const europe = project(50, 10)
@@ -33,19 +34,22 @@ function routeView(flight: Flight) {
 
 // World map with one clickable plane per flight, positioned in percent of the
 // world layer, which pans and zooms as a whole. Planes glide between polls;
-// ids in `jumped` snap to their new position instead. Clicking a plane selects
+// ids in `jumped` snap to their new position instead, and ids in `featuredIds`
+// get a ring. Clicking a plane selects
 // it (or deselects it if already selected); clicking the map background
 // deselects. A drag never counts as a click.
 export function FlightMap({
   flights,
   selectedId,
   jumped = NO_JUMPS,
+  featuredIds = NO_FEATURED,
   replay = null,
   onSelect,
 }: {
   flights: Flight[]
   selectedId: string | null
   jumped?: Set<string>
+  featuredIds?: Set<string>
   replay?: ReplayState | null
   onSelect: (id: string | null) => void
 }) {
@@ -99,6 +103,7 @@ export function FlightMap({
             'plane',
             f.id === selectedId && 'selected',
             jumped.has(f.id) && 'jump',
+            featuredIds.has(f.id) && 'featured',
           ]
             .filter(Boolean)
             .join(' ')

@@ -2,8 +2,8 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop) and Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay). Both are summarized in the Implementation roadmap.
-- **Next.** Milestones 3–7 are ordered there, and Milestone 3 (daily variety) is next in line. None of them has been started.
+- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay) and Milestone 3 (daily variety: tagged facts, quest templates, featured flights). All three are summarized in the Implementation roadmap.
+- **Next.** Milestones 4–7 are ordered there, and Milestone 4 (Collection, badges and the catch moment) is next in line. None of them has been started.
 
 ## Context
 
@@ -69,8 +69,8 @@ Aviation-curious people without deep aviation background — including the creat
 - [OpenSky Network](https://openskynetwork.github.io/opensky-api/rest.html) — free live ADS-B state vectors (position, altitude, velocity, heading, callsign) for non-commercial/research use, OAuth2 client-credentials auth as of 2026. The mock data's attribute structure should mirror OpenSky's state-vector fields. Still open: the exact field-by-field schema mapping and auth setup — and free-tier request limits should be re-verified on OpenSky's own docs immediately before integration, since third-party sources disagreed on the exact daily allowance during research (reports ranged ~1,000–4,000 requests/day for authenticated accounts). Two further points to settle at integration time:
   - **Flight identity.** The Journal's "one catch per flight per day" rule relies on `Flight.id`. For real data, `id` should come from the callsign (a flight number repeats daily on the same route, so callsign plus the day identifies one flight), not the ICAO24 transponder address (which identifies the airframe, and one airframe flies several flights a day). Handle a missing callsign.
   - **Missing fields to verify.** As researched so far, live state vectors don't include aircraft type, route or flight duration, yet the long-haul quest uses `duration_min` and facts are keyed by `aircraft_type`. Check OpenSky's aircraft metadata and flights endpoints (or another source) for these before relying on them. The Milestone 2 journey replay also depends on origin/destination, so it stays hidden for flights without a route.
-- The concrete quest template parameters (exact thresholds per template) — the templated system itself is a later milestone; Milestone 1 ships with a single hardcoded quest condition instead.
-- The concrete fact-pool content per attribute category (aircraft type, airline, altitude band, region, time-of-day, weather) for aircraft, flights, and airports.
+    - **Checked for Milestone 3 (2026-09-28, OpenSky REST docs).** State vectors have 18 fields: position, barometric and geometric altitude (metres), velocity (m/s), true track, vertical rate, callsign, on-ground flag and a numeric aircraft category (index 17). They have no aircraft type, route or duration. The quota is 400 credits/day anonymous, 4,000 standard and 8,000 for active feeders, so the earlier "1,000–4,000" reports were roughly right for standard accounts. Aircraft type and duration therefore need a metadata source at integration time (Milestone 7). Until then the Milestone 3 templates and fact tags rely mostly on altitude, position/region, airline (callsign prefix) and time of day, and treat aircraft type and duration as the parts that may need scaling back.
+- Weather quest templates and weather fact tags: the template system and the fact pools exist since Milestone 3 (thresholds are constants at the top of `quest.ts`), but nothing uses weather until Milestone 6. The pools are also still small (37 facts), so they can grow at any time.
 - How mock weather data is represented/sourced before any real weather integration.
 - Hosting/deployment target (a free static host — Vercel, Netlify, or GitHub Pages are all viable for a portfolio piece, plus somewhere to run the FastAPI backend) — not yet decided. Build tooling is settled (see Technical direction).
 - The concrete screen/component breakdown.
@@ -88,7 +88,7 @@ Aviation-curious people without deep aviation background — including the creat
 - **Tooling (settled in the scaffold):** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, and `tsc` for type checking; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`. Hosting is still open.
 - **Animation: Framer Motion** — the eventual choice for the MVP's bouncy/springy interactions; not needed until after the core loop works. GSAP was considered for more elaborate showcase moments but deferred to keep the animation surface manageable for a first project.
 - **State & persistence: React Context/hooks + browser localStorage** — simplest setup, adequate for MVP-scale Journal/quest data.
-- **Quest logic for now:** a single hardcoded quest condition (no template engine) proves the loop first; the parameterized quest-template system described above is a deliberate later generalization, not part of the first implementation milestone.
+- **Quest logic:** a small list of parameterized quest templates in `quest.ts`, each with a title, a concept fact and a `matches()` test. One is picked per local day and saved (see Milestone 3). There is no template engine beyond that list.
 
 ## Implementation roadmap
 
@@ -98,7 +98,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 - **Backend and data.** A FastAPI backend serves mock flights on `GET /flights` (plus `/health`), and the frontend polls it every 5 s. A failed poll keeps the last good data on screen.
 - **Map and card.** Planes on a placeholder map. Clicking one opens a ticket-style card with its details, one fact per aircraft type (`facts.ts`) and a Catch button. A selected flight that drops out of the feed stays at its last position, flagged "signal lost".
-- **Quest.** One hardcoded quest, "Catch a long-haul flight (over 6 hours)" (`quest.ts`), shown in a ticket strip that gets a "Done!" stamp and a concept fact (great-circle routes) when completed.
+- **Quest.** One hardcoded quest, "Catch a long-haul flight (over 6 hours)" (`quest.ts`), shown in a ticket strip that gets a "Done!" stamp and a concept fact (great-circle routes) when completed. Milestone 3 turned it into one of several templates.
 - **Journal.** Catches go into a Journal persisted to localStorage under a versioned key; corrupt or missing data loads as empty. Each entry stores the flight snapshot, the fact text shown and a `caughtAt` timestamp.
 - **Rules that still hold:**
   - A flight can be caught once per local day.
@@ -123,14 +123,25 @@ Aviation-curious people without deep aviation background — including the creat
   - **Measuring gotcha.** `getBoundingClientRect` reports layout positions and hides this rounding. Only screenshots (painted pixels) reveal it.
   - **Same rule elsewhere.** Anything that moves continuously inside the zoomed layer should use `transform`, not `left`/`top`. Live planes and endpoint chips still use `left`/`top`, which is fine while they move well under one layer pixel per poll.
 
-**Next milestones (ordered, not yet started).** Finish the MVP mechanics first (daily variety, a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state.
+**Milestone 3 — Daily variety (done).** A new reason to come back each day. It is all frontend; the backend and the `/flights` contract did not change:
 
-**Milestone 3 — Daily variety (facts, quest templates, featured flights):** a new reason to come back each day.
+- **Data fit.** Checked against OpenSky's docs (see Open items). Tags and templates rely mostly on attributes that survive real data. Aircraft type and duration are the ones that need a metadata source in Milestone 7.
+- **Tags (`attributes.ts`).** The one place that turns a flight into labels: altitude band (low, mid, cruise, high), airline (the 3-letter callsign prefix), region and time of day.
+  - **Region.** "Land" is a point-in-polygon test on the map's own `WORLD_LAND` data. "Open ocean" is water with no land within about 3° in 8 directions, so the English Channel and Irish Sea don't count. A few coarse boxes add "europe" and "north-atlantic", and the Mediterranean and other big seas are excluded by box.
+  - **Time of day.** Local solar time at the plane (UTC plus longitude/15), not the viewer's clock.
+- **Tagged facts (`facts.ts`).** 37 facts, each tagged by aircraft type, airline, altitude band, region or time of day. A flight gets one of the facts matching its tags, picked by a hash of flight id and local day (`hash.ts`, `dayKey` in `dates.ts`). It is stable across polls, so the card doesn't flicker and the Journal saves what was shown, yet it varies between flights and days.
+- **Quest templates (`quest.ts`).** Seven: high (over 36,000 ft), low (under 20,000 ft), wide-body, propeller, over open ocean, in the dark, long-haul (over 6 h).
+  - **Daily pick.** `pickQuest` starts at a point chosen by the local date and takes the first template some current flight can satisfy.
+  - **Lock-in.** The choice (only `{day, questId}`, not completion) is saved under `airspace-explorer:quest:v1` (`dailyQuest.ts`, `useDailyQuest.ts`), so a reload or a changed feed keeps the day's quest.
+  - **Completion.** Still derived from today's Journal, judging each catch at its own `caughtAt` time, which matters for the night quest.
+- **Featured flights (`featured.ts`).** Three planes per session get a pulsing dashed ring: one that completes the quest, then the rarest aircraft types in the current feed, one plane per type, skipping flights caught today. They are picked once when the feed and quest are ready, and a ring goes away when the flight is caught.
+- **Catch scroll.** The catch that completes the quest scrolls the page back to the top, where the quest strip and its stamp are (smooth, or instant under reduced motion).
+- **Known limits.**
+  - With the static mock feed the featured picks barely change from day to day (the same rare types), and the night quest is only available when some plane is over a night-time longitude.
+  - The fact pool is a first draft, reviewed by the user.
+  - There are no weather tags yet (Milestone 6).
 
-0. Data-fit check (research, no code). Re-verify which attributes OpenSky actually provides (see Open items). Templates and fact tags should rely mostly on attributes that will survive the switch to real data (altitude, position/region, airline from the callsign prefix, time of day). Aircraft type and duration are flagged as needing a metadata source.
-1. Tagged fact pools. `facts.ts` becomes a static pool tagged by aircraft type, airline, altitude band, region and time-of-day. `getFact` collects the matching facts and picks one at random. This is safe because Journal entries already store the fact text they showed.
-2. Quest templates. Replace `QUEST` with a few parameterized templates (altitude, aircraft category, region such as "over open ocean", time-of-day, long-haul duration), each with a title, a concept fact and `matches()`. Today's quest is picked deterministically from the local date, so a reload shows the same quest, and only from quests at least one current flight can satisfy. Completion is still derived from today's Journal entries.
-3. Featured flights. Highlight 2–3 flights per session on the map with a distinct marker ring, favouring rarer types and matches for today's quest.
+**Next milestones (ordered, not yet started).** Finish the MVP mechanics first (a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state.
 
 **Milestone 4 — Collection, badges and the catch moment:** catching feels rewarding and progress has a home.
 

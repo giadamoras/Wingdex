@@ -15,6 +15,7 @@ Small visual slice pulled ahead of the Milestone 1 quest work. It follows the "r
   - **Journey button.** A secondary paper button with an ink outline and flat shadow, next to the coral Catch.
   - **Zoom.** Like the land, line widths are divided by `--zoom` so they look the same at any zoom. The route SVG is named `.route-lines` because `.route` is the card's route text.
 - **Map controls** (Milestone 2): +/−/reset buttons in the map's bottom-right corner, styled like small cream tickets with the ink border and a flat shadow. The map shows a grab cursor.
+- **Featured flights** (Milestone 3): a dashed paper-coloured ring that gently pulses (`featured-pulse`, off under reduced motion) around 2–3 planes picked for the session. The selected plane's solid mustard ring replaces it, since the selected rule comes later in the CSS. The ring is a `::after` pseudo-element, so it may use `transform`.
 - **Card**: ticket look with callsign, aircraft-type and altitude chips, the fact in a speech-bubble block and a coral Catch button.
 - **Motion**: CSS-only pop on selection and card appearance, disabled under `prefers-reduced-motion`.
 - **Quest strip** (added with Milestone 1): a slim ticket above the map, using the card's paper, border and shadow, with an inverted "QUEST" label. On completion, a coral rubber stamp ("Done!", double border, tilted -8deg) lands with its own `stamp` keyframes. The keyframes repeat the tilt, because a `transform` animation replaces the element's own `transform`. The concept fact appears below a dashed tear line.

@@ -146,3 +146,16 @@ test('clicking the map background deselects', () => {
   fireEvent.click(container.querySelector('.map')!)
   expect(onSelect).toHaveBeenCalledWith(null)
 })
+
+test('featured planes get the ring class', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 49, 5)]}
+      selectedId={null}
+      featuredIds={new Set(['2'])}
+      onSelect={() => {}}
+    />,
+  )
+  expect(screen.getByTitle('CS1').classList.contains('featured')).toBe(false)
+  expect(screen.getByTitle('CS2').classList.contains('featured')).toBe(true)
+})
