@@ -1,6 +1,6 @@
 # Airspace Explorer — Product & Technical Plan
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is complete: steps 1–6 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card, hardcoded quest, persisted Journal). The next milestone has not been chosen yet.
+**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled. Milestone 1 is complete: steps 1–6 are done (scaffold, mock `/flights` endpoint, polling frontend with flight dots, click-to-open flight card, hardcoded quest, persisted Journal). Milestones 2–7 are ordered in the Implementation roadmap, and Milestone 2 (Living map) is in progress.
 
 ## Context
 
@@ -65,7 +65,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 - [OpenSky Network](https://openskynetwork.github.io/opensky-api/rest.html) — free live ADS-B state vectors (position, altitude, velocity, heading, callsign) for non-commercial/research use, OAuth2 client-credentials auth as of 2026. The mock data's attribute structure should mirror OpenSky's state-vector fields. Still open: the exact field-by-field schema mapping and auth setup — and free-tier request limits should be re-verified on OpenSky's own docs immediately before integration, since third-party sources disagreed on the exact daily allowance during research (reports ranged ~1,000–4,000 requests/day for authenticated accounts). Two further points to settle at integration time:
   - **Flight identity.** The Journal's "one catch per flight per day" rule relies on `Flight.id`. For real data, `id` should come from the callsign (a flight number repeats daily on the same route, so callsign plus the day identifies one flight), not the ICAO24 transponder address (which identifies the airframe, and one airframe flies several flights a day). Handle a missing callsign.
-  - **Missing fields to verify.** As researched so far, live state vectors don't include aircraft type, route or flight duration, yet the long-haul quest uses `duration_min` and facts are keyed by `aircraft_type`. Check OpenSky's aircraft metadata and flights endpoints (or another source) for these before relying on them.
+  - **Missing fields to verify.** As researched so far, live state vectors don't include aircraft type, route or flight duration, yet the long-haul quest uses `duration_min` and facts are keyed by `aircraft_type`. Check OpenSky's aircraft metadata and flights endpoints (or another source) for these before relying on them. The Milestone 2 journey replay also depends on origin/destination, so it stays hidden for flights without a route.
 - The concrete quest template parameters (exact thresholds per template) — the templated system itself is a later milestone; Milestone 1 ships with a single hardcoded quest condition instead.
 - The concrete fact-pool content per attribute category (aircraft type, airline, altitude band, region, time-of-day, weather) for aircraft, flights, and airports.
 - How mock weather data is represented/sourced before any real weather integration.
@@ -77,7 +77,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 - **Architecture: two-part monorepo** — `frontend/` (React + TypeScript + Vite) and `backend/` (Python + FastAPI) in one repository. Introducing a real backend from the start (rather than deferring it) is motivated by a concrete need, not "real apps have backends": OpenSky's OAuth2 flow requires a client secret that must never reach the browser, and pooling/caching requests against OpenSky's shared daily quota also needs a server-side layer — both are real requirements once live data is integrated, so the boundary is worth having early.
 - **Backend responsibility boundary:** the backend owns _world/flight data_ only — serving it (mock now, real later) through a stable domain model. It never owns user-specific data. The frontend owns everything user-scoped — Journal, Badges, active quest state — consistent with the decision that persistence is local-only (no accounts, no cloud sync).
-- **Backend data model (minimal for now):** a single flat `Flight` — id, callsign, aircraft type (plain string for now), latitude, longitude, altitude, heading, and **flight duration** (included from the start to support a future distance-based quest template even though that quest is a later milestone). As implemented, fields are `id`, `callsign`, `aircraft_type`, `latitude`/`longitude` (degrees), `altitude_ft` (feet, matching how pilots and the quests express altitude), `heading` (degrees, 0–360) and `duration_min` (minutes), validated with pydantic. OpenSky reports altitude in metres, so the eventual provider converts to these units. Richer models (`AircraftType`, `Airport`, `WeatherCondition` as their own structured types) are deliberately deferred until the features that need them are actually being built.
+- **Backend data model (minimal for now):** a single flat `Flight` — id, callsign, aircraft type (plain string for now), latitude, longitude, altitude, heading, and **flight duration** (included from the start to support a future distance-based quest template even though that quest is a later milestone). As implemented, fields are `id`, `callsign`, `aircraft_type`, `latitude`/`longitude` (degrees), `altitude_ft` (feet, matching how pilots and the quests express altitude), `heading` (degrees, 0–360) and `duration_min` (minutes), validated with pydantic. OpenSky reports altitude in metres, so the eventual provider converts to these units. Richer models (`AircraftType`, `WeatherCondition` as their own structured types) are deliberately deferred until the features that need them are actually being built. Milestone 2 adds the first one, because the journey replay needs a route. `Airport` (`icao`, `iata`, `name`, `latitude`, `longitude`) and `Flight.origin`/`Flight.destination` are **optional**, because OpenSky state vectors carry no route. `Flight.speed_kt` (knots) is also added, since OpenSky reports velocity.
 - **No formal provider abstraction yet:** a plain function (e.g. `get_mock_flights()`) generates mock data. A shared interface for multiple providers (mock vs. OpenSky) is deferred until there's an actual second implementation to satisfy — introducing it now, with only one real implementation, would be premature abstraction.
 - **Minimal API surface:** one endpoint, `GET /flights`, returning the normalized `Flight` list. No POST endpoints — the backend stores nothing user-specific. Fact-pool content is a static file bundled into the frontend, not a backend endpoint, since it's content rather than something requiring server computation.
 - **Live data source: OpenSky Network** (see Open Items) — the intended eventual real provider; mock data's structure mirrors what OpenSky-normalized data would look like, so swapping providers later changes only the backend's internal implementation, never the `/flights` contract or the frontend.
@@ -89,7 +89,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Implementation roadmap
 
-**Milestone 1 — walking skeleton with one playable loop (current target):**
+**Milestone 1 — walking skeleton with one playable loop (done):**
 
 1. ✅ Done. Scaffold `backend/` (FastAPI, `/health` endpoint) and `frontend/` (Vite + React + TS, fetches `/health` and displays it) — proves CORS/plumbing before any feature work. (The frontend's `/health` display was later replaced by `/flights` loading/error states; the backend `/health` endpoint is kept.)
 2. ✅ Done. Backend: minimal `Flight` model (including duration) + `get_mock_flights()` returning 10 flights with positions jittered by up to ±0.5° per call; `GET /flights` returning them as JSON.
@@ -101,7 +101,48 @@ Aviation-curious people without deep aviation background — including the creat
    - **One catch per flight per local day.** A flight already caught today shows a "Caught today ✓" stamp instead of the Catch button.
    - **A minimal daily reset, pulled forward.** Quest completion is no longer stored. It is derived from _today's_ catches, so older catches don't count and the quest resets at the user's local midnight. This implements the "personal day" rule from the core loop for the single hardcoded quest.
 
-**Later milestones (rough order, not yet started):** generalize the hardcoded quest into the parameterized template system; build the real illustrated map art and swap in the placeholder; add the Collection screen (Journal + Badges tabs) and badge unlocks; author the tagged fact-pool content; apply the retro-poster visual/mascot/onboarding pass and Framer Motion polish; implement the real `OpenSkyProvider` and swap it in behind the existing `/flights` contract; add weather (atmospheric, then functional); add streaks/collection-progress view and other Nice-to-have items.
+**Later milestones (ordered, not yet started).** Finish the MVP mechanics first (a living map, daily variety, a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state. Two MVP "Essential" items are still missing after Milestone 1: pan/zoom, and flights that actually move (the mock only jitters them by ±0.5°).
+
+**Milestone 2 — Living map (current target):** the map feels like real airspace you can explore. Flights move at **real speed**, the way flight trackers show them. Zoomed out that movement is barely visible, so a "See the journey" replay supplies the visible motion. This is our version of the route line and playback that FlightRadar24-style apps offer.
+
+1. ✅ Done. Backend: flights on real routes at real speed. A minimal `Airport` model, plus optional `origin`/`destination` and a `speed_kt` field on `Flight`. There are ~25–30 mock flights between ~15 real airports. Each one's position is interpolated along the great-circle route from origin to destination according to elapsed server time. `duration_min` is the distance divided by the speed, and a flight that arrives departs again with the same `id`. Small great-circle helpers live in `geo.py`.
+2. Frontend: mirror the new fields, show the route ("FRA → JFK") on the card, and let planes glide between polls with a 5 s CSS transition. A flight that restarts its leg jumps rather than sliding back across the map.
+3. Frontend: "See the journey". A card button (hidden when the route is unknown) draws the dashed great-circle route and flies a ghost plane from origin to destination in ~8 s with `requestAnimationFrame`. It is cancelled by closing the card or selecting another flight, and under reduced motion only the route line is shown. The live plane stays put as "you are here".
+4. Frontend: pan/zoom. Hand-rolled on the existing map: one transformable layer, planes counter-scaled so they keep their size, drag / wheel / pinch / +− buttons, 1×–6× zoom clamped to the bounds. The maths lives in a tested `panzoom.ts`. No map library.
+
+**Milestone 3 — Daily variety (facts, quest templates, featured flights):** a new reason to come back each day.
+
+0. Data-fit check (research, no code). Re-verify which attributes OpenSky actually provides (see Open items). Templates and fact tags should rely mostly on attributes that will survive the switch to real data (altitude, position/region, airline from the callsign prefix, time of day). Aircraft type and duration are flagged as needing a metadata source.
+1. Tagged fact pools. `facts.ts` becomes a static pool tagged by aircraft type, airline, altitude band, region and time-of-day. `getFact` collects the matching facts and picks one at random. This is safe because Journal entries already store the fact text they showed.
+2. Quest templates. Replace `QUEST` with a few parameterized templates (altitude, aircraft category, region such as "over open ocean", time-of-day, long-haul duration), each with a title, a concept fact and `matches()`. Today's quest is picked deterministically from the local date, so a reload shows the same quest, and only from quests at least one current flight can satisfy. Completion is still derived from today's Journal entries.
+3. Featured flights. Highlight 2–3 flights per session on the map with a distinct marker ring, favouring rarer types and matches for today's quest.
+
+**Milestone 4 — Collection, badges and the catch moment:** catching feels rewarding and progress has a home.
+
+1. A Collection screen with Journal and Badges tabs, opened from the map (simple view state, no router). Journal state moves into React Context here.
+2. Badges defined as pure functions over the Journal (first catch, 5 aircraft types, 3 quest days, an ocean crossing…), so they are derived rather than stored. Only the set of badges already seen is persisted, and a newly unlocked badge shows a one-time popup on the map.
+3. Passport card and catch stamp: the deferred idea in `docs/ui-foundation.md`, extending `.stamp`. Its open questions get answered at the start of the milestone.
+
+**Milestone 5 — Visual pass, mascot and onboarding:** the retro travel-poster kawaii identity, ready for the portfolio. Starts with a short design doc (palette values, mascot, silhouette style).
+
+1. Illustrated map art replacing `EuropeLand.tsx` and the placeholder sea.
+2. Silhouettes for each aircraft type, and palette tokens that shift by time of day (region and weather come later).
+3. Mascot and a short onboarding (a greeting, then one guaranteed-easy first catch).
+4. Framer Motion for springy card, stamp and popup motion.
+
+**Milestone 6 — Weather:** atmosphere first, then weather as a game attribute.
+
+1. A mock weather snapshot from the backend (a few areas, each with a condition). Whether this becomes a new endpoint or a field on flights gets decided then.
+2. Weather icons on the map.
+3. Weather as a quest-template parameter and fact tag (turbulence, storm avoidance).
+
+**Milestone 7 — Live data and deployment:** real flights, publicly hosted.
+
+1. `OpenSkyProvider` behind the existing `/flights` contract: OAuth2 client credentials, server-side caching to protect the daily quota, a callsign-based `id`, and metres converted to feet. The provider interface is introduced here, once a second implementation exists.
+2. Fill in the missing type and duration from a metadata source, or scale back the templates that depend on them.
+3. Deploy the frontend (static host) and the backend, which settles the hosting open item.
+
+**Nice-to-have, after the MVP:** streak counter, richer mascot dialogue, larger fact pools, a collection-progress view.
 
 ## Visual & interaction direction
 
