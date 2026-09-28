@@ -7,7 +7,8 @@ Small visual slice pulled ahead of Milestone 1 step 5. It follows the "retro tra
 - **Design tokens** as CSS variables in `frontend/src/index.css` (`--paper`, `--ink`, `--sea`, `--land`, `--accent`, `--highlight`, `--mint`, plus font variables), so a later region/time/weather palette shift only swaps values.
 - **Fonts**: Fredoka (display) and Nunito (body), self-hosted through `@fontsource` packages.
 - **Aircraft markers**: chunky SVG plane silhouette (`PlaneIcon.tsx`) rotated by `heading`; the selected plane gets a mustard ring.
-- **Placeholder map**: sea colour, dashed 10-degree graticule and rough flat land shapes (`EuropeLand.tsx`), positioned with the existing `project()`.
+- **Placeholder map**: sea colour, dashed graticule and flat land shapes, positioned with the existing `project()`. Originally hand-drawn Europe shapes (`EuropeLand.tsx`) with a 10-degree grid. Since Milestone 2 step 3 it is the whole world: Natural Earth coastlines (`WorldLand.tsx`) with a 30-degree grid, drawn in the same style.
+- **Map controls** (Milestone 2 step 3): +/−/reset buttons in the map's bottom-right corner, styled like small cream tickets with the ink border and a flat shadow. The map shows a grab cursor.
 - **Card**: ticket look with callsign, aircraft-type and altitude chips, the fact in a speech-bubble block and a coral Catch button.
 - **Motion**: CSS-only pop on selection and card appearance, disabled under `prefers-reduced-motion`.
 - **Quest strip** (added with Milestone 1 step 5): a slim ticket above the map, using the card's paper, border and shadow, with an inverted "QUEST" label. On completion, a coral rubber stamp ("Done!", double border, tilted -8deg) lands with its own `stamp` keyframes. The keyframes repeat the tilt, because a `transform` animation replaces the element's own `transform`. The concept fact appears below a dashed tear line.
@@ -18,11 +19,11 @@ Small visual slice pulled ahead of Milestone 1 step 5. It follows the "retro tra
 
 ## Out of scope (deferred per plan.md)
 
-Pan/zoom, real map art, mascot/onboarding, Framer Motion, per-type aircraft silhouettes, palette shifting by region/time/weather.
+Real map art, mascot/onboarding, Framer Motion, per-type aircraft silhouettes, palette shifting by region/time/weather.
 
 ## Notes
 
-- The land polygons are hand-placed approximations to give the map some shape; they are throwaway and will be replaced by the real illustrated map.
+- The land polygons are simplified Natural Earth coastlines, which are throwaway too and will be replaced by the real illustrated map.
 
 ## Deferred idea: passport card and catch stamp
 

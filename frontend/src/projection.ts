@@ -1,5 +1,6 @@
-// Placeholder map area (Europe / North Atlantic), covering all mock flights.
-export const MAP_BOUNDS = { west: -30, east: 40, south: 34, north: 64 }
+// The whole world except Antarctica. The map box's aspect ratio (18 / 7 in
+// index.css) matches 360 x 140 degrees, so a degree is equally wide and tall.
+export const MAP_BOUNDS = { west: -180, east: 180, south: -60, north: 80 }
 
 // Basic linear lat/lon -> percent of the map box (no real map projection yet).
 export function project(latitude: number, longitude: number) {

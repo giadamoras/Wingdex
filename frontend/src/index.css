@@ -104,13 +104,24 @@ h1 {
 .map {
   position: relative;
   width: 100%;
-  aspect-ratio: 7 / 3;
+  aspect-ratio: 18 / 7; /* 360 x 140 degrees, see MAP_BOUNDS */
   box-sizing: border-box;
   overflow: hidden;
   background: var(--sea);
   border: 4px solid var(--ink);
   border-radius: 16px;
   box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+  cursor: grab;
+  touch-action: none; /* the map handles drag and pinch itself */
+  user-select: none;
+}
+
+/* Everything that pans and zooms: land and planes. Scaled from its top-left
+   corner; usePanZoom sets the transform and --zoom. */
+.map-world {
+  position: absolute;
+  inset: 0;
+  transform-origin: 0 0;
 }
 
 .land {
@@ -120,10 +131,12 @@ h1 {
   height: 100%;
 }
 
+/* non-scaling-stroke ignores the CSS zoom on .map-world, so stroke widths
+   and dashes are divided by --zoom to stay constant on screen. */
 .land polygon {
   fill: var(--land);
   stroke: var(--ink);
-  stroke-width: 1.5;
+  stroke-width: calc(1.5px / var(--zoom, 1));
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
@@ -131,8 +144,8 @@ h1 {
 .land .grid {
   stroke: #fff;
   stroke-opacity: 0.35;
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
+  stroke-width: calc(1px / var(--zoom, 1));
+  stroke-dasharray: calc(4px / var(--zoom, 1));
   vector-effect: non-scaling-stroke;
 }
 
@@ -144,7 +157,8 @@ h1 {
   border: none;
   background: none;
   cursor: pointer;
-  transform: translate(-50%, -50%);
+  /* Centre on the position, and undo the map's zoom so planes keep their size. */
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
   /* Glide for one poll interval (5 s, POLL_INTERVAL_MS) so movement looks continuous. */
   transition:
     left 5s linear,
@@ -175,6 +189,36 @@ h1 {
   border: 3px solid var(--highlight);
   border-radius: 50%;
   animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Zoom buttons in the map's bottom-right corner, in the chip style. */
+.map-controls {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.map-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: #fffaf0;
+  border: 2px solid var(--ink);
+  border-radius: 10px;
+  box-shadow: 2px 2px 0 var(--ink);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-controls button:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 
 /* Fixed-position ticket panel below the map. */

@@ -107,8 +107,13 @@ Aviation-curious people without deep aviation background — including the creat
 
 1. ✅ Done. Backend: flights on real routes at real speed. A minimal `Airport` model, plus optional `origin`/`destination` and a `speed_kt` field on `Flight`. There are ~25–30 mock flights between ~15 real airports. Each one's position is interpolated along the great-circle route from origin to destination according to elapsed server time. `duration_min` is the scheduled gate-to-gate time: distance ÷ average speed, plus 25 min for taxi, take-off and landing (the mock loop itself covers only the airborne part). Speeds and altitudes are believable rather than exact: lower on short hops, headwinds westbound, one turboprop. A flight that arrives departs again with the same `id`. Small great-circle helpers live in `geo.py`.
 2. ✅ Done. Frontend: mirror the new fields, show the route ("FRA → JFK", hidden when unknown) and a speed chip on the card, and let planes glide between polls with a 5 s CSS transition. Planes fade in when they first appear. The rule for jumps doesn't depend on the data source: `jumpedFlightIds` (`motion.ts`) flags any flight that moved further than twice what its speed allows since the previous response, and the map snaps those planes instead of sliding them. This covers the mock restarting a route and, later, real flights reappearing after a coverage gap. _Later idea:_ make the mock behave like real traffic, parking the plane at its destination and fading it out, then a new flight appearing at the origin. This needs a "recently left the feed" state, so it's deferred.
-3. Frontend: "See the journey". A card button (hidden when the route is unknown) draws the dashed great-circle route and flies a ghost plane from origin to destination in ~8 s with `requestAnimationFrame`. It is cancelled by closing the card or selecting another flight, and under reduced motion only the route line is shown. The live plane stays put as "you are here".
-4. Frontend: pan/zoom. Hand-rolled on the existing map: one transformable layer, planes counter-scaled so they keep their size, drag / wheel / pinch / +− buttons, 1×–6× zoom clamped to the bounds. The maths lives in a tested `panzoom.ts`. No map library.
+3. ✅ Done. Frontend: world map and pan/zoom (moved ahead of the replay, because long routes run to JFK, BOS, DXB and SIN, off the old Europe-only map).
+   - **World map.** `MAP_BOUNDS` covers the whole world except Antarctica (180°W–180°E, 60°S–80°N), with an 18:7 map box so a degree is as wide as it is tall.
+   - **Coastlines.** Natural Earth 1:110m (public domain) replace the hand-drawn Europe shapes. `scripts/build-land.mjs` generates them once into `worldLandData.ts`, drawn by `WorldLand.tsx`.
+   - **Pan/zoom.** Hand-rolled with no map library. One world layer is translated and scaled, and planes undo the zoom through a `--zoom` CSS variable so they keep their size.
+   - **Controls.** Drag, wheel zoom at the cursor, two-finger pinch, and +/−/reset buttons. Zoom runs from 1× (whole world) to 16×, and the map opens at 5× on Europe. The view is clamped to the edges, and a drag never counts as a click.
+   - **Code.** The maths is in `panzoom.ts` (tested) and the gestures in `usePanZoom.ts`. `vector-effect: non-scaling-stroke` ignores the CSS zoom, so coastline and grid stroke widths are divided by `--zoom` to stay constant on screen.
+4. Frontend: "See the journey". Selecting a flight always draws its dashed great-circle route, like flight trackers do. A card button (hidden when the route is unknown) replays the trip: a semi-transparent ghost plane flies from origin to destination and leaves a solid trail over the dashed line, while the live plane stays put. The replay pace is proportional to flight length (about 1 s per hour of flight), kept between ~3 and ~10 s. Closing the card or selecting another flight cancels it, and under reduced motion only the route line is shown.
 
 **Milestone 3 — Daily variety (facts, quest templates, featured flights):** a new reason to come back each day.
 
@@ -125,7 +130,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 **Milestone 5 — Visual pass, mascot and onboarding:** the retro travel-poster kawaii identity, ready for the portfolio. Starts with a short design doc (palette values, mascot, silhouette style).
 
-1. Illustrated map art replacing `EuropeLand.tsx` and the placeholder sea.
+1. Illustrated map art replacing the placeholder coastlines (`WorldLand.tsx`) and sea.
 2. Silhouettes for each aircraft type, and palette tokens that shift by time of day (region and weather come later).
 3. Mascot and a short onboarding (a greeting, then one guaranteed-easy first catch).
 4. Framer Motion for springy card, stamp and popup motion.

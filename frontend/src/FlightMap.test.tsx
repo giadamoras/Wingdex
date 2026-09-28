@@ -84,6 +84,56 @@ test('clicking a dot selects it, clicking the selected dot deselects', () => {
   expect(onSelect).toHaveBeenLastCalledWith(null)
 })
 
+// jsdom has no layout, so give the map a size and stub pointer capture.
+const withMapBox = (map: HTMLElement) => {
+  map.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: 1000, height: 400 }) as DOMRect
+  map.setPointerCapture = vi.fn()
+}
+
+const worldTransform = (container: HTMLElement) =>
+  (container.querySelector('.map-world') as HTMLElement).style.transform
+
+test('a drag pans the map and does not count as a click', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={onSelect}
+    />,
+  )
+  const map = container.querySelector('.map') as HTMLElement
+  withMapBox(map)
+  const before = worldTransform(container)
+
+  const plane = screen.getByTitle('CS1')
+  fireEvent.pointerDown(plane, { pointerId: 1, clientX: 500, clientY: 200 })
+  fireEvent.pointerMove(plane, { pointerId: 1, clientX: 540, clientY: 220 })
+  fireEvent.pointerUp(plane, { pointerId: 1, clientX: 540, clientY: 220 })
+  fireEvent.click(plane)
+
+  expect(worldTransform(container)).not.toBe(before)
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test('zoom buttons change the view without deselecting; reset restores it', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId="1"
+      onSelect={onSelect}
+    />,
+  )
+  const start = worldTransform(container)
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+  expect(worldTransform(container)).not.toBe(start)
+  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }))
+  expect(worldTransform(container)).toBe(start)
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
 test('clicking the map background deselects', () => {
   const onSelect = vi.fn()
   const { container } = render(
