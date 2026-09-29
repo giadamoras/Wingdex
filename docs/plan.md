@@ -2,8 +2,8 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay) and Milestone 3 (daily variety: tagged facts, quest templates, featured flights). All three are summarized in the Implementation roadmap.
-- **Next.** Milestones 4–7 are ordered there, and Milestone 4 (Collection, badges and the catch moment) is next in line. None of them has been started.
+- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay), Milestone 3 (daily variety: tagged facts, quest templates, featured flights) and Milestone 4 (Collection, badges and the catch moment). All four are summarized in the Implementation roadmap.
+- **Next.** Milestones 5–7 are ordered there, and Milestone 5 (visual pass, mascot and onboarding) is next in line. None of them has been started.
 
 ## Context
 
@@ -141,13 +141,17 @@ Aviation-curious people without deep aviation background — including the creat
   - The fact pool is a first draft, reviewed by the user.
   - There are no weather tags yet (Milestone 6).
 
-**Next milestones (ordered, not yet started).** Finish the MVP mechanics first (a Collection). Then do the visual pass once the screens are stable, and swap in real data last. Each milestone ends in a playable, demoable state.
+**Milestone 4 — Collection, badges and the catch moment (done).** Catching feels rewarding and progress has a home. Still all frontend:
 
-**Milestone 4 — Collection, badges and the catch moment:** catching feels rewarding and progress has a home.
+- **Collection screen (`Collection.tsx`).** Journal, Badges and Facts tabs behind a header button (`📘 Collection` / `🗺 Map`), a plain `view` state in `App.tsx`, no router. The Journal moved out of the map view into this screen's Journal tab.
+- **Journal in Context.** `useJournal`'s state and localStorage effect moved into `JournalContext.tsx` (the `JournalProvider`, wrapping `<App>` in `main.tsx`), with the context object and value type in `journalStore.ts` and the consumer hook in `useJournalContext.ts` — split into three files, one hook per file like the rest of the codebase, to avoid a React Fast Refresh lint warning from mixing a component and a hook export. `addCatch` now takes an optional `questId`.
+- **Badges (`badges.ts`).** Four, each a pure function over the Journal: first catch, 5 distinct aircraft types, 3 different quest-completion days, and a catch over open ocean (region recomputed from the flight snapshot's position, same as the quest template). "3 quest days" needed a small schema addition to stay Journal-only: `JournalEntry.questId` (optional) is set only on the catch that completed that day's quest, so quest-day badges don't need a separate quest-history store. Only the set of badges already shown a popup persists (`badgesSeen.ts`); unlocked state itself is always derived (`useBadgeUnlocks.ts`), and a newly unlocked badge shows a one-time popup on the map (`BadgePopup.tsx`), visually distinct from the entry stamp (a toast, not a stamped card).
+- **Passport card.** The flight card is a passport page (ruled-paper texture, a header strip, the existing chips plus a new HEADING chip). Catch is the same uniform, immediate reaction for every flight — the plain "Caught today ✓" marker, no per-flight animation and no delay before the card closes (an earlier version delayed closing so a destination-specific stamp could land on the card itself; tried, then simplified away after review, since a varying per-catch animation and an artificial delay both add complexity without adding to the "satisfying catch" feel the plan called for).
+- **Entry stamp and Journal.** The deferred passport-stamp idea in `docs/ui-foundation.md` lives on as the Journal's entry format rather than a catch-moment animation: each Journal entry is just a small ink "entry stamp" (`EntryStamp.tsx`) — destination-focused like a real immigration stamp (falls back to the callsign when there's no known route) — with no other flight detail, laid out as a wrapping row ("a page of stamps"). This also replaced the first attempt at a fuller passport-stub layout (callsign, chips, fact text) once it turned out to be more information than the collection view needed.
+- **Facts tab.** Each catch's fact (`JournalEntry.fact`, unchanged since Milestone 1) is worth keeping even though the Journal entry no longer shows it. `FactList.tsx` lists every distinct fact learned so far, in the order first caught, deduplicated (`[...new Set(journal.map(e => e.fact))]` — `Set` preserves insertion order, so no extra bookkeeping is needed).
+- **Known limits.** None outstanding. (An earlier draft of this note flagged the Badges/Facts tabs' `display: grid` single-column layout as sharing the Journal's narrow-item quirk; checked with a computed-width probe and it doesn't — their row content, unlike the old short Journal entries, is long enough that the implicit grid column already fills the container. Worth remembering: measure before writing a limitation down.)
 
-1. A Collection screen with Journal and Badges tabs, opened from the map (simple view state, no router). Journal state moves into React Context here.
-2. Badges defined as pure functions over the Journal (first catch, 5 aircraft types, 3 quest days, an ocean crossing…), so they are derived rather than stored. Only the set of badges already seen is persisted, and a newly unlocked badge shows a one-time popup on the map.
-3. Passport card and catch stamp: the deferred idea in `docs/ui-foundation.md`, extending `.stamp`. Its open questions get answered at the start of the milestone.
+**Next milestones (ordered, not yet started).** Do the visual pass now that the MVP screens are stable, then swap in real data last. Each milestone ends in a playable, demoable state.
 
 **Milestone 5 — Visual pass, mascot and onboarding:** the retro travel-poster kawaii identity, ready for the portfolio. Starts with a short design doc (palette values, mascot, silhouette style).
 

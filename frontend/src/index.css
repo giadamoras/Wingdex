@@ -36,10 +36,38 @@ h2 {
 }
 
 h1 {
-  margin-bottom: 12px;
+  margin: 0;
   font-size: 2rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
+}
+
+/* Title and the Collection toggle, side by side above the quest strip. */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Same paper-button look as .journey. */
+.collection-btn {
+  padding: 8px 20px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.collection-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 
 /* Quest strip: a slim ticket above the map, same paper/border/shadow as the card. */
@@ -328,6 +356,31 @@ h1 {
   animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Passport-page treatment: a faint ruled pattern for the flight card. */
+.passport-page {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(31 58 74 / 6%) 0,
+    rgb(31 58 74 / 6%) 1px,
+    transparent 1px,
+    transparent 26px
+  );
+}
+
+/* Header band, bled to the card's edges like a passport cover. */
+.passport-strip {
+  margin: -14px -18px 12px;
+  padding: 6px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 13px 13px 0 0;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
 .card-head {
   display: flex;
   flex-wrap: wrap;
@@ -422,7 +475,7 @@ h1 {
   margin: 4px 0 2px 6px;
 }
 
-/* Journal: a stack of small ticket stubs below the map. */
+/* Journal: a page of stamps below the map. */
 .journal {
   margin-top: 28px;
 }
@@ -438,6 +491,82 @@ h1 {
 }
 
 .journal ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journal-entry {
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ink stamp for a catch: multi-line (label, destination, date, callsign),
+   unlike the single-line .stamp used for "Done!" and "Caught today". Static
+   (no landing animation): it's a record of a past catch, not the moment. */
+.entry-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 5px 14px;
+  color: var(--accent);
+  border: 3px double var(--accent);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+.entry-stamp-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.entry-stamp-code {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.entry-stamp-date {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+}
+
+.entry-stamp-callsign {
+  font-size: 0.6rem;
+  opacity: 0.85;
+}
+
+/* Collection screen: Journal, Badges and Facts tabs. */
+.collection-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 8px 20px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px 999px 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.tab.active {
+  opacity: 1;
+  background: var(--highlight);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.badge-list {
   display: grid;
   gap: 10px;
   margin: 0;
@@ -445,44 +574,94 @@ h1 {
   list-style: none;
 }
 
-/* Ticket stub: mint strip on the left like a torn-off coupon edge. */
-.journal-entry {
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 10px 14px;
   background: #fffaf0;
   border: 2px solid var(--ink);
-  border-left: 10px solid var(--mint);
   border-radius: 12px;
   box-shadow: 3px 3px 0 rgb(31 58 74 / 20%);
-  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.journal-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+.badge.locked {
+  opacity: 0.55;
 }
 
-.journal-head strong {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 600;
+.badge-icon {
+  font-size: 1.6rem;
 }
 
-.journal-head .chip {
-  padding: 0 10px;
-  font-size: 0.85rem;
+.badge p {
+  margin: 2px 0 0;
+  opacity: 0.8;
 }
 
-.journal-head time {
-  margin-left: auto; /* pushes the time to the right edge */
-  font-size: 0.9rem;
+/* Facts tab: each distinct fact learned, in a speech-bubble block like the
+   card's own fact (.fact), stacked below the map. */
+.facts-empty {
+  font-style: italic;
   opacity: 0.7;
 }
 
-.journal-entry p {
-  margin: 6px 0 0;
+.facts ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact-entry {
+  padding: 10px 14px;
+  background: var(--mint);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
   line-height: 1.4;
+}
+
+/* Lightweight popup on the map when a badge unlocks, visually distinct from
+   the entry stamp: a toast, not a stamped document. */
+.badge-popup {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 280px;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 rgb(31 58 74 / 35%);
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.badge-popup-icon {
+  font-size: 1.6rem;
+}
+
+.badge-popup p {
+  margin: 2px 0 0;
+}
+
+.badge-popup-close {
+  margin-left: auto;
+  padding: 0 6px;
+  background: none;
+  border: none;
+  color: var(--paper);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.badge-popup-close:hover {
+  opacity: 1;
 }
 
 @keyframes pop {
@@ -539,7 +718,8 @@ h1 {
   .plane.featured::after,
   .card,
   .stamp,
-  .journal-entry {
+  .journal-entry,
+  .badge-popup {
     animation: none;
   }
 }

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { formatCaughtAt, formatDuration } from './format'
+import { formatCaughtAt, formatDuration, formatStampDate } from './format'
 
 test('pads zero minutes as "00"', () => {
   expect(formatDuration(540)).toBe('9h 00m')
@@ -21,4 +21,9 @@ test('shows a catch time as short local date and 24h time', () => {
   // Built from a local time, so the result doesn't depend on the time zone.
   const iso = new Date(2026, 8, 28, 14, 3).toISOString()
   expect(formatCaughtAt(iso)).toBe('Sep 28, 14:03')
+})
+
+test('shows a stamp date as day, uppercase month, year', () => {
+  const iso = new Date(2026, 8, 4, 14, 3).toISOString()
+  expect(formatStampDate(iso)).toBe('04 SEP 2026')
 })

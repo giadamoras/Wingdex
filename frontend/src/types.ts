@@ -29,4 +29,7 @@ export interface JournalEntry {
   flight: Flight
   fact: string
   caughtAt: string // ISO timestamp, e.g. "2026-09-25T14:03:00.000Z"
+  // Set only when this catch completed that day's quest (entries saved
+  // before Milestone 4 lack it, same as speed_kt above).
+  questId?: string
 }

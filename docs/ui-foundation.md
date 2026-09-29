@@ -16,13 +16,20 @@ Small visual slice pulled ahead of the Milestone 1 quest work. It follows the "r
   - **Zoom.** Like the land, line widths are divided by `--zoom` so they look the same at any zoom. The route SVG is named `.route-lines` because `.route` is the card's route text.
 - **Map controls** (Milestone 2): +/−/reset buttons in the map's bottom-right corner, styled like small cream tickets with the ink border and a flat shadow. The map shows a grab cursor.
 - **Featured flights** (Milestone 3): a dashed paper-coloured ring that gently pulses (`featured-pulse`, off under reduced motion) around 2–3 planes picked for the session. The selected plane's solid mustard ring replaces it, since the selected rule comes later in the CSS. The ring is a `::after` pseudo-element, so it may use `transform`.
-- **Card**: ticket look with callsign, aircraft-type and altitude chips, the fact in a speech-bubble block and a coral Catch button.
+- **Card**: ticket look with callsign, aircraft-type and altitude chips, the fact in a speech-bubble block and a coral Catch button. Since Milestone 4 it's a passport page (below).
 - **Motion**: CSS-only pop on selection and card appearance, disabled under `prefers-reduced-motion`.
 - **Quest strip** (added with Milestone 1): a slim ticket above the map, using the card's paper, border and shadow, with an inverted "QUEST" label. On completion, a coral rubber stamp ("Done!", double border, tilted -8deg) lands with its own `stamp` keyframes. The keyframes repeat the tilt, because a `transform` animation replaces the element's own `transform`. The concept fact appears below a dashed tear line.
 - **Journal and caught state** (added with Milestone 1):
-  - **Journal entries** are small ticket stubs (paper, ink border, a thick mint left edge like a torn coupon), stacked below the map, newest first. They pop in with the shared `pop` animation.
-  - **"Caught today ✓"** replaces the Catch button on the card and reuses `.stamp`, so "caught" and "quest done" share one stamp look.
+  - **Journal entries** are small ink stamps (since Milestone 4, see below), stacked below the map, newest first (since Milestone 4, inside the Collection screen). They pop in with the shared `pop` animation.
+  - **"Caught today ✓"** replaces the Catch button on the card and reuses `.stamp`, so "caught" and "quest done" share one stamp look — the same for every flight, and immediate: Catch closes the card right away, same as Milestone 1.
   - `.stamp` is `inline-block`, because transforms (the tilt and the landing animation) are ignored on plain inline elements.
+- **Passport card** (Milestone 4): the flight card is a passport page — `.passport-page`'s faint ruled-line background, a `.passport-strip` header band bled to the card's edges ("AIRSPACE EXPLORER · FLIGHT PASSPORT"), the existing chips plus a new HEADING chip (rounded to a whole degree), and the fact reframed as "Did you know? ...".
+- **Entry stamp** (Milestone 4, `EntryStamp.tsx`): a small static ink stamp, `.entry-stamp`, showing the destination IATA code (like a real immigration entry stamp, not a route) with a callsign fallback when there's no known destination, plus the date and callsign in smaller print. It's Journal-only — an early version also played it as a landing catch-moment animation with a delayed card close, but that was simplified away after review in favour of one uniform, immediate catch reaction for every flight (above) and the stamp being purely how a Journal entry looks.
+- **Collection screen** (Milestone 4): Journal, Badges and Facts tabs (`.collection-tabs`, `.tab`/`.tab.active`) behind a header toggle button (`.collection-btn`, `.app-header`).
+  - **Journal tab**: a wrapping row of entry stamps (`.journal ul` is `display: flex; flex-wrap: wrap`) — "a page of stamps," no other flight detail.
+  - **Badges tab** (`.badge-list`, `.badge`/`.badge.locked`): a medal or a lock icon per badge.
+  - **Facts tab** (`FactList.tsx`, `.facts`, `.fact-entry`): every distinct fact learned so far, deduplicated, in the card's own fact style (`.fact-entry` reuses the mint speech-bubble look).
+  - A badge unlock shows `.badge-popup`, a fixed toast in the map's corner, deliberately not reusing `.stamp`/`.entry-stamp` — badges are a different kind of reward from a catch.
 
 ## Out of scope (deferred per plan.md)
 
@@ -31,21 +38,3 @@ Real map art, mascot/onboarding, Framer Motion, per-type aircraft silhouettes, p
 ## Notes
 
 - The land polygons are simplified Natural Earth coastlines, which are throwaway too and will be replaced by the real illustrated map.
-
-## Deferred idea: passport card and catch stamp
-
-Not built yet. The plain Journal exists now (Milestone 1), so this belongs with the Collection screen and visual pass. `.stamp` already sets the stamp look (quest "Done!" and "Caught today ✓"), so the catch stamp should extend that style rather than introduce a second one.
-
-**Concept:** the flight card becomes a passport page, and Catch becomes stamping it, to mimic the travelling vibe (and fit the "spot & collect" Journal).
-
-- **Card as a passport page (CSS only):** cream paper with a subtle ruled/guilloche pattern, a header strip ("AIRSPACE EXPLORER · FLIGHT PASSPORT"), the callsign as the "name" field, small-caps labelled fields (AIRCRAFT, ALTITUDE, HEADING), the fact reframed as a "Did you know?" note, and a dashed empty stamp area.
-- **Catch = stamp:** a CSS animation drops a round or rectangular stamp (callsign, aircraft type, date) onto the stamp area with a slight rotation and a quick overshoot, in an ink colour taken from the design tokens. It stays visible for about a second, then the card closes.
-- **Stamp art:** inline SVG or styled `div`, no image assets. Per-type or per-airline designs are a later art pass. Framer Motion stays deferred.
-- **Behaviour:** Catch would delay only the visual close (~1s) so the stamp can land; the Journal append still happens immediately.
-
-**Open questions to decide when unpacking:**
-
-1. What goes on the stamp: callsign, aircraft type and date only, or also route/country once the data has it?
-2. Delay the card close by ~1s, or play the stamp as a brief overlay while the card closes instantly?
-3. Should the Journal/Collection also look like passport pages, or stay a plain list at first?
-4. Add HEADING to the card (data already exists, no backend change)?

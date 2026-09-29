@@ -4,8 +4,12 @@ import App from './App'
 import { saveDailyQuest } from './dailyQuest'
 import { dayKey } from './dates'
 import { saveJournal } from './journal'
+import { JournalProvider } from './JournalContext'
 import { QUEST_TEMPLATES } from './quest'
 import { POLL_INTERVAL_MS } from './useFlights'
+
+// Every render needs the Journal Context that main.tsx normally provides.
+const renderApp = () => render(<App />, { wrapper: JournalProvider })
 
 const flights = [
   {
@@ -15,7 +19,7 @@ const flights = [
     latitude: 50,
     longitude: 0,
     altitude_ft: 36000,
-    heading: 90,
+    heading: 90.4, // not a whole number, like a real live-data heading
     speed_kt: 450,
     duration_min: 95,
     origin: {
@@ -57,13 +61,13 @@ test('shows a loading message until the first response', () => {
     'fetch',
     vi.fn(() => new Promise(() => {})),
   ) // never resolves
-  render(<App />)
+  renderApp()
   expect(screen.getByText('Loading flights...')).toBeTruthy()
 })
 
 test('renders flights once loaded', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByTitle('TST1')).toBeTruthy()
 })
@@ -71,7 +75,7 @@ test('renders flights once loaded', async () => {
 test('polls /flights on an interval', async () => {
   const fetchMock = vi.fn(ok)
   vi.stubGlobal('fetch', fetchMock)
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
   expect(fetchMock).toHaveBeenCalledTimes(2)
 })
@@ -90,20 +94,21 @@ const two = () =>
 
 test('clicking a dot opens a card with details and a fact', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   expect(screen.getByRole('heading', { name: 'TST1' })).toBeTruthy()
   expect(screen.getByText(/36,000 ft/)).toBeTruthy()
   // Which fact shows depends on the flight and day, so only check there is one.
   expect(container.querySelector('.fact')?.textContent).toBeTruthy()
+  expect(screen.getByText('90°')).toBeTruthy() // rounded from 90.4
   expect(screen.getByText('450 kt')).toBeTruthy()
   expect(screen.getByText('LHR → CDG')).toBeTruthy()
 })
 
 test('the fact on the card stays the same across polls', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   const fact = container.querySelector('.fact')?.textContent
@@ -119,7 +124,7 @@ test('the card hides the route when the source does not know it', async () => {
       Promise.resolve({ ok: true, json: () => Promise.resolve([noRoute]) }),
     ),
   )
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   expect(screen.queryByText(/→/)).toBeNull()
@@ -130,7 +135,7 @@ test('the card hides the route when the source does not know it', async () => {
 
 test('selecting a flight draws its route with both airport codes', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(container.querySelector('.route-lines')).toBeNull()
 
@@ -143,7 +148,7 @@ test('selecting a flight draws its route with both airport codes', async () => {
 
 test('the journey replay flies a ghost, then offers to replay', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   fireEvent.click(screen.getByRole('button', { name: 'See the journey' }))
@@ -161,7 +166,7 @@ test('the journey replay flies a ghost, then offers to replay', async () => {
 
 test('Stop and selecting another flight both end the replay', async () => {
   vi.stubGlobal('fetch', vi.fn(two))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
 
@@ -190,7 +195,7 @@ test('a flight that jumps between polls snaps instead of sliding', async () => {
         Promise.resolve({ ok: true, json: () => Promise.resolve([restarted]) }),
       ),
   )
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByTitle('TST1').classList.contains('jump')).toBe(false)
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
@@ -199,7 +204,7 @@ test('a flight that jumps between polls snaps instead of sliding', async () => {
 
 test('selecting another dot replaces the card; Catch closes it', async () => {
   vi.stubGlobal('fetch', vi.fn(two))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   fireEvent.click(screen.getByTitle('TST2'))
@@ -215,7 +220,7 @@ test('a flight that leaves the feed stays on the map until dismissed', async () 
     'fetch',
     vi.fn().mockImplementationOnce(two).mockImplementation(ok),
   )
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST2'))
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
@@ -228,7 +233,7 @@ test('a flight that leaves the feed stays on the map until dismissed', async () 
 
 test('shows an error if the first load fails', async () => {
   vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('Could not load flights.')).toBeTruthy()
 })
@@ -239,7 +244,7 @@ test('keeps the last flights when a later poll fails', async () => {
     .mockImplementationOnce(ok)
     .mockRejectedValue(new Error('network'))
   vi.stubGlobal('fetch', fetchMock)
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
   expect(screen.getByTitle('TST1')).toBeTruthy()
   expect(screen.getByText('Connection lost, retrying...')).toBeTruthy()
@@ -264,7 +269,7 @@ const pinQuest = (questId: string) => saveDailyQuest({ day: dayKey(), questId })
 test('catching a long-haul flight completes the quest', async () => {
   pinQuest('long-haul')
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
 
   // Short flight: no stamp
@@ -280,7 +285,7 @@ test('catching a long-haul flight completes the quest', async () => {
 
 test('a flight caught today cannot be caught again', async () => {
   vi.stubGlobal('fetch', vi.fn(ok))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
@@ -293,15 +298,20 @@ test('a flight caught today cannot be caught again', async () => {
 
 test('catches appear in the Journal, newest first', async () => {
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
+
+  // The Journal lives in the Collection screen, reached from the header.
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
   expect(screen.getByText(/No catches yet/)).toBeTruthy()
+  fireEvent.click(screen.getByRole('button', { name: '🗺 Map' }))
 
   fireEvent.click(screen.getByTitle('TST1'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
   fireEvent.click(screen.getByTitle('TST3'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
 
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
   expect(screen.getByRole('heading', { name: 'Journal (2)' })).toBeTruthy()
   const items = screen.getAllByRole('listitem')
   expect(items).toHaveLength(2)
@@ -312,14 +322,14 @@ test('catches appear in the Journal, newest first', async () => {
 test('catches and the quest stamp survive a reload', async () => {
   pinQuest('long-haul')
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST3'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
 
   // Unmount and render a fresh App: state is gone, only localStorage remains.
   cleanup()
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('Done!')).toBeTruthy()
   fireEvent.click(screen.getByTitle('TST3'))
@@ -338,7 +348,7 @@ test("yesterday's catches don't count for today", async () => {
     },
   ])
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
 
   // The quest isn't done, and the flight can be caught again today.
@@ -352,7 +362,7 @@ const questTitle = (container: HTMLElement) =>
 
 test('the quest is picked once per day and kept after a reload', async () => {
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   expect(questTitle(container)).toBe("Finding today's quest...")
   await act(() => vi.advanceTimersByTimeAsync(0))
   const title = questTitle(container)
@@ -361,7 +371,7 @@ test('the quest is picked once per day and kept after a reload', async () => {
   // Fresh App with a different feed: the saved pick wins.
   cleanup()
   vi.stubGlobal('fetch', vi.fn(ok))
-  const again = render(<App />)
+  const again = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(questTitle(again.container)).toBe(title)
 })
@@ -370,7 +380,7 @@ test("yesterday's quest is replaced by a new pick", async () => {
   vi.setSystemTime(new Date(2026, 8, 28, 12, 0))
   saveDailyQuest({ day: '2026-09-27', questId: 'ocean' })
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  const { container } = render(<App />)
+  const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   // Nothing in the test feed is over open ocean, so it can't be the new pick.
   const ocean = QUEST_TEMPLATES.find((q) => q.id === 'ocean')!
@@ -390,7 +400,7 @@ test('featured flights get a ring until they are caught', async () => {
       }),
     ),
   )
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   const featured = (title: string) =>
     screen.getByTitle(title).classList.contains('featured')
@@ -406,7 +416,7 @@ test('featured flights get a ring until they are caught', async () => {
 test('catching the quest flight scrolls back up to the quest strip', async () => {
   pinQuest('long-haul')
   vi.stubGlobal('fetch', vi.fn(withLongHaul))
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
 
   // A flight that doesn't complete the quest leaves the scroll alone.
@@ -432,11 +442,98 @@ test('catching more matching flights after the quest is done does not scroll aga
       }),
     ),
   )
-  render(<App />)
+  renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST3'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
   fireEvent.click(screen.getByTitle('TST4'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
   expect(scrollTo).toHaveBeenCalledTimes(1)
+})
+
+test('catching a flight for the first time unlocks a badge popup', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  expect(screen.getByText('Badge unlocked!')).toBeTruthy()
+  expect(screen.getByText('First Catch')).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }))
+  expect(screen.queryByText('Badge unlocked!')).toBeNull()
+})
+
+test('a badge popup auto-dismisses, and a seen badge does not pop up again on reload', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  await act(() => vi.advanceTimersByTimeAsync(5000))
+  expect(screen.queryByText('Badge unlocked!')).toBeNull()
+
+  cleanup()
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText('Badge unlocked!')).toBeNull()
+})
+
+test('the Badges tab reflects unlocked and locked badges', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Badges' }))
+
+  expect(screen.getByText('First Catch').closest('li')?.className).toContain(
+    'unlocked',
+  )
+  expect(screen.getByText('Ocean Crosser').closest('li')?.className).toContain(
+    'locked',
+  )
+})
+
+test('Journal entries show only the stamp, not the fact', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  const fact = (container.querySelector('.fact')?.textContent ?? '')
+    .replace('Did you know?', '')
+    .trim()
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
+  const entry = screen.getAllByRole('listitem')[0]
+  expect(entry.textContent).not.toContain(fact)
+  expect(entry.textContent).toContain('TST1') // the stamp still identifies the catch
+})
+
+test('the Facts tab shows each learned fact once, even from repeat catches', async () => {
+  saveJournal([
+    {
+      flight: { ...flights[0], id: 'f1', callsign: 'TST1' },
+      fact: 'Repeated fact.',
+      caughtAt: '2026-09-20T10:00:00.000Z',
+    },
+    {
+      flight: { ...flights[0], id: 'f5', callsign: 'TST5' },
+      fact: 'Repeated fact.',
+      caughtAt: '2026-09-21T10:00:00.000Z',
+    },
+  ])
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
+  fireEvent.click(screen.getByRole('tab', { name: 'Facts' }))
+
+  expect(screen.getByRole('heading', { name: 'Facts (1)' })).toBeTruthy()
+  expect(screen.getAllByText('Repeated fact.')).toHaveLength(1)
 })

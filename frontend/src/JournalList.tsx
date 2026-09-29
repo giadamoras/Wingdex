@@ -1,9 +1,9 @@
-import { formatCaughtAt } from './format'
+import { EntryStamp } from './EntryStamp'
 import type { JournalEntry } from './types'
 
-// Plain list of every catch, newest first. The Collection screen replaces
-// this in a later milestone. (Not named Journal.tsx: on Windows that would
-// clash with journal.ts, since file names there ignore case.)
+// A page of entry stamps, one per catch, newest first, shown in the
+// Collection screen's Journal tab. (Not named Journal.tsx: on Windows that
+// would clash with journal.ts, since file names there ignore case.)
 export function JournalList({ entries }: { entries: JournalEntry[] }) {
   // Copy before reversing: reverse() changes the array in place, and
   // `entries` is React state that must never be modified directly.
@@ -24,14 +24,7 @@ export function JournalList({ entries }: { entries: JournalEntry[] }) {
               key={`${entry.flight.id}-${entry.caughtAt}`}
               className="journal-entry"
             >
-              <div className="journal-head">
-                <strong>{entry.flight.callsign}</strong>
-                <span className="chip">{entry.flight.aircraft_type}</span>
-                <time dateTime={entry.caughtAt}>
-                  {formatCaughtAt(entry.caughtAt)}
-                </time>
-              </div>
-              <p>{entry.fact}</p>
+              <EntryStamp entry={entry} />
             </li>
           ))}
         </ul>

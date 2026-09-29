@@ -4,7 +4,7 @@ Read `docs/plan.md` before making significant changes. It is the source of truth
 
 ## Current scope
 
-Milestones 1, 2 and 3 are complete. The next milestone has not been started: do not implement Milestone 4 or later unless explicitly asked.
+Milestones 1–4 are complete. The next milestone has not been started: do not implement Milestone 5 or later unless explicitly asked.
 
 ## Development principles
 

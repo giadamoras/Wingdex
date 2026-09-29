@@ -15,3 +15,24 @@ export function formatCaughtAt(iso: string): string {
     hourCycle: 'h23',
   })
 }
+
+const STAMP_MONTHS = [
+  'JAN',
+  'FEB',
+  'MAR',
+  'APR',
+  'MAY',
+  'JUN',
+  'JUL',
+  'AUG',
+  'SEP',
+  'OCT',
+  'NOV',
+  'DEC',
+]
+
+// Formats an ISO timestamp like an immigration stamp's date, e.g. "24 SEP 2026".
+export function formatStampDate(iso: string): string {
+  const d = new Date(iso)
+  return `${String(d.getDate()).padStart(2, '0')} ${STAMP_MONTHS[d.getMonth()]} ${d.getFullYear()}`
+}

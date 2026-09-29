@@ -1,21 +1,28 @@
 import { useState } from 'react'
+import { BadgePopup } from './BadgePopup'
+import { Collection } from './Collection'
 import { dayKey, isToday } from './dates'
 import { pickFeatured } from './featured'
 import { FlightCard } from './FlightCard'
 import { FlightMap } from './FlightMap'
-import { JournalList } from './JournalList'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
 import type { Flight } from './types'
+import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
 import { useFlights } from './useFlights'
-import { useJournal } from './useJournal'
+import { useJournalContext } from './useJournalContext'
 
 function App() {
   const { flights, jumped, error } = useFlights()
-  const { journal, addCatch } = useJournal()
+  const { journal, addCatch } = useJournalContext()
   const quest = useDailyQuest(flights)
   const { replay, playedId, start, stop } = useReplay()
+  const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
+
+  // 'map' vs the Collection screen (Journal + Badges tabs); a plain view
+  // state, no router, per the Milestone 4 plan.
+  const [view, setView] = useState<'map' | 'collection'>('map')
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.
   const [selected, setSelected] = useState<Flight | null>(null)
@@ -35,14 +42,17 @@ function App() {
   // A catch that finishes the quest also scrolls to the top, where the quest
   // strip and its "Done!" stamp are, so it's noticed while reading the card.
   const catchFlight = () => {
-    if (selected) {
-      addCatch(selected)
-      if (quest && !questDone && quest.matches(selected))
-        window.scrollTo({
-          top: 0,
-          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-        })
-    }
+    if (!selected) return
+    const questId =
+      quest !== null && !questDone && quest.matches(selected)
+        ? quest.id
+        : undefined
+    addCatch(selected, questId)
+    if (questId !== undefined)
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+      })
     stop()
     setSelected(null)
   }
@@ -79,37 +89,52 @@ function App() {
 
   return (
     <main>
-      <h1>✈ Airspace Explorer</h1>
-      <QuestBanner quest={quest} done={questDone} />
-      {flights === null ? (
-        <p>{error ? 'Could not load flights.' : 'Loading flights...'}</p>
+      <div className="app-header">
+        <h1>✈ Airspace Explorer</h1>
+        <button
+          className="collection-btn"
+          onClick={() => setView(view === 'map' ? 'collection' : 'map')}
+        >
+          {view === 'map' ? '📘 Collection' : '🗺 Map'}
+        </button>
+      </div>
+      {view === 'collection' ? (
+        <Collection />
       ) : (
         <>
-          {error && <p>Connection lost, retrying...</p>}
-          <FlightMap
-            flights={mapFlights}
-            selectedId={selected?.id ?? null}
-            jumped={jumped}
-            featuredIds={featuredIds}
-            replay={replay}
-            onSelect={select}
-          />
-          {selected && (
-            <FlightCard
-              flight={selected}
-              lost={lost}
-              caught={caughtToday}
-              replaying={replay?.flight.id === selected.id}
-              replayed={playedId === selected.id}
-              onCatch={catchFlight}
-              onReplay={() => start(selected)}
-              onStopReplay={stop}
-            />
+          <QuestBanner quest={quest} done={questDone} />
+          {flights === null ? (
+            <p>{error ? 'Could not load flights.' : 'Loading flights...'}</p>
+          ) : (
+            <>
+              {error && <p>Connection lost, retrying...</p>}
+              <FlightMap
+                flights={mapFlights}
+                selectedId={selected?.id ?? null}
+                jumped={jumped}
+                featuredIds={featuredIds}
+                replay={replay}
+                onSelect={select}
+              />
+              {selected && (
+                <FlightCard
+                  flight={selected}
+                  lost={lost}
+                  caught={caughtToday}
+                  replaying={replay?.flight.id === selected.id}
+                  replayed={playedId === selected.id}
+                  onCatch={catchFlight}
+                  onReplay={() => start(selected)}
+                  onStopReplay={stop}
+                />
+              )}
+            </>
+          )}
+          {popupBadge && (
+            <BadgePopup badge={popupBadge} onDismiss={dismissBadge} />
           )}
         </>
       )}
-      {/* Outside the loading branch: past catches show even if flights fail to load. */}
-      <JournalList entries={journal} />
     </main>
   )
 }
