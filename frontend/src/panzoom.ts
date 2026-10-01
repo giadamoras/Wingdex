@@ -61,8 +61,9 @@ export function fitBounds(
   return centredOn((minX + maxX) / 2, (minY + maxY) / 2, zoom)
 }
 
-// World point at the centre of the box for a view.
-const centreOf = (v: View) => ({
+// World point at the centre of the box for a view. Exported so the map's
+// time-of-day palette can be based on what part of the world is in view.
+export const centreOf = (v: View) => ({
   px: (0.5 - v.x) / v.zoom,
   py: (0.5 - v.y) / v.zoom,
 })

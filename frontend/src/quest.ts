@@ -18,8 +18,10 @@ const LOW_FT = 20_000 // "flying low"
 const LONG_HAUL_MIN = 360 // 6 hours, gate to gate
 
 // Aircraft categories by ICAO type code. Not every type: enough for the mock
-// data and the common types a live feed would show.
-const WIDE_BODY = new Set([
+// data and the common types a live feed would show. Exported for reuse by
+// aircraftSilhouette.ts, so the "wide-body"/"turboprop" quests and the plane
+// silhouettes agree on the same categories.
+export const WIDE_BODY = new Set([
   'A306',
   'A310',
   'A332',
@@ -47,7 +49,7 @@ const WIDE_BODY = new Set([
   'B789',
   'B78X',
 ])
-const TURBOPROP = new Set([
+export const TURBOPROP = new Set([
   'AT43',
   'AT45',
   'AT72',

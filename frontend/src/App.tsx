@@ -1,3 +1,4 @@
+import { AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { BadgePopup } from './BadgePopup'
 import { Collection } from './Collection'
@@ -5,6 +6,7 @@ import { dayKey, isToday } from './dates'
 import { pickFeatured } from './featured'
 import { FlightCard } from './FlightCard'
 import { FlightMap } from './FlightMap'
+import { Onboarding } from './Onboarding'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
 import type { Flight } from './types'
@@ -12,6 +14,7 @@ import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
 import { useFlights } from './useFlights'
 import { useJournalContext } from './useJournalContext'
+import { useOnboarding } from './useOnboarding'
 
 function App() {
   const { flights, jumped, error } = useFlights()
@@ -19,6 +22,7 @@ function App() {
   const quest = useDailyQuest(flights)
   const { replay, playedId, start, stop } = useReplay()
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
+  const onboarding = useOnboarding(flights, journal.length)
 
   // 'map' vs the Collection screen (Journal + Badges tabs); a plain view
   // state, no router, per the Milestone 4 plan.
@@ -83,16 +87,16 @@ function App() {
       (id) => !todaysCatches.some((e) => e.flight.id === id),
     ),
   )
-
   // A lost flight stays on the map at its last position until dismissed.
   const mapFlights = lost ? [...(flights ?? []), selected] : (flights ?? [])
 
   return (
-    <main>
+    // has-onboarding leaves room under the page for the docked mascot.
+    <main className={onboarding.step ? 'has-onboarding' : undefined}>
       <div className="app-header">
         <h1>✈ Airspace Explorer</h1>
         <button
-          className="collection-btn"
+          className={`collection-btn${onboarding.step === 'done' ? ' nudge' : ''}`}
           onClick={() => setView(view === 'map' ? 'collection' : 'map')}
         >
           {view === 'map' ? '📘 Collection' : '🗺 Map'}
@@ -113,6 +117,7 @@ function App() {
                 selectedId={selected?.id ?? null}
                 jumped={jumped}
                 featuredIds={featuredIds}
+                targetId={onboarding.targetId}
                 replay={replay}
                 onSelect={select}
               />
@@ -130,9 +135,24 @@ function App() {
               )}
             </>
           )}
-          {popupBadge && (
-            <BadgePopup badge={popupBadge} onDismiss={dismissBadge} />
-          )}
+          <AnimatePresence>
+            {popupBadge && (
+              <BadgePopup
+                key={popupBadge.id}
+                badge={popupBadge}
+                onDismiss={dismissBadge}
+              />
+            )}
+          </AnimatePresence>
+          <Onboarding
+            // While a card is open only the mascot stays: the speech bubble
+            // could cover the card's own buttons on a short viewport.
+            step={onboarding.step}
+            cardOpen={selected !== null}
+            hasTarget={onboarding.targetId !== null}
+            onAdvance={onboarding.advance}
+            onDismiss={onboarding.dismiss}
+          />
         </>
       )}
     </main>

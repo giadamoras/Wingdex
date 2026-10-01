@@ -5,6 +5,7 @@ import { saveDailyQuest } from './dailyQuest'
 import { dayKey } from './dates'
 import { saveJournal } from './journal'
 import { JournalProvider } from './JournalContext'
+import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
 import { POLL_INTERVAL_MS } from './useFlights'
 
@@ -44,15 +45,30 @@ const ok = () =>
 
 // jsdom doesn't implement scrollTo, so stub it (and let tests check it).
 const scrollTo = vi.fn()
+// jsdom has no matchMedia at all. Most tests leave it unset (prefersReducedMotion
+// then defaults to false, same as a real browser with no preference set) -
+// the replay tests specifically need that, to see the actual ghost animation.
+// Tests that don't care about animation and just want Framer Motion's
+// components to behave synchronously (see the badge popup tests) can stub it
+// to "reduced" themselves.
+const reducedMotion = () => {
+  window.matchMedia = vi.fn().mockReturnValue({ matches: true })
+}
+
 beforeEach(() => {
   vi.useFakeTimers()
   scrollTo.mockClear()
   window.scrollTo = scrollTo
+  // Onboarding is a separate feature (see the dedicated tests near the
+  // bottom of this file), so keep it out of everything else's way.
+  markOnboardingSeen()
 })
 afterEach(() => {
   cleanup()
   vi.useRealTimers()
   vi.unstubAllGlobals()
+  // @ts-expect-error test-only cleanup of the per-test stub above
+  delete window.matchMedia
   localStorage.clear() // the Journal persists, so wipe it between tests
 })
 
@@ -452,6 +468,7 @@ test('catching more matching flights after the quest is done does not scroll aga
 })
 
 test('catching a flight for the first time unlocks a badge popup', async () => {
+  reducedMotion()
   vi.stubGlobal('fetch', vi.fn(ok))
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
@@ -466,6 +483,7 @@ test('catching a flight for the first time unlocks a badge popup', async () => {
 })
 
 test('a badge popup auto-dismisses, and a seen badge does not pop up again on reload', async () => {
+  reducedMotion()
   vi.stubGlobal('fetch', vi.fn(ok))
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
@@ -536,4 +554,142 @@ test('the Facts tab shows each learned fact once, even from repeat catches', asy
 
   expect(screen.getByRole('heading', { name: 'Facts (1)' })).toBeTruthy()
   expect(screen.getAllByText('Repeated fact.')).toHaveLength(1)
+})
+
+// beforeEach marks onboarding as already seen for every test above, so these
+// undo that first to exercise the "first ever visit" flow.
+test('onboarding greets, prompts a catch, celebrates it, then is remembered', async () => {
+  reducedMotion()
+  localStorage.clear()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  expect(
+    screen.getByText(
+      'Welcome aboard! Tap a plane on the map to see it up close.',
+    ),
+  ).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Got it!' }))
+  // Only flight in the fixture, so it's always the highlighted target.
+  expect(
+    screen.getByText(
+      'Try catching that circled plane - or any other you like!',
+    ),
+  ).toBeTruthy()
+
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(
+    screen.getByText('Nice catch! Peek at your Collection to see it.'),
+  ).toBeTruthy()
+  expect(
+    screen.getByRole('button', { name: /Collection/ }).className,
+  ).toContain('nudge')
+
+  await act(() => vi.advanceTimersByTimeAsync(6000)) // auto-dismiss
+  expect(
+    screen.queryByText('Nice catch! Peek at your Collection to see it.'),
+  ).toBeNull()
+
+  cleanup()
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/Welcome aboard/)).toBeNull()
+})
+
+test('onboarding can be skipped at any point, and stays skipped', async () => {
+  reducedMotion()
+  localStorage.clear()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  fireEvent.click(screen.getByRole('button', { name: 'Dismiss onboarding' }))
+  expect(screen.queryByText(/Welcome aboard/)).toBeNull()
+
+  cleanup()
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/Welcome aboard/)).toBeNull()
+})
+
+test("onboarding turns its bubble into a click-through hint while a card is open, so it cannot block the card's own buttons", async () => {
+  reducedMotion()
+  localStorage.clear()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(container.querySelector('.onboarding-bubble')).not.toBeNull()
+
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(container.querySelector('.onboarding-mascot')).not.toBeNull()
+  expect(container.querySelector('.onboarding-bubble.hint')).not.toBeNull()
+  expect(screen.getByText(/Hit Catch/)).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Got it!' })).toBeNull()
+  expect(
+    screen.queryByRole('button', { name: 'Dismiss onboarding' }),
+  ).toBeNull()
+
+  // Deselecting (not catching) brings the normal bubble back.
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(container.querySelector('.onboarding-bubble.hint')).toBeNull()
+  expect(screen.getByRole('button', { name: 'Got it!' })).toBeTruthy()
+})
+
+test('the catch step rings the target plane, and the ring stays on it as the feed updates', async () => {
+  reducedMotion()
+  localStorage.clear()
+  const feed = [
+    flights[0],
+    { ...flights[0], id: 'f2', callsign: 'TST2', latitude: -40 },
+  ]
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve({ ok: true, json: () => Promise.resolve(feed) }),
+    ),
+  )
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByTitle('TST1').className).not.toContain('target')
+
+  fireEvent.click(screen.getByRole('button', { name: 'Got it!' }))
+  expect(screen.getByTitle('TST1').className).toContain('target')
+
+  // TST2 drifts closer to the default view than TST1; the ring must not hop.
+  feed[1] = { ...feed[1], latitude: 50, longitude: 10 }
+  feed[0] = { ...feed[0], latitude: 30 }
+  await act(() => vi.advanceTimersByTimeAsync(6000))
+  expect(screen.getByTitle('TST1').className).toContain('target')
+  expect(screen.getByTitle('TST2').className).not.toContain('target')
+})
+
+test('catching a different flight than the highlighted one still completes onboarding', async () => {
+  reducedMotion()
+  localStorage.clear()
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve([
+            flights[0],
+            { ...flights[0], id: 'f2', callsign: 'TST2', latitude: -40 },
+          ]),
+      }),
+    ),
+  )
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByRole('button', { name: 'Got it!' }))
+
+  // TST1 (closer to the default view) is the highlighted one; catch TST2 instead.
+  fireEvent.click(screen.getByTitle('TST2'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(
+    screen.getByText('Nice catch! Peek at your Collection to see it.'),
+  ).toBeTruthy()
 })

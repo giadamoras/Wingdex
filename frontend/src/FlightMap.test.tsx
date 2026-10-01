@@ -147,6 +147,18 @@ test('clicking the map background deselects', () => {
   expect(onSelect).toHaveBeenCalledWith(null)
 })
 
+test('the map carries a time-of-day attribute for the palette CSS to key off', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const mapTime = container.querySelector('.map')!.getAttribute('data-map-time')
+  expect(['dawn', 'day', 'dusk', 'night']).toContain(mapTime)
+})
+
 test('featured planes get the ring class', () => {
   render(
     <FlightMap

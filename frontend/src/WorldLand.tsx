@@ -28,9 +28,9 @@ const shapes = WORLD_LAND.map((ring) =>
     .join(' '),
 )
 
-// Placeholder land from Natural Earth coastlines until the illustrated map
-// arrives. Same coordinate system as the planes: a 0-100 box stretched over
-// the map.
+// The real geography (Natural Earth coastlines), rendered with a poster-style
+// illustrated fill instead of a flat colour. Same coordinate system as the
+// planes: a 0-100 box stretched over the map.
 export function WorldLand() {
   return (
     <svg
@@ -39,6 +39,31 @@ export function WorldLand() {
       preserveAspectRatio="none"
       aria-hidden="true"
     >
+      <defs>
+        {/* One light-to-dark gradient across the whole map (userSpaceOnUse,
+            not each polygon's own box), like a poster print lit from the
+            north. Stops are colour-mixed from --land, so a time-of-day
+            palette swap (see [data-map-time] in index.css) carries through
+            automatically. */}
+        <linearGradient
+          id="landFill"
+          gradientUnits="userSpaceOnUse"
+          x1="0"
+          y1="0"
+          x2="0"
+          y2="100"
+        >
+          <stop
+            offset="0%"
+            style={{ stopColor: 'color-mix(in srgb, var(--land), white 25%)' }}
+          />
+          <stop offset="55%" style={{ stopColor: 'var(--land)' }} />
+          <stop
+            offset="100%"
+            style={{ stopColor: 'color-mix(in srgb, var(--land), black 12%)' }}
+          />
+        </linearGradient>
+      </defs>
       {lons.map((lon) => (
         <line
           key={`lon${lon}`}

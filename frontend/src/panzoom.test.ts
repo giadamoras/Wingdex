@@ -1,6 +1,7 @@
 import { expect, test } from 'vitest'
 import {
   centredOn,
+  centreOf,
   clampView,
   fitBounds,
   MAX_ZOOM,
@@ -48,6 +49,12 @@ test('panning moves the view by the drag distance', () => {
   const view = panBy({ zoom: 4, x: -1, y: -1 }, 0.25, -0.1)
   expect(view.x).toBeCloseTo(-0.75)
   expect(view.y).toBeCloseTo(-1.1)
+})
+
+test('centreOf recovers the world point centredOn was given', () => {
+  const view = centredOn(0.7, 0.3, 4)
+  expect(centreOf(view).px).toBeCloseTo(0.7)
+  expect(centreOf(view).py).toBeCloseTo(0.3)
 })
 
 test('centredOn puts the world point in the middle of the box', () => {

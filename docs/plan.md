@@ -2,8 +2,8 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay), Milestone 3 (daily variety: tagged facts, quest templates, featured flights) and Milestone 4 (Collection, badges and the catch moment). All four are summarized in the Implementation roadmap.
-- **Next.** Milestones 5–7 are ordered there, and Milestone 5 (visual pass, mascot and onboarding) is next in line. None of them has been started.
+- **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay), Milestone 3 (daily variety: tagged facts, quest templates, featured flights), Milestone 4 (Collection, badges and the catch moment) and Milestone 5 (visual pass, mascot and onboarding). All five are summarized in the Implementation roadmap.
+- **Next.** Milestones 6-7 are ordered there. Neither has been started.
 
 ## Context
 
@@ -151,14 +151,20 @@ Aviation-curious people without deep aviation background — including the creat
 - **Facts tab.** Each catch's fact (`JournalEntry.fact`, unchanged since Milestone 1) is worth keeping even though the Journal entry no longer shows it. `FactList.tsx` lists every distinct fact learned so far, in the order first caught, deduplicated (`[...new Set(journal.map(e => e.fact))]` — `Set` preserves insertion order, so no extra bookkeeping is needed).
 - **Known limits.** None outstanding. (An earlier draft of this note flagged the Badges/Facts tabs' `display: grid` single-column layout as sharing the Journal's narrow-item quirk; checked with a computed-width probe and it doesn't — their row content, unlike the old short Journal entries, is long enough that the implicit grid column already fills the container. Worth remembering: measure before writing a limitation down.)
 
-**Next milestones (ordered, not yet started).** Do the visual pass now that the MVP screens are stable, then swap in real data last. Each milestone ends in a playable, demoable state.
+**Next milestones.** The visual pass is done; weather comes next, then swap in real data last. Each milestone ends in a playable, demoable state.
 
-**Milestone 5 — Visual pass, mascot and onboarding:** the retro travel-poster kawaii identity, ready for the portfolio. Starts with a short design doc (palette values, mascot, silhouette style).
+**Milestone 5 — Visual pass, mascot and onboarding (done):** the retro travel-poster kawaii identity, ready for the portfolio. Frontend only; details of each piece are in `docs/ui-foundation.md`.
 
-1. Illustrated map art replacing the placeholder coastlines (`WorldLand.tsx`) and sea.
-2. Silhouettes for each aircraft type, and palette tokens that shift by time of day (region and weather come later).
-3. Mascot and a short onboarding (a greeting, then one guaranteed-easy first catch).
-4. Framer Motion for springy card, stamp and popup motion.
+- **Map art.** `WorldLand.tsx` reskins the same Natural Earth coastlines (land gradient lit from the north, zoom-compensated shadow, dotted graticule, a CSS sea texture). `CountryBorders.tsx`/`countryData.ts` (from `scripts/build-countries.mjs`) add borders and name labels at a constant screen size, with real collision avoidance using the map's rendered width. Two false starts fixed this: font size scaling with the map (a colliding pair could never separate on zoom) and a fixed rank threshold with no collision check.
+- **Aircraft silhouettes and time-of-day palette.** `aircraftSilhouette.ts` sorts ICAO types into 5 families (reusing `quest.ts`'s `WIDE_BODY`/`TURBOPROP`), drawn by `PlaneIcon.tsx`. The map's sea/land palette (`.map[data-map-time]`) follows the solar time at the viewport centre (`timeOfDay`, `centreOf`, `unprojectLongitude`) and eases over 0.9 s via `@property` colours. Region and weather palette shifts are deferred to Milestone 6+.
+- **Mascot.** `Mascot.tsx`: a chibi cat pilot with `idle`/`talk`/`cheer` faces. It also delivers the quest-completion fact (`QuestBanner.tsx`), a once-a-day celebration, not shown on the banner itself or on every card.
+- **Onboarding.** `useOnboarding.ts` is a `greeting` -> `catch` -> `done` -> gone state machine, run once per device (`onboardingSeen.ts`). The mascot stays docked bottom-left for the whole flow and speaks each step in a typed-out speech bubble (`Onboarding.tsx`); the map stays usable throughout. The catch step rings one real flight near `DEFAULT_CENTER` (`onboardingTarget.ts`, pinned once picked) with its own `.plane.target` ring, but completes on *any* catch. The last step nudges the Collection button.
+- **Framer Motion.** A real dependency now: card entrance, the shared stamp (`Stamp.tsx`), badge popup (with its first real exit animation) and the onboarding. The Journal grid, featured ring and map/route animations stay plain CSS (zoom-compensated SVG math). Under `prefers-reduced-motion`, converted components skip Framer Motion entirely (plain elements) - more correct for accessibility, and needed for testing (below).
+- **Bugs found and fixed.**
+  - The onboarding bubble could sit over the card's Catch/journey buttons on a short viewport and block clicks (found by a Playwright check, not unit tests). While a card is open the bubble is now a click-through "Hit Catch" hint, and the page gets bottom padding while onboarding runs.
+  - The highlighted plane was invisible: the ring was a 2px dashed `--paper` circle, nearly the land's colour (this also hit the daily featured rings, now ink). The target was also re-picked every render, so the ring hopped between moving planes.
+- **Testing gotcha.** Under Vitest's fake timers a `motion` component's exit transition (`AnimatePresence`) can fail to complete after earlier tests have driven other fake-timer animations (a cross-test scheduler leak; isolated repros pass, smaller time steps and real timers did not help). Mocking `matchMedia` to report reduced motion in the affected tests (the `reducedMotion()` helper in `App.test.tsx`, per test, not global) fixes it. The journey-replay tests need `prefersReducedMotion()` to read `false`, hence per-test.
+- **Known limits.** The onboarding target is the flight nearest the default view; with a sparse live feed it could be off-screen (not handled). The mascot, hint bubble and Collection nudge were checked in a browser with a mocked feed at two viewport sizes, but not against a real phone; on a very short viewport the docked mascot and hint overlap the card's text until you scroll.
 
 **Milestone 6 — Weather:** atmosphere first, then weather as a game attribute.
 
@@ -176,7 +182,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Visual & interaction direction
 
-A small visual foundation slice (tokens, fonts, plane markers, placeholder land, ticket card) was pulled ahead of the Milestone 1 quest work — see `docs/ui-foundation.md`. The full visual pass below is still a later milestone.
+A small visual foundation slice (tokens, fonts, plane markers, placeholder land, ticket card) was pulled ahead of the Milestone 1 quest work — see `docs/ui-foundation.md`. The full visual pass below was done in Milestone 5.
 
 - **Overall style: Retro travel-poster kawaii** — vintage mid-century aviation travel-poster palettes and shapes, combined with cuteness, rather than generic cartoon cuteness. This is meant to be aviation-flavored kawaii specifically, a differentiator in its own right.
 - **Mascot:** kept, rendered in the same poster style (e.g. a stylized paper-airplane or pilot figure), still carrying onboarding and daily-quest prompts.
@@ -184,4 +190,4 @@ A small visual foundation slice (tokens, fonts, plane markers, placeholder land,
 - **Motion personality:** bouncy/springy animation, deliberately contrasting the flat vintage-poster look with toy-like, playful energy.
 - **Palette strategy:** shifts by context (region, time-of-day, weather) rather than one fixed palette — warm tones over deserts, cool over poles, dusk hues at sunset, etc. This reinforces the weather layer already defined as functional (not just decorative) in the MVP, and makes exploring different parts of the world feel visually distinct.
 
-Still open: concrete palette values, mascot character design, aircraft illustration style guide, iconography for weather/badges, and UI layout/screen composition — these belong to a dedicated visual-design pass.
+Settled in Milestone 5: palette values, the cat-pilot mascot, aircraft silhouettes, badge iconography and screen layout. Still open: weather iconography (Milestone 6).

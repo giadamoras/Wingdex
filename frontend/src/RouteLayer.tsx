@@ -105,7 +105,10 @@ export function RouteLayer({
             className={landing ? 'ghost fading' : 'ghost'}
             aria-hidden="true"
           >
-            <PlaneIcon heading={ghostHeading} />
+            <PlaneIcon
+              heading={ghostHeading}
+              aircraftType={flight.aircraft_type}
+            />
           </div>
         </div>
       )}

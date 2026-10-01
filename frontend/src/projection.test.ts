@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { MAP_BOUNDS, project } from './projection'
+import { MAP_BOUNDS, project, unprojectLongitude } from './projection'
 
 const { west, east, south, north } = MAP_BOUNDS
 
@@ -16,4 +16,10 @@ test('centre of the bounds maps to the centre', () => {
     x: 50,
     y: 50,
   })
+})
+
+test('unprojectLongitude reverses the x axis of project', () => {
+  expect(unprojectLongitude(0)).toBe(west)
+  expect(unprojectLongitude(1)).toBe(east)
+  expect(unprojectLongitude(0.5)).toBe((west + east) / 2)
 })

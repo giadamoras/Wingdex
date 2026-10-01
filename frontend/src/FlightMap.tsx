@@ -1,9 +1,11 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
+import { timeOfDay } from './attributes'
+import { CountryBorders } from './CountryBorders'
 import { routePoints } from './geo'
-import { centredOn, fitBounds } from './panzoom'
+import { centredOn, centreOf, fitBounds } from './panzoom'
 import { PlaneIcon } from './PlaneIcon'
-import { project } from './projection'
+import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
 import { FIT_MS, prefersReducedMotion, type ReplayState } from './replay'
 import { RouteLayer } from './RouteLayer'
 import type { Flight } from './types'
@@ -14,7 +16,7 @@ const NO_JUMPS = new Set<string>()
 const NO_FEATURED = new Set<string>()
 
 // Opening view: zoomed in on Europe, roughly the old Europe-only map.
-const europe = project(50, 10)
+const europe = project(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
 const START_VIEW = centredOn(europe.x / 100, europe.y / 100, 5)
 
 // The view that shows a flight's whole route.
@@ -34,8 +36,8 @@ function routeView(flight: Flight) {
 
 // World map with one clickable plane per flight, positioned in percent of the
 // world layer, which pans and zooms as a whole. Planes glide between polls;
-// ids in `jumped` snap to their new position instead, and ids in `featuredIds`
-// get a ring. Clicking a plane selects
+// ids in `jumped` snap to their new position instead, ids in `featuredIds`
+// get a ring, and `targetId` a bolder one. Clicking a plane selects
 // it (or deselects it if already selected); clicking the map background
 // deselects. A drag never counts as a click.
 export function FlightMap({
@@ -43,6 +45,7 @@ export function FlightMap({
   selectedId,
   jumped = NO_JUMPS,
   featuredIds = NO_FEATURED,
+  targetId = null,
   replay = null,
   onSelect,
 }: {
@@ -50,6 +53,7 @@ export function FlightMap({
   selectedId: string | null
   jumped?: Set<string>
   featuredIds?: Set<string>
+  targetId?: string | null
   replay?: ReplayState | null
   onSelect: (id: string | null) => void
 }) {
@@ -59,6 +63,23 @@ export function FlightMap({
     START_VIEW,
   )
   const selected = flights.find((f) => f.id === selectedId) ?? null
+
+  // The map box's rendered width in real pixels, so CountryBorders can turn
+  // the fractional pan/zoom view into real pixel gaps for its label
+  // collision check. 0 until the first layout, which CountryBorders treats
+  // as "nothing fits yet" rather than guessing.
+  const [mapWidthPx, setMapWidthPx] = useState(0)
+  useEffect(() => {
+    const el = mapRef.current
+    // jsdom (tests) has no ResizeObserver; mapWidthPx just stays 0, and
+    // CountryBorders treats that as "nothing fits yet" - no crash either way.
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setMapWidthPx(entry.contentRect.width)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   // When a replay starts, move the camera so the whole route fits.
   const replayStart = replay?.startedAt
@@ -76,6 +97,13 @@ export function FlightMap({
     '--zoom': view.zoom,
   } as CSSProperties
 
+  // The map's sea/land palette follows the solar time at the centre of the
+  // current view, so panning to another part of the world can shift it (see
+  // index.css's [data-map-time] rules). Recomputed on every render, which
+  // already happens on pan/zoom and every 5 s poll, so no timer is needed.
+  const { px } = centreOf(view)
+  const mapTime = timeOfDay(unprojectLongitude(px))
+
   // Control buttons must not reach the map's deselect.
   const control = (action: () => void) => (e: MouseEvent) => {
     e.stopPropagation()
@@ -85,12 +113,14 @@ export function FlightMap({
   return (
     <div
       className="map"
+      data-map-time={mapTime}
       ref={mapRef}
       onClick={() => onSelect(null)}
       {...handlers}
     >
       <div className="map-world" style={worldStyle}>
         <WorldLand />
+        <CountryBorders view={view} mapWidthPx={mapWidthPx} />
         {selected && (
           <RouteLayer
             flight={selected}
@@ -104,6 +134,7 @@ export function FlightMap({
             f.id === selectedId && 'selected',
             jumped.has(f.id) && 'jump',
             featuredIds.has(f.id) && 'featured',
+            f.id === targetId && 'target', // onboarding's "catch this one"
           ]
             .filter(Boolean)
             .join(' ')
@@ -118,7 +149,7 @@ export function FlightMap({
                 onSelect(f.id === selectedId ? null : f.id)
               }}
             >
-              <PlaneIcon heading={f.heading} />
+              <PlaneIcon heading={f.heading} aircraftType={f.aircraft_type} />
             </button>
           )
         })}

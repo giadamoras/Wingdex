@@ -1,6 +1,9 @@
+import { motion } from 'framer-motion'
 import type { Flight } from './types'
 import { formatDuration } from './format'
 import { getFact } from './facts'
+import { prefersReducedMotion } from './replay'
+import { Stamp } from './Stamp'
 
 // Passport-page card for the selected flight. `lost` means it dropped out
 // of the feed and is shown at its last known position. The journey button
@@ -30,8 +33,9 @@ export function FlightCard({
     : replayed
       ? 'Replay journey'
       : 'See the journey'
-  return (
-    <section className="card passport-page">
+
+  const content = (
+    <>
       <p className="passport-strip">Airspace Explorer · Flight Passport</p>
       <header className="card-head">
         <h2>{flight.callsign}</h2>
@@ -60,7 +64,7 @@ export function FlightCard({
       </p>
       <div className="card-actions">
         {caught ? (
-          <span className="stamp">Caught today ✓</span>
+          <Stamp>Caught today ✓</Stamp>
         ) : (
           <button className="catch" onClick={onCatch}>
             Catch
@@ -75,6 +79,20 @@ export function FlightCard({
           </button>
         )}
       </div>
-    </section>
+    </>
+  )
+
+  // Reduced motion: skip Framer Motion entirely, not just shorten it.
+  if (prefersReducedMotion())
+    return <section className="card passport-page">{content}</section>
+  return (
+    <motion.section
+      className="card passport-page"
+      initial={{ scale: 0.6, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+    >
+      {content}
+    </motion.section>
   )
 }
