@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.mock_flights import get_mock_flights
-from app.models import Flight
+from app.mock_weather import get_mock_weather
+from app.models import Flight, WeatherArea
 
 app = FastAPI(title="Airspace Explorer API")
 
@@ -23,3 +24,8 @@ def health() -> dict[str, str]:
 @app.get("/flights")
 def flights() -> list[Flight]:
     return get_mock_flights()
+
+
+@app.get("/weather")
+def weather() -> list[WeatherArea]:
+    return get_mock_weather()

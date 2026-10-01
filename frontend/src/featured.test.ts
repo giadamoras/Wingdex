@@ -65,3 +65,41 @@ test('returns fewer flights when the feed is small', () => {
   expect(pickFeatured([flights[0]], null, none, day)).toEqual(['a1'])
   expect(pickFeatured([], null, none, day)).toEqual([])
 })
+
+test('a flight inside weather can be featured for a weather quest', () => {
+  const areaOverFlight = {
+    id: 'w',
+    hazard: 'turbulence' as const,
+    region: 'Test',
+    altitude_min_ft: 0,
+    altitude_max_ft: 40000,
+    valid_from: 0,
+    valid_to: 4_000_000_000,
+    polygon: [
+      { latitude: 40, longitude: 0 },
+      { latitude: 40, longitude: 10 },
+      { latitude: 50, longitude: 10 },
+      { latitude: 50, longitude: 0 },
+      { latitude: 40, longitude: 0 },
+    ],
+    movement_dir: null,
+    movement_speed_kt: null,
+  }
+  const inWeather = { ...flight('w1', 'A320'), latitude: 45, longitude: 5 }
+  const outside = { ...flight('o1', 'A320'), latitude: 20, longitude: 5 }
+  const quest: Quest = {
+    id: 'weather-turbulence',
+    title: 'q',
+    conceptFact: 'f',
+    matches: (f, _at, weather = []) =>
+      weather.some(
+        (a) =>
+          f.latitude >= 40 && f.latitude <= 50 && a.hazard === 'turbulence',
+      ),
+  }
+  // Only the flight inside the box completes it, so it must be picked.
+  const ids = pickFeatured([outside, inWeather], quest, none, day, new Date(), [
+    areaOverFlight,
+  ])
+  expect(ids[0]).toBe('w1')
+})

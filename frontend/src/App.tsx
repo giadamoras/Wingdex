@@ -9,17 +9,25 @@ import { FlightMap } from './FlightMap'
 import { Onboarding } from './Onboarding'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
-import type { Flight } from './types'
+import type { Flight, WeatherArea } from './types'
 import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
 import { useFlights } from './useFlights'
 import { useJournalContext } from './useJournalContext'
 import { useOnboarding } from './useOnboarding'
+import { useWeather } from './useWeather'
+
+// Stable empty list for while weather is loading, so memoised map code doesn't
+// see a new array on every render.
+const NO_WEATHER: WeatherArea[] = []
 
 function App() {
   const { flights, jumped, error } = useFlights()
+  // Null until the first response; quests and featured flights wait for it.
+  const weather = useWeather()
+  const weatherAreas = weather ?? NO_WEATHER
   const { journal, addCatch } = useJournalContext()
-  const quest = useDailyQuest(flights)
+  const quest = useDailyQuest(flights, weather)
   const { replay, playedId, start, stop } = useReplay()
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
   const onboarding = useOnboarding(flights, journal.length)
@@ -48,10 +56,12 @@ function App() {
   const catchFlight = () => {
     if (!selected) return
     const questId =
-      quest !== null && !questDone && quest.matches(selected)
+      quest !== null &&
+      !questDone &&
+      quest.matches(selected, new Date(), weatherAreas)
         ? quest.id
         : undefined
-    addCatch(selected, questId)
+    addCatch(selected, questId, weatherAreas)
     if (questId !== undefined)
       window.scrollTo({
         top: 0,
@@ -64,22 +74,31 @@ function App() {
   const lost = selected !== null && !live
   // Derived from the Journal on every render, never stored separately.
   const todaysCatches = journal.filter((e) => isToday(e.caughtAt))
-  // Each catch is judged at its own catch time (matters for night quests).
+  // Each catch is judged at its own catch time (matters for night quests). The
+  // entry that completed the quest also carries its id, which keeps a weather
+  // quest done after the weather it was caught in has moved on.
   const questDone =
     quest !== null &&
-    todaysCatches.some((e) => quest.matches(e.flight, new Date(e.caughtAt)))
+    todaysCatches.some(
+      (e) =>
+        e.questId === quest.id ||
+        quest.matches(e.flight, new Date(e.caughtAt), weatherAreas),
+    )
   const caughtToday = todaysCatches.some((e) => e.flight.id === selected?.id)
 
-  // Featured flights: picked once per session, when the feed and quest are
-  // ready. The ring goes away once the flight is caught today.
+  // Featured flights: picked once per session, when the feed, weather and
+  // quest are ready (a weather quest needs the weather to find its flight).
+  // The ring goes away once the flight is caught today.
   const [featured, setFeatured] = useState<string[] | null>(null)
-  if (featured === null && flights && quest)
+  if (featured === null && flights && weather && quest)
     setFeatured(
       pickFeatured(
         flights,
         quest,
         new Set(todaysCatches.map((e) => e.flight.id)),
         dayKey(),
+        new Date(),
+        weather,
       ),
     )
   const featuredIds = new Set(
@@ -119,11 +138,13 @@ function App() {
                 featuredIds={featuredIds}
                 targetId={onboarding.targetId}
                 replay={replay}
+                weather={weatherAreas}
                 onSelect={select}
               />
               {selected && (
                 <FlightCard
                   flight={selected}
+                  weather={weatherAreas}
                   lost={lost}
                   caught={caughtToday}
                   replaying={replay?.flight.id === selected.id}

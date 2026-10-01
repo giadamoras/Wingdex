@@ -33,3 +33,26 @@ export interface JournalEntry {
   // before Milestone 4 lack it, same as speed_kt above).
   questId?: string
 }
+
+export interface LatLon {
+  latitude: number // degrees
+  longitude: number // degrees
+}
+
+export type Hazard =
+  'thunderstorm' | 'turbulence' | 'icing' | 'volcanic_ash' | 'tropical_cyclone'
+
+// Mirrors the backend WeatherArea model (GET /weather): a hazard area with an
+// altitude band and a closed polygon.
+export interface WeatherArea {
+  id: string
+  hazard: Hazard
+  region: string // airspace it was issued for, e.g. "North Atlantic"
+  altitude_min_ft: number // the hazard only affects flights between the bounds
+  altitude_max_ft: number
+  valid_from: number // Unix seconds
+  valid_to: number // Unix seconds
+  polygon: LatLon[] // closed ring: the last point repeats the first
+  movement_dir: number | null // degrees towards, when known
+  movement_speed_kt: number | null
+}

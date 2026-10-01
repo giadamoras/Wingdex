@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { pickQuest, QUEST_TEMPLATES, type Quest } from './quest'
+import type { Hazard, WeatherArea } from './types'
 
 const flight = {
   id: 'f1',
@@ -96,4 +97,70 @@ test('skips quests that no current flight can satisfy', () => {
 test('returns null when nothing can be satisfied', () => {
   expect(pickQuest([never('a')], [flight], '2026-09-28')).toBeNull()
   expect(pickQuest(QUEST_TEMPLATES, [], '2026-09-28')).toBeNull()
+})
+
+// A box over Paris (flight above is at 48.5N, 2.3E, 30,000 ft), valid around NOW.
+const NOW = new Date(Date.UTC(2026, 8, 28, 12, 0))
+const hazardArea = (hazard: Hazard): WeatherArea => ({
+  id: `w-${hazard}`,
+  hazard,
+  region: 'Test',
+  altitude_min_ft: 10000,
+  altitude_max_ft: 40000,
+  valid_from: NOW.getTime() / 1000 - 3600,
+  valid_to: NOW.getTime() / 1000 + 3600,
+  polygon: [
+    { latitude: 45, longitude: 0 },
+    { latitude: 45, longitude: 5 },
+    { latitude: 50, longitude: 5 },
+    { latitude: 50, longitude: 0 },
+    { latitude: 45, longitude: 0 },
+  ],
+  movement_dir: null,
+  movement_speed_kt: null,
+})
+
+const HAZARDS: Hazard[] = [
+  'thunderstorm',
+  'turbulence',
+  'icing',
+  'volcanic_ash',
+  'tropical_cyclone',
+]
+
+test('every weather hazard has a quest that matches only inside that hazard', () => {
+  for (const hazard of HAZARDS) {
+    const q = quest(`weather-${hazard}`)
+    expect(q.matches(flight, NOW, [hazardArea(hazard)])).toBe(true)
+    // A different hazard over the flight doesn't complete this quest.
+    const other = HAZARDS.find((h) => h !== hazard)!
+    expect(q.matches(flight, NOW, [hazardArea(other)])).toBe(false)
+  }
+})
+
+test('weather quests never match without weather', () => {
+  for (const hazard of HAZARDS)
+    expect(quest(`weather-${hazard}`).matches(flight, NOW)).toBe(false)
+})
+
+test('a weather quest needs the right height and moment', () => {
+  const q = quest('weather-thunderstorm')
+  const areas = [hazardArea('thunderstorm')]
+  expect(q.matches({ ...flight, altitude_ft: 5000 }, NOW, areas)).toBe(false)
+  expect(q.matches(flight, new Date(NOW.getTime() + 7200_000), areas)).toBe(
+    false,
+  )
+})
+
+test('quest ids are unique', () => {
+  const ids = QUEST_TEMPLATES.map((q) => q.id)
+  expect(new Set(ids).size).toBe(ids.length)
+})
+
+test('a weather quest can be picked only when a flight is in that weather', () => {
+  const only = [quest('weather-icing')]
+  expect(pickQuest(only, [flight], '2026-09-28', NOW, [])).toBeNull()
+  expect(
+    pickQuest(only, [flight], '2026-09-28', NOW, [hazardArea('icing')]),
+  ).toBe(only[0])
 })

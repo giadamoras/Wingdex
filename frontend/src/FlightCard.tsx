@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import type { Flight } from './types'
+import type { Flight, WeatherArea } from './types'
 import { formatDuration } from './format'
 import { getFact } from './facts'
 import { prefersReducedMotion } from './replay'
@@ -10,6 +10,7 @@ import { Stamp } from './Stamp'
 // replays the route on the map (only when the route is known).
 export function FlightCard({
   flight,
+  weather,
   lost,
   caught,
   replaying,
@@ -19,6 +20,7 @@ export function FlightCard({
   onStopReplay,
 }: {
   flight: Flight
+  weather: WeatherArea[] // hazards the flight may be in, for its fact
   lost: boolean
   caught: boolean
   replaying: boolean
@@ -60,7 +62,7 @@ export function FlightCard({
         <p className="lost">Signal lost - showing last known position.</p>
       )}
       <p className="fact">
-        <strong>Did you know?</strong> {getFact(flight)}
+        <strong>Did you know?</strong> {getFact(flight, new Date(), weather)}
       </p>
       <div className="card-actions">
         {caught ? (

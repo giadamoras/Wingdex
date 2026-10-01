@@ -1,13 +1,24 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
-import { saveDailyQuest } from './dailyQuest'
+import { fetchWeather } from './api'
+import { QUEST_STORAGE_KEY, saveDailyQuest } from './dailyQuest'
 import { dayKey } from './dates'
 import { saveJournal } from './journal'
 import { JournalProvider } from './JournalContext'
 import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
+import type { WeatherArea } from './types'
 import { POLL_INTERVAL_MS } from './useFlights'
+import { WEATHER_POLL_MS } from './useWeather'
+
+// Only the weather request is replaced. The tests below stub the global fetch
+// in the order flights are requested, and a second request on mount would
+// break that, so weather gets its own mock (set per test in beforeEach).
+vi.mock('./api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./api')>()),
+  fetchWeather: vi.fn(),
+}))
 
 // Every render needs the Journal Context that main.tsx normally provides.
 const renderApp = () => render(<App />, { wrapper: JournalProvider })
@@ -59,6 +70,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   scrollTo.mockClear()
   window.scrollTo = scrollTo
+  vi.mocked(fetchWeather).mockResolvedValue([]) // no weather unless a test adds some
   // Onboarding is a separate feature (see the dedicated tests near the
   // bottom of this file), so keep it out of everything else's way.
   markOnboardingSeen()
@@ -692,4 +704,151 @@ test('catching a different flight than the highlighted one still completes onboa
   expect(
     screen.getByText('Nice catch! Peek at your Collection to see it.'),
   ).toBeTruthy()
+})
+
+const storm: WeatherArea = {
+  id: 'w1',
+  hazard: 'thunderstorm',
+  region: 'North Atlantic',
+  altitude_min_ft: 0,
+  altitude_max_ft: 45000,
+  valid_from: 0,
+  valid_to: 1,
+  polygon: [
+    { latitude: 46, longitude: -52 },
+    { latitude: 46, longitude: -44 },
+    { latitude: 51, longitude: -44 },
+    { latitude: 51, longitude: -52 },
+    { latitude: 46, longitude: -52 },
+  ],
+  movement_dir: null,
+  movement_speed_kt: null,
+}
+
+test('shows weather icons from /weather on the map', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  vi.mocked(fetchWeather).mockResolvedValue([storm])
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(
+    screen.getAllByTitle('Thunderstorm, North Atlantic').length,
+  ).toBeGreaterThan(0)
+})
+
+test('the flight map still works when /weather fails', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  vi.mocked(fetchWeather).mockRejectedValue(new Error('network'))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByTitle('TST1')).toBeTruthy()
+  expect(screen.queryByText(/Connection lost/)).toBeNull()
+})
+
+test('weather is polled far less often than flights', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 3))
+  expect(fetchWeather).toHaveBeenCalledTimes(1)
+  await act(() => vi.advanceTimersByTimeAsync(WEATHER_POLL_MS))
+  expect(fetchWeather).toHaveBeenCalledTimes(2)
+})
+
+// A storm over TST1 (50N, 0E, 36,000 ft), as opposed to the Atlantic one above.
+const stormOverTst1: WeatherArea = {
+  ...storm,
+  id: 'w2',
+  valid_to: 4_000_000_000, // storm above expired in 1970; this one is current
+  polygon: [
+    { latitude: 45, longitude: -5 },
+    { latitude: 45, longitude: 5 },
+    { latitude: 55, longitude: 5 },
+    { latitude: 55, longitude: -5 },
+    { latitude: 45, longitude: -5 },
+  ],
+}
+
+test('catching a flight inside a thunderstorm completes the weather quest', async () => {
+  pinQuest('weather-thunderstorm')
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  vi.mocked(fetchWeather).mockResolvedValue([stormOverTst1])
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  // TST3 shares TST1's position, so both are in the storm; a flight far away is not.
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.getByText('Done!')).toBeTruthy()
+})
+
+test('a catch outside the weather does not complete the weather quest', async () => {
+  pinQuest('weather-thunderstorm')
+  const faraway = { ...flights[0], id: 'f9', callsign: 'TST9', latitude: -20 }
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([flights[0], faraway]),
+      }),
+    ),
+  )
+  vi.mocked(fetchWeather).mockResolvedValue([stormOverTst1])
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  fireEvent.click(screen.getByTitle('TST9'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.queryByText('Done!')).toBeNull()
+})
+
+test('the quest stays done after the weather it was caught in has moved on', async () => {
+  pinQuest('weather-thunderstorm')
+  vi.stubGlobal('fetch', vi.fn(ok))
+  vi.mocked(fetchWeather).mockResolvedValue([stormOverTst1])
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.getByText('Done!')).toBeTruthy()
+
+  // The next weather poll has no storm any more.
+  vi.mocked(fetchWeather).mockResolvedValue([])
+  await act(() => vi.advanceTimersByTimeAsync(WEATHER_POLL_MS))
+  expect(screen.getByText('Done!')).toBeTruthy()
+})
+
+test('a flight in a hazard shows a fact about it on its card', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  vi.mocked(fetchWeather).mockResolvedValue([stormOverTst1])
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(container.querySelector('.fact')?.textContent).toMatch(/thunderstorm/i)
+})
+
+test('the daily quest is not picked until the weather has loaded', async () => {
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  let resolveWeather!: (areas: WeatherArea[]) => void
+  vi.mocked(fetchWeather).mockReturnValue(
+    new Promise((resolve) => {
+      resolveWeather = resolve
+    }),
+  )
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  // Flights are on the map, but no quest is chosen yet.
+  expect(screen.getByTitle('TST1')).toBeTruthy()
+  expect(localStorage.getItem(QUEST_STORAGE_KEY)).toBeNull()
+
+  resolveWeather([])
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(localStorage.getItem(QUEST_STORAGE_KEY)).not.toBeNull()
+})
+
+test('a failed weather request does not block the daily quest', async () => {
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  vi.mocked(fetchWeather).mockRejectedValue(new Error('network'))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(localStorage.getItem(QUEST_STORAGE_KEY)).not.toBeNull()
 })

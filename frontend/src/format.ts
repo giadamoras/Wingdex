@@ -36,3 +36,10 @@ export function formatStampDate(iso: string): string {
   const d = new Date(iso)
   return `${String(d.getDate()).padStart(2, '0')} ${STAMP_MONTHS[d.getMonth()]} ${d.getFullYear()}`
 }
+
+// Formats an altitude band in feet, e.g. "up to 45,000 ft" or
+// "20,000–38,000 ft" (a band starting at the ground has no useful lower bound).
+export function formatAltitudeBand(minFt: number, maxFt: number): string {
+  const n = (ft: number) => ft.toLocaleString('en-US')
+  return minFt <= 0 ? `up to ${n(maxFt)} ft` : `${n(minFt)}–${n(maxFt)} ft`
+}

@@ -8,12 +8,14 @@ import { PlaneIcon } from './PlaneIcon'
 import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
 import { FIT_MS, prefersReducedMotion, type ReplayState } from './replay'
 import { RouteLayer } from './RouteLayer'
-import type { Flight } from './types'
+import type { Flight, WeatherArea } from './types'
 import { usePanZoom } from './usePanZoom'
+import { WeatherLayer } from './WeatherLayer'
 import { WorldLand } from './WorldLand'
 
 const NO_JUMPS = new Set<string>()
 const NO_FEATURED = new Set<string>()
+const NO_WEATHER: WeatherArea[] = []
 
 // Opening view: zoomed in on Europe, roughly the old Europe-only map.
 const europe = project(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
@@ -39,7 +41,9 @@ function routeView(flight: Flight) {
 // ids in `jumped` snap to their new position instead, ids in `featuredIds`
 // get a ring, and `targetId` a bolder one. Clicking a plane selects
 // it (or deselects it if already selected); clicking the map background
-// deselects. A drag never counts as a click.
+// deselects. A drag never counts as a click. Weather areas (under the planes)
+// are selected the same way, by clicking one of their icons; selecting a
+// weather area deselects the flight and the other way round.
 export function FlightMap({
   flights,
   selectedId,
@@ -47,6 +51,7 @@ export function FlightMap({
   featuredIds = NO_FEATURED,
   targetId = null,
   replay = null,
+  weather = NO_WEATHER,
   onSelect,
 }: {
   flights: Flight[]
@@ -55,9 +60,13 @@ export function FlightMap({
   featuredIds?: Set<string>
   targetId?: string | null
   replay?: ReplayState | null
+  weather?: WeatherArea[]
   onSelect: (id: string | null) => void
 }) {
   const mapRef = useRef<HTMLDivElement>(null)
+  const [weatherId, setWeatherId] = useState<string | null>(null)
+  // The map controls' weather switch, for anyone who finds the map too busy.
+  const [showWeather, setShowWeather] = useState(true)
   const { view, handlers, zoomIn, zoomOut, reset, animateTo } = usePanZoom(
     mapRef,
     START_VIEW,
@@ -115,12 +124,26 @@ export function FlightMap({
       className="map"
       data-map-time={mapTime}
       ref={mapRef}
-      onClick={() => onSelect(null)}
+      onClick={() => {
+        setWeatherId(null)
+        onSelect(null)
+      }}
       {...handlers}
     >
       <div className="map-world" style={worldStyle}>
         <WorldLand />
         <CountryBorders view={view} mapWidthPx={mapWidthPx} />
+        {showWeather && (
+          <WeatherLayer
+            areas={weather}
+            zoom={view.zoom}
+            selectedId={weatherId}
+            onSelect={(id) => {
+              setWeatherId(id)
+              if (id !== null) onSelect(null) // one selection at a time
+            }}
+          />
+        )}
         {selected && (
           <RouteLayer
             flight={selected}
@@ -146,6 +169,7 @@ export function FlightMap({
               style={{ left: `${x}%`, top: `${y}%` }}
               onClick={(e) => {
                 e.stopPropagation() // don't trigger the map's deselect
+                setWeatherId(null)
                 onSelect(f.id === selectedId ? null : f.id)
               }}
             >
@@ -155,6 +179,17 @@ export function FlightMap({
         })}
       </div>
       <div className="map-controls">
+        <button
+          aria-label="Weather"
+          title="Show or hide weather"
+          aria-pressed={showWeather}
+          onClick={control(() => {
+            setShowWeather((on) => !on)
+            setWeatherId(null) // hiding the weather drops any selected area
+          })}
+        >
+          ☁
+        </button>
         <button aria-label="Zoom in" onClick={control(zoomIn)}>
           +
         </button>

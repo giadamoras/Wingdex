@@ -1,3 +1,4 @@
+import type { Hazard, WeatherArea } from './types'
 import { WORLD_LAND } from './worldLandData'
 
 // Turns a flight's raw data into the labels ("tags") that fact pools and quest
@@ -25,7 +26,11 @@ export function airlineOf(callsign: string): string | undefined {
 
 // Ray casting: draw a line from the point and count how often it crosses the
 // ring's edges. An odd count means the point is inside.
-function inRing(lat: number, lon: number, ring: [number, number][]): boolean {
+export function inRing(
+  lat: number,
+  lon: number,
+  ring: [number, number][],
+): boolean {
   let inside = false
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [lonI, latI] = ring[i]
@@ -104,4 +109,31 @@ export function timeOfDay(longitude: number, now = new Date()): TimeOfDay {
   if (solar < 8) return 'dawn'
   if (solar < 17) return 'day'
   return 'dusk'
+}
+
+// Weather hazards a flight is in at time `at`: inside the area's polygon, within
+// its altitude band, and while the advisory is valid. A flight above an icing
+// layer's top is not in it. Areas can overlap, so this is a list.
+export function weatherAt(
+  flight: { latitude: number; longitude: number; altitude_ft: number },
+  areas: WeatherArea[],
+  at = new Date(),
+): Hazard[] {
+  const seconds = at.getTime() / 1000
+  const hazards = new Set<Hazard>()
+  for (const area of areas) {
+    if (seconds < area.valid_from || seconds > area.valid_to) continue
+    if (
+      flight.altitude_ft < area.altitude_min_ft ||
+      flight.altitude_ft > area.altitude_max_ft
+    )
+      continue
+    const ring = area.polygon.map((p): [number, number] => [
+      p.longitude,
+      p.latitude,
+    ])
+    if (inRing(flight.latitude, flight.longitude, ring))
+      hazards.add(area.hazard)
+  }
+  return [...hazards]
 }

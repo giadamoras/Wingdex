@@ -1,5 +1,10 @@
 import { expect, test } from 'vitest'
-import { formatCaughtAt, formatDuration, formatStampDate } from './format'
+import {
+  formatAltitudeBand,
+  formatCaughtAt,
+  formatDuration,
+  formatStampDate,
+} from './format'
 
 test('pads zero minutes as "00"', () => {
   expect(formatDuration(540)).toBe('9h 00m')
@@ -26,4 +31,12 @@ test('shows a catch time as short local date and 24h time', () => {
 test('shows a stamp date as day, uppercase month, year', () => {
   const iso = new Date(2026, 8, 4, 14, 3).toISOString()
   expect(formatStampDate(iso)).toBe('04 SEP 2026')
+})
+
+test('shows an altitude band from the ground as "up to"', () => {
+  expect(formatAltitudeBand(0, 45000)).toBe('up to 45,000 ft')
+})
+
+test('shows an altitude band with both bounds', () => {
+  expect(formatAltitudeBand(20000, 38000)).toBe('20,000–38,000 ft')
 })

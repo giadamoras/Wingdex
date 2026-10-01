@@ -1,6 +1,6 @@
 import { hashString } from './hash'
 import type { Quest } from './quest'
-import type { Flight } from './types'
+import type { Flight, WeatherArea } from './types'
 
 const FEATURED_COUNT = 3
 
@@ -14,6 +14,7 @@ export function pickFeatured(
   caughtTodayIds: Set<string>,
   day: string,
   now = new Date(),
+  weather: WeatherArea[] = [],
 ): string[] {
   const shuffle = (f: Flight) => hashString(f.id + day)
   const candidates = flights
@@ -21,7 +22,8 @@ export function pickFeatured(
     .sort((a, b) => shuffle(a) - shuffle(b))
 
   const picked: Flight[] = []
-  const questMatch = quest && candidates.find((f) => quest.matches(f, now))
+  const questMatch =
+    quest && candidates.find((f) => quest.matches(f, now, weather))
   if (questMatch) picked.push(questMatch)
 
   // How many flights of each type are flying (fewer means rarer).

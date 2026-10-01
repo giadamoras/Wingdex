@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest'
 import { getFact } from './facts'
+import type { Hazard, WeatherArea } from './types'
 
 const flight = {
   id: 'f1',
@@ -59,4 +60,66 @@ test('an aircraft type with facts can show one of its own', () => {
       'The Embraer E190 seats passengers 2+2, so there is no middle seat.',
     ),
   ).toBe(true)
+})
+
+// A box over the flight's position (50N, 30W), valid at NOON, 0-40,000 ft.
+const stormArea = (hazard: Hazard): WeatherArea => ({
+  id: `w-${hazard}`,
+  hazard,
+  region: 'Test',
+  altitude_min_ft: 0,
+  altitude_max_ft: 40000,
+  valid_from: noon.getTime() / 1000 - 3600,
+  valid_to: noon.getTime() / 1000 + 3600,
+  polygon: [
+    { latitude: 45, longitude: -35 },
+    { latitude: 45, longitude: -25 },
+    { latitude: 55, longitude: -25 },
+    { latitude: 55, longitude: -35 },
+    { latitude: 45, longitude: -35 },
+  ],
+  movement_dir: null,
+  movement_speed_kt: null,
+})
+
+const HAZARDS: Hazard[] = [
+  'thunderstorm',
+  'turbulence',
+  'icing',
+  'volcanic_ash',
+  'tropical_cyclone',
+]
+
+test('a flight in a hazard always gets a fact about that hazard', () => {
+  for (const hazard of HAZARDS) {
+    const texts = new Set(
+      Array.from({ length: 40 }, (_, i) =>
+        getFact({ ...flight, id: `f${i}` }, noon, [stormArea(hazard)]),
+      ),
+    )
+    // Two facts per hazard, none from the ordinary pool.
+    expect(texts.size).toBeGreaterThan(0)
+    expect(texts.size).toBeLessThanOrEqual(2)
+    const normal = new Set(
+      Array.from({ length: 40 }, (_, i) =>
+        getFact({ ...flight, id: `f${i}` }, noon),
+      ),
+    )
+    for (const t of texts) expect(normal.has(t)).toBe(false)
+  }
+})
+
+test('the weather fact is stable for a flight on a given day', () => {
+  const areas = [stormArea('icing')]
+  expect(getFact(flight, noon, areas)).toBe(getFact(flight, noon, areas))
+})
+
+test('a flight outside every hazard gets the ordinary pool', () => {
+  const far = { ...flight, longitude: 100 }
+  expect(getFact(far, noon, [stormArea('icing')])).toBe(getFact(far, noon))
+})
+
+test('a flight above the hazard layer gets the ordinary pool', () => {
+  const high = { ...flight, altitude_ft: 41000 }
+  expect(getFact(high, noon, [stormArea('icing')])).toBe(getFact(high, noon))
 })

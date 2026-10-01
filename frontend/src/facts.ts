@@ -1,11 +1,17 @@
-import { airlineOf, altitudeBand, regionsOf, timeOfDay } from './attributes'
+import {
+  airlineOf,
+  altitudeBand,
+  regionsOf,
+  timeOfDay,
+  weatherAt,
+} from './attributes'
 import { dayKey } from './dates'
 import { hashString } from './hash'
-import type { Flight } from './types'
+import type { Flight, Hazard, WeatherArea } from './types'
 
 // One fact, tagged with the single flight attribute it is about. A flight
 // gets every fact whose tag matches one of its own attributes.
-type FactKind = 'type' | 'airline' | 'altitude' | 'region' | 'time'
+type FactKind = 'type' | 'airline' | 'altitude' | 'region' | 'time' | 'weather'
 interface Fact {
   kind: FactKind
   value: string
@@ -13,7 +19,8 @@ interface Fact {
 }
 
 // Values: type is the ICAO aircraft code, airline the 3-letter callsign prefix,
-// altitude/region/time the labels from attributes.ts.
+// altitude/region/time the labels from attributes.ts, weather a hazard name
+// (see Hazard in types.ts).
 const FACTS: Fact[] = [
   // Aircraft types
   {
@@ -209,6 +216,58 @@ const FACTS: Fact[] = [
     value: 'day',
     text: "A contrail only forms when the air is cold and humid enough for the engines' water vapour to freeze into ice crystals.",
   },
+
+  // Weather hazards. Shown only to a flight that is inside one (see getFact).
+  {
+    kind: 'weather',
+    value: 'thunderstorm',
+    text: 'Pilots steer around thunderstorms instead of flying through them. The tall clouds hide violent up-and-down air currents, hail and lightning, and the weather radar in the nose shows which way to go.',
+  },
+  {
+    kind: 'weather',
+    value: 'thunderstorm',
+    text: "A thunderstorm cloud can tower far above the height airliners cruise at, so climbing over it isn't an option. Pilots go around it instead, often keeping about 20 nautical miles away from the worst of it.",
+  },
+  {
+    kind: 'weather',
+    value: 'turbulence',
+    text: 'Turbulence is bumpy air, made by jet streams, mountains and storms. It can feel scary, but airliners are built to flex far more than it ever asks. The real rule is to keep your seat belt on.',
+  },
+  {
+    kind: 'weather',
+    value: 'turbulence',
+    text: 'Mountains send waves of air rippling downwind, like water flowing over a rock in a stream. Planes crossing mountain ranges like the Alps can feel those waves as bumps, even when the sky is clear.',
+  },
+  {
+    kind: 'weather',
+    value: 'icing',
+    text: 'Ice can build up on the wings and change their shape, so they make less lift. Airliners heat the wing edges and engine intakes, and pilots can climb or descend to leave an icy layer.',
+  },
+  {
+    kind: 'weather',
+    value: 'icing',
+    text: 'Icing comes from supercooled water: cloud droplets that are still liquid below freezing and turn to ice the moment they touch a plane. That is why a warning comes with a range of heights. Above or below the layer, the air is fine.',
+  },
+  {
+    kind: 'weather',
+    value: 'volcanic_ash',
+    text: 'Volcanic ash is made of tiny, glass-like pieces of rock. In a jet engine it can melt and clog the turbine, so pilots avoid ash clouds, even thin ones that are hard to see.',
+  },
+  {
+    kind: 'weather',
+    value: 'volcanic_ash',
+    text: "After Iceland's Eyjafjallajökull volcano erupted in 2010, much of Europe's airspace was shut for days, the biggest closure since World War II.",
+  },
+  {
+    kind: 'weather',
+    value: 'tropical_cyclone',
+    text: 'Hurricanes and typhoons are the same kind of storm, a tropical cyclone, named differently depending on where it forms. Airlines route flights well around them, and cancel flights to airports in their path.',
+  },
+  {
+    kind: 'weather',
+    value: 'tropical_cyclone',
+    text: "A tropical cyclone's storm clouds can reach the heights airliners cruise at, so there is no flying over one. Forecasters track each storm so routes can be planned to skirt it.",
+  },
 ]
 
 const FALLBACK_FACT =
@@ -218,7 +277,22 @@ const FALLBACK_FACT =
 // The pick is seeded by flight id and local day, not random per call: the card
 // re-renders on every poll and the Journal stores the fact that was shown, so
 // it must stay the same. It still varies between flights and between days.
-export function getFact(flight: Flight, now = new Date()): string {
+// A flight inside a weather hazard gets a fact about that hazard instead of
+// the usual pool: weather is rare and worth explaining when you meet it.
+export function getFact(
+  flight: Flight,
+  now = new Date(),
+  weather: WeatherArea[] = [],
+): string {
+  const hazards = weatherAt(flight, weather, now)
+  const weatherFacts = FACTS.filter(
+    (f) => f.kind === 'weather' && hazards.includes(f.value as Hazard),
+  )
+  if (weatherFacts.length > 0)
+    return weatherFacts[
+      hashString(flight.id + dayKey(now)) % weatherFacts.length
+    ].text
+
   const tags = new Set([
     `type:${flight.aircraft_type}`,
     `airline:${airlineOf(flight.callsign)}`,

@@ -1,15 +1,16 @@
-import { regionsOf, timeOfDay } from './attributes'
+import { regionsOf, timeOfDay, weatherAt } from './attributes'
 import { hashString } from './hash'
-import type { Flight } from './types'
+import type { Flight, Hazard, WeatherArea } from './types'
 
 // A quest template: a title, a concept fact for the completion moment, and a
 // test for whether a caught flight completes it. `at` is when the flight was
 // caught, so time-of-day quests judge the catch moment, not the current time.
+// `weather` is the hazard areas at that moment; only weather quests read it.
 export interface Quest {
   id: string
   title: string
   conceptFact: string
-  matches(flight: Flight, at?: Date): boolean
+  matches(flight: Flight, at?: Date, weather?: WeatherArea[]): boolean
 }
 
 // Thresholds in one place so they are easy to tune.
@@ -66,6 +67,43 @@ export const TURBOPROP = new Set([
   'C208',
 ])
 
+// One quest per weather hazard: catch a flight that is inside such an area, at
+// a height the hazard reaches (see weatherAt). Built from this table so adding
+// a hazard is one entry.
+const WEATHER_QUESTS: { hazard: Hazard; title: string; conceptFact: string }[] =
+  [
+    {
+      hazard: 'thunderstorm',
+      title: 'Catch a flight inside a thunderstorm area',
+      conceptFact:
+        'Thunderstorms are the weather pilots respect most. Inside them air rushes up and down at high speed, with hail and lightning too. Flights are routed around them, and advisories like the ones on this map are how crews find out where they are.',
+    },
+    {
+      hazard: 'turbulence',
+      title: 'Catch a flight in a turbulence area',
+      conceptFact:
+        'Turbulence is bumpy air. It can come from storms, jet streams, mountains, or even clear air with no cloud at all. A warning gives pilots a range of heights, so they can often climb or descend to smoother air.',
+    },
+    {
+      hazard: 'icing',
+      title: 'Catch a flight in an icing area',
+      conceptFact:
+        'Icing warnings come with a range of heights because ice only forms in a layer of cloud at certain levels. Above or below it the air is fine, so pilots can often avoid icing just by changing level.',
+    },
+    {
+      hazard: 'volcanic_ash',
+      title: 'Catch a flight in a volcanic ash area',
+      conceptFact:
+        'Ash from an erupting volcano can drift for thousands of kilometres. Special weather offices track the cloud and issue warnings, because even a thin ash cloud can damage jet engines.',
+    },
+    {
+      hazard: 'tropical_cyclone',
+      title: 'Catch a flight in a tropical cyclone area',
+      conceptFact:
+        "A tropical cyclone's storm cloud is hundreds of kilometres across and can tower to cruising height, so flights go around it. Warnings tell crews where it is and where it is heading.",
+    },
+  ]
+
 export const QUEST_TEMPLATES: Quest[] = [
   {
     id: 'high',
@@ -116,6 +154,13 @@ export const QUEST_TEMPLATES: Quest[] = [
       "Long flights often look curved on a flat map, but they're taking the shortest path. On a globe, the shortest route between two cities is a 'great circle', which bends toward the poles. That's why flights from Europe to North America pass near Iceland and Greenland.",
     matches: (f) => f.duration_min > LONG_HAUL_MIN,
   },
+  ...WEATHER_QUESTS.map(({ hazard, title, conceptFact }): Quest => ({
+    id: `weather-${hazard}`,
+    title,
+    conceptFact,
+    matches: (f, at = new Date(), weather = []) =>
+      weatherAt(f, weather, at).includes(hazard),
+  })),
 ]
 
 // Today's quest for the given local day (see dayKey): the day picks a starting
@@ -126,11 +171,12 @@ export function pickQuest(
   flights: Flight[],
   day: string,
   now = new Date(),
+  weather: WeatherArea[] = [],
 ): Quest | null {
   const start = hashString(day) % templates.length
   for (let i = 0; i < templates.length; i++) {
     const quest = templates[(start + i) % templates.length]
-    if (flights.some((f) => quest.matches(f, now))) return quest
+    if (flights.some((f) => quest.matches(f, now, weather))) return quest
   }
   return null
 }
