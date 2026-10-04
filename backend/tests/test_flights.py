@@ -129,3 +129,9 @@ def test_get_flights_endpoint() -> None:
     assert set(body[0]) == set(Flight.model_fields)
     flight = Flight.model_validate(body[0])
     assert flight.origin is not None and flight.origin.iata
+
+
+def test_flight_list_is_gzipped_when_the_browser_accepts_it() -> None:
+    response = client.get("/flights", headers={"Accept-Encoding": "gzip"})
+    assert response.headers["content-encoding"] == "gzip"
+    assert response.json()  # the client decodes it transparently

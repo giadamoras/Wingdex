@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
 from app.mock_weather import get_mock_weather
 from app.models import Flight, FlightRoute, WeatherArea
@@ -9,6 +10,9 @@ from app.routes import LookupUnavailable, RouteService
 app = FastAPI(title="Airspace Explorer API")
 provider = create_provider()  # FLIGHT_SOURCE=mock (default) or opensky
 route_service = RouteService()
+
+# The flight list is large and repetitive JSON; gzip shrinks it about 8x.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 # Allow the Vite dev server to call the API from the browser.
 app.add_middleware(

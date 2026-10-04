@@ -455,3 +455,8 @@ def test_from_env_reads_options() -> None:
 def test_defaults_are_the_normal_preset() -> None:
     provider = OpenSkyProvider.from_env({"OPENSKY_CLIENT_ID": "a", "OPENSKY_CLIENT_SECRET": "b"})
     assert (provider._ttl, provider._max_per_hour, provider._reserve) == (90.0, 200, 400)
+
+
+def test_default_cap_is_a_ceiling_above_the_whole_world() -> None:
+    provider = OpenSkyProvider.from_env({"OPENSKY_CLIENT_ID": "a", "OPENSKY_CLIENT_SECRET": "b"})
+    assert provider._max_flights == 15000

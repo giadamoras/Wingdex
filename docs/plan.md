@@ -3,7 +3,7 @@
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
 - **Done.** Milestones 1-6 (walking skeleton, living map, daily variety, Collection and badges, visual pass and onboarding, weather), summarized in the Implementation roadmap.
-- **In progress.** Milestone 7 (live data and deployment). Done: the OpenSky provider (step 1), live aircraft type, route and duration (step 2), the extra card detail and the journey readability fix. Next, in order: density (step 3), real weather (step 4), quests (step 5), world-wide mock data (step 6), deployment (step 7).
+- **In progress.** Milestone 7 (live data and deployment). Done: the OpenSky provider (step 1), live aircraft type, route and duration (step 2), the extra card detail, the journey readability fix and density (step 3). Next, in order: real weather (step 4), quests (step 5), world-wide mock data (step 6), deployment (step 7).
 
 ## Context
 
@@ -167,7 +167,7 @@ Aviation-curious people without deep aviation background — including the creat
 - **Quota (re-verified 2026-10-04).** 4,000 credits per day for a standard account, no monthly cap found. A global `/states/all` costs 4 credits, and so does any box over 400 sq°, so a bounding box saves nothing. `X-Rate-Limit-Remaining` reports what is left; at zero the API answers 429 with `X-Rate-Limit-Retry-After-Seconds`.
 - **Provider.** `providers.py` holds the `FlightProvider` Protocol and `create_provider`. `FLIGHT_SOURCE=mock` (default) or `opensky`, so a missing secret never breaks the app. `opensky.py` has the token handling, mapping, cache and dead reckoning. One shared snapshot refreshes on demand after 90 s, so no visitors means no quota use. On failure it serves the stale snapshot and backs off (30 s, or as long as a 429 asks).
 - **Credit guard** (normal preset): a 60 s refresh floor, a 200-credit hourly cap and a 400-credit reserve read from OpenSky's header. `/health` shows its state. The presets and arithmetic are in `docs/opensky-credit-guard.md`.
-- **Mapping.** `id` is the callsign, or the `icao24` address when there is none (the callsign then shows as "Unknown"). On-ground aircraft and incomplete rows are dropped, and duplicate callsigns keep the freshest report. The whole world is served, capped at 1,500 flights by a hash-of-id sample. That keeps the altitude mix (every quest can still match) and the same planes between refreshes. It is uniform, so it mirrors real traffic: Europe full, oceans, Africa and South America sparse. **Decided: keep it uniform.** A random pick each refresh was rejected because planes would flicker and selection, the once-a-day catch rule and fact choice would shift.
+- **Mapping.** `id` is the callsign, or the `icao24` address when there is none (the callsign then shows as "Unknown"). On-ground aircraft and incomplete rows are dropped, and duplicate callsigns keep the freshest report. The whole world is served, capped by a hash-of-id sample (1,500 at first; since step 3's second pass a 15,000 safety ceiling, so the whole world). That keeps the altitude mix (every quest can still match) and the same planes between refreshes. It is uniform, so it mirrors real traffic: Europe full, oceans, Africa and South America sparse. **Decided: keep it uniform.** A random pick each refresh was rejected because planes would flicker and selection, the once-a-day catch rule and fact choice would shift.
 
 **Step 1b — Readability and performance of live data (done except density).**
 
@@ -200,16 +200,36 @@ Aviation-curious people without deep aviation background — including the creat
   - Routes come from the callsign, so a wrong or outdated one is possible, and the estimate can be off by tens of minutes.
   - A tapped flight's fact can change when the lookup adds its type.
 
-**Step 3 — Density (next; approach to confirm before coding).** Option E in earlier notes. The live map is very full, and the motion measurement above ties the stutter to the plane count (1,500 markers is about 32 fps; 600 is about 57). Frontend only, no credits.
+**Step 3 — Density (done 2026-10-04).** Option E in earlier notes. The live map is very full, and the motion measurement above ties the stutter to the plane count (1,500 markers is about 32 fps; 600 is about 57). Frontend only, no credits.
 
+- **Built, first pass.** `visiblePlanes.ts` (`visibleFlights`), used by `FlightMap.tsx`: only planes in view (5% margin), thinned by a stable id hash to about 150 at world zoom, growing with zoom. Measured with 1,500 moving planes (headless Chromium, software rendering, 20 s each): opening Europe view 794 planes at 57 fps, world view 118 at 60, zoomed in 297 at 59.
+- **Second pass: sparse regions (found live by the user).** Zoomed in on Australia, Asia, Africa or South America the map looked sparse. The cause was the server's world-wide cap (1,500 of about 10,800 airborne planes is 14%), not the frontend cull: once zoomed in the frontend already drew everything it was sent. FlightRadar24 caps what is shown **per view** (a forum post says 1,500 at once, sorted by altitude; unofficial), not per world.
+  - **Payload measured** (synthetic live-like planes, the real field set): 1,500 planes 0.43 MB (0.05 MB gzipped), 4,000 planes 1.16 MB (0.14 MB), 10,800 planes 3.13 MB (0.37 MB). The server did not compress before; gzip is about 8x.
+  - **Backend (final).** `DEFAULT_MAX_FLIGHTS = 15000` in `opensky.py`, a ceiling above the whole world (about 10,800 airborne), so by default every plane is sent. It first went in at 5,000, a cautious midpoint, until the measurements below showed the full feed is fine. `OPENSKY_MAX_FLIGHTS` still changes it, and the hash sample keeps the same planes between refreshes if a lower cap is set. `GZipMiddleware` in `main.py` compresses the list.
+  - **Frontend.** `visibleFlights` now draws at most `VIEW_CAP = 800` planes in view. If more are in view, a plane is kept when its id hash is under `800 / count in view`, so a plane keeps one fixed rank and zooming in only adds planes. 800 because 794 drawn planes held 57 fps while 1,500 gave 32; the extra planes from the server only fill emptier regions. A small feed (the mock) is drawn whole. Selected, featured and onboarding-target planes are always drawn; quest picks still use the full feed.
+  - **Measured with 5,000 moving planes** (same method): opening Europe view 669 drawn at 57.5 fps, world view 716 at 57.3, zoomed in 791 at 57.0.
+  - **Measured with the full 10,800** (cap on): server 109 ms per `/flights` request (60 ms at 5,000; validate, serialise and gzip, no dead reckoning), frontend cull 0.85 ms per render, JSON parse 9 ms for 2.2 MB on a laptop; drawn 826, 890 and 787 planes at 56, 54 and 56 fps in the three views.
+  - **"All planes" switch: tried and removed (2026-10-04).** A map-control switch that lifted the draw cap was built, then removed by the user's decision. Measured with 10,800 moving planes (headless software rendering) it drew 5,705 planes at 2.9 fps in the opening Europe view, 10,800 at 1.2 fps in the world view and 2,096 at 23 fps zoomed in, so it was close to unusable. The 800 draw cap stays. Where fewer than 800 planes are in view (sparse regions zoomed in) nothing is thinned, so every plane the server sent is drawn. A zoom-gated variant (lift the cap only below about 1,500 in view) was weighed and not built.
+  - **Zooming in shows everything.** The 800 limit is on the planes in view, so each zoom step (a quarter of the area) lifts the thinning once 800 or fewer are in view. A rough, unmeasured estimate puts Europe's opening view at about 2,000-3,000 planes, so it would be fully drawn around zoom 9 of 16. The very densest spots (the London-Paris-Frankfurt corridor at peak) might still exceed 800 at the maximum zoom; not checked.
+  - **To check live (user):** whether Australia, Asia, Africa and South America now look right, whether Europe's opening view is too dense, how many planes are really in view before the cap (a temporary log would give it), and the poll size and server time on a real feed. The cap is one setting (`OPENSKY_MAX_FLIGHTS`) and one constant (`VIEW_CAP`).
+  - **Known limits.** Unmeasured: the JSON parse and React work on a phone, and dead reckoning time on the server for the whole world. Where more than 800 planes are in view the cut is by hash rank, so which planes show is arbitrary.
+
+- **Decided 2026-10-04 (approach C, refined in the second pass).** Viewport cull plus a cap on the planes in view (first a cap that grew with zoom, then a flat 800 in view); balanced priority (smooth at world zoom, fuller as you zoom in); no marker spacing; target about 55 fps or more in the repeated measurement.
 - **Approach.**
-  - Draw only the planes in the visible area, capped at about 150 at once, with more revealed as you zoom in.
+  - Draw only the planes in the visible area, at most 800 at once (second pass; the first pass used a cap that grew with zoom from about 150).
   - The cap is filled by a stable hash of the flight id, so planes do not flicker when panning (one plane, one fixed rank). A "most interesting first" ranking (rare types, extremes, weather) is left for later.
   - Quest, featured, selected and onboarding-target planes are always shown. Quest and featured picks are still made from the full feed, so a server-side or visible-area filter cannot starve them.
-  - Space out overlapping markers, like the country labels.
+  - Overlapping markers stay as they are (decided: like FlightRadar24, a crowded sky is fine).
   - Must keep working with the glide, the jump snap and the route/replay dimming in `FlightMap.tsx`.
 - **Alternatives weighed.** A per-grid-cell cap on the server (B) thins Europe but reverses "keep it uniform"; a learning-first selection (A) needs good type data. Neither is planned now.
-- **Done when:** the 1,500-flight measurement above is repeated and the map holds a steady frame rate, panning and zooming do not make planes pop in and out distractingly, and the selected, quest and featured planes are never hidden.
+- **Done when:** the plane-count measurement is repeated and the map holds about 55 fps or more (done with 1,500, 5,000 and 10,800 planes sent), panning and zooming do not make planes pop in and out distractingly, and the selected, quest and featured planes are never hidden.
+- **Nice to have, out of scope for this step.**
+  - A "most interesting first" ranking (rare types, extremes, weather) in place of the hash order.
+  - Clustering or count badges in dense areas.
+  - Cheaper rendering (a canvas or SVG layer) if the DOM markers are still too heavy, for example on a phone.
+  - Server-side thinning (per grid cell), which would reverse "keep it uniform".
+  - A per-view server request (`/flights?bbox=`, like FlightRadar24 may do) or a hybrid base-plus-detail feed, if sending the whole world proves too heavy (payload, server time or a phone). Weighed in the second pass; not needed yet.
+  - Testing on a real GPU and a phone (the measurements so far are headless software rendering).
 
 **Step 4 — Real weather.** A provider behind the existing `/weather` contract that maps the AWC `isigmet` JSON into `WeatherArea` (field notes and unconfirmed details are in Milestone 6), with server-side caching inside its rate limit. Decide what to do with real SIGMETs being sparse and issued around real events: the weather quests may often have nothing to match, and a quest saved for the day can outlive its hazard.
 
@@ -218,6 +238,8 @@ Aviation-curious people without deep aviation background — including the creat
 **Step 6 — World-wide mock data.** Spread the mock feed over the whole world to match a world-wide live feed, so a demo without OpenSky credentials looks like the real thing. The mock's weather areas may need the same.
 
 **Step 7 — Deployment.** Deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, and decide whether Planespotters photos are worth adding once there is a project URL.
+
+**Milestone 8 - Flight Tracking** Track a specific flight in real time. Search or enter a flight number (callsign) and follow that plane live, even when it is not among the planes drawn. Specifics are undecided: how the flight is found (search box, URL, or from the flight card), whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in OpenSky credits, and how it interacts with the density logic, the daily catch rule and the journal.
 
 **Nice-to-have, after the MVP:** streak counter, richer mascot dialogue, larger fact pools, a collection-progress view.
 

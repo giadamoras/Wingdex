@@ -40,6 +40,10 @@ DEFAULT_CACHE_TTL_S = 90.0  # usual time between refreshes
 DEFAULT_MIN_TTL_S = 60.0  # refreshes never come closer together than this
 DEFAULT_MAX_CREDITS_PER_HOUR = 200
 DEFAULT_CREDIT_RESERVE = 400  # stop refreshing when OpenSky says this few credits are left
+# Flights served at most. Only a safety ceiling: about 10,800 are airborne at once, so by
+# default the whole world is sent. The frontend decides what to draw, and gzip keeps the
+# poll small (measured in docs/plan.md, step 3).
+DEFAULT_MAX_FLIGHTS = 15000
 HOUR_S = 3600
 RESERVE_PROBE_S = 1800  # under the reserve, check again at most this often
 
@@ -203,7 +207,7 @@ class OpenSkyProvider:
         min_ttl_s: float = DEFAULT_MIN_TTL_S,
         max_credits_per_hour: int = DEFAULT_MAX_CREDITS_PER_HOUR,
         credit_reserve: int = DEFAULT_CREDIT_RESERVE,
-        max_flights: int = 1500,
+        max_flights: int = DEFAULT_MAX_FLIGHTS,
         aircraft_types: Mapping[str, str] | None = None,  # None: the bundled type file
         http: httpx.Client | None = None,
         clock: Callable[[], float] = time.time,
@@ -255,7 +259,7 @@ class OpenSkyProvider:
                 env.get("OPENSKY_MAX_CREDITS_PER_HOUR", DEFAULT_MAX_CREDITS_PER_HOUR)
             ),
             credit_reserve=int(env.get("OPENSKY_CREDIT_RESERVE", DEFAULT_CREDIT_RESERVE)),
-            max_flights=int(env.get("OPENSKY_MAX_FLIGHTS", "1500")),
+            max_flights=int(env.get("OPENSKY_MAX_FLIGHTS", str(DEFAULT_MAX_FLIGHTS))),
         )
 
     def status(self) -> dict[str, str | int | None]:

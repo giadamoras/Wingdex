@@ -891,7 +891,7 @@ test('catching a flight inside a thunderstorm completes the weather quest', asyn
 
 test('a catch outside the weather does not complete the weather quest', async () => {
   pinQuest('weather-thunderstorm')
-  const faraway = { ...flights[0], id: 'f9', callsign: 'TST9', latitude: -20 }
+  const faraway = { ...flights[0], id: 'f9', callsign: 'TST9', latitude: 40 }
   vi.stubGlobal(
     'fetch',
     vi.fn(() =>

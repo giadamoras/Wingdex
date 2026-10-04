@@ -20,20 +20,34 @@ const flight = (id: string, latitude: number, longitude: number): Flight => ({
   destination: null,
 })
 
-test('renders one dot per flight at its projected position', () => {
+test('renders one dot per flight in view at its projected position', () => {
   const { west, north } = MAP_BOUNDS
   render(
     <FlightMap
-      flights={[flight('1', north, west), flight('2', 49, 5)]}
+      flights={[flight('1', 50, 10), flight('2', 49, 5)]}
       selectedId={null}
       onSelect={() => {}}
     />,
   )
 
+  // The map opens zoomed in on Europe; 50N 10E is at x = 190/360, y = 30/140.
   const first = screen.getByTitle('CS1')
-  expect(first.style.left).toBe('0%')
-  expect(first.style.top).toBe('0%')
+  expect(parseFloat(first.style.left)).toBeCloseTo(((10 - west) / 360) * 100)
+  expect(parseFloat(first.style.top)).toBeCloseTo(((north - 50) / 140) * 100)
   expect(screen.getByTitle('CS2')).toBeTruthy()
+})
+
+test('planes outside the view are not drawn, unless selected', () => {
+  const { west, north } = MAP_BOUNDS
+  const flights = [flight('1', north, west), flight('2', 49, 5)]
+  const { rerender } = render(
+    <FlightMap flights={flights} selectedId={null} onSelect={() => {}} />,
+  )
+  expect(screen.queryByTitle('CS1')).toBeNull()
+  expect(screen.getByTitle('CS2')).toBeTruthy()
+
+  rerender(<FlightMap flights={flights} selectedId="1" onSelect={() => {}} />)
+  expect(screen.getByTitle('CS1')).toBeTruthy()
 })
 
 test('rotates each plane to its heading', () => {

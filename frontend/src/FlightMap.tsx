@@ -10,6 +10,7 @@ import { FIT_MS, prefersReducedMotion, type ReplayState } from './replay'
 import { RouteLayer } from './RouteLayer'
 import type { Flight, WeatherArea } from './types'
 import { usePanZoom } from './usePanZoom'
+import { visibleFlights } from './visiblePlanes'
 import { WeatherLayer } from './WeatherLayer'
 import { WorldLand } from './WorldLand'
 
@@ -72,6 +73,13 @@ export function FlightMap({
     START_VIEW,
   )
   const selected = flights.find((f) => f.id === selectedId) ?? null
+  // Only the planes in view, thinned when crowded; the selected, featured and
+  // target planes are always drawn.
+  const drawn = visibleFlights(flights, view, [
+    selectedId,
+    targetId,
+    ...featuredIds,
+  ])
 
   // The map box's rendered width in real pixels, so CountryBorders can turn
   // the fractional pan/zoom view into real pixel gaps for its label
@@ -155,7 +163,7 @@ export function FlightMap({
             replay={replay?.flight.id === selected.id ? replay : null}
           />
         )}
-        {flights.map((f) => {
+        {drawn.map((f) => {
           const { x, y } = project(f.latitude, f.longitude)
           const className = [
             'plane',
