@@ -2,6 +2,7 @@ import { expect, test } from 'vitest'
 import {
   formatAltitudeBand,
   formatCaughtAt,
+  formatClimb,
   formatDuration,
   formatStampDate,
 } from './format'
@@ -39,4 +40,16 @@ test('shows an altitude band from the ground as "up to"', () => {
 
 test('shows an altitude band with both bounds', () => {
   expect(formatAltitudeBand(20000, 38000)).toBe('20,000–38,000 ft')
+})
+
+test('formatClimb shows the direction and a rounded rate', () => {
+  expect(formatClimb(1850)).toBe('↗ 1,900 ft/min')
+  expect(formatClimb(-2210)).toBe('↘ 2,200 ft/min')
+})
+
+test('formatClimb calls a small rate level and an unknown one nothing', () => {
+  expect(formatClimb(0)).toBe('level')
+  expect(formatClimb(-299)).toBe('level')
+  expect(formatClimb(null)).toBeNull()
+  expect(formatClimb(undefined)).toBeNull()
 })

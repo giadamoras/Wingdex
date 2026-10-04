@@ -43,3 +43,12 @@ export function formatAltitudeBand(minFt: number, maxFt: number): string {
   const n = (ft: number) => ft.toLocaleString('en-US')
   return minFt <= 0 ? `up to ${n(maxFt)} ft` : `${n(minFt)}–${n(maxFt)} ft`
 }
+
+// Climb or descent as a short label, e.g. "↗ 1,900 ft/min", or "level" when it
+// is under 300 ft/min either way (cruise wobble). null when unknown.
+export function formatClimb(fpm: number | null | undefined): string | null {
+  if (fpm === null || fpm === undefined) return null
+  if (Math.abs(fpm) < 300) return 'level'
+  const rate = Math.round(Math.abs(fpm) / 100) * 100
+  return `${fpm > 0 ? '↗' : '↘'} ${rate.toLocaleString('en-US')} ft/min`
+}

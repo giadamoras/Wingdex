@@ -730,6 +730,21 @@ h1 {
   letter-spacing: 0.05em;
 }
 
+/* The cities behind the route's codes, and the extra detail from the lookup. */
+.cities {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.details {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 .lost,
 .route-note {
   margin: 10px 0 0;

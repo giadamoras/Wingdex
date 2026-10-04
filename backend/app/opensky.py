@@ -31,6 +31,7 @@ STATES_URL = "https://opensky-network.org/api/states/all"
 
 M_TO_FT = 3.28084
 MS_TO_KT = 1.94384
+MS_TO_FPM = 196.85  # metres per second to feet per minute
 
 NO_CALLSIGN = "Unknown"  # shown for a plane that sends no callsign
 
@@ -64,9 +65,9 @@ def map_state(row: list[Any], types: Mapping[str, str] | None = None) -> Tracked
     """Turn one OpenSky state vector into a Flight, or None if it can't be a valid one.
 
     `types` maps icao24 to an ICAO type code; a plane it doesn't know has no type.
-    Field indexes: 0 icao24, 1 callsign, 3 time_position, 4 last_contact, 5 longitude,
-    6 latitude, 7 baro_altitude (m), 8 on_ground, 9 velocity (m/s), 10 true_track,
-    13 geo_altitude (m).
+    Field indexes: 0 icao24, 1 callsign, 2 origin_country, 3 time_position, 4 last_contact,
+    5 longitude, 6 latitude, 7 baro_altitude (m), 8 on_ground, 9 velocity (m/s),
+    10 true_track, 11 vertical_rate (m/s), 13 geo_altitude (m).
     """
     if len(row) < 11 or row[8]:  # too short, or parked on the ground
         return None
@@ -95,6 +96,9 @@ def map_state(row: list[Any], types: Mapping[str, str] | None = None) -> Tracked
     if heading >= 360:  # a tiny negative track can round up to exactly 360
         heading = 0.0
     callsign = row[1].strip().upper() if isinstance(row[1], str) else ""
+    # Rows can be short: the climb rate and country are nice to have, not required.
+    rate = _num(row[11]) if len(row) > 11 else None
+    country = row[2].strip() or None if isinstance(row[2], str) else None
     flight = Flight(
         # The callsign names the flight; the airframe address stands in when there is none.
         id=callsign or icao24,
@@ -105,6 +109,8 @@ def map_state(row: list[Any], types: Mapping[str, str] | None = None) -> Tracked
         altitude_ft=max(0, round(altitude_m * M_TO_FT)),
         heading=heading,
         speed_kt=speed_kt,
+        vertical_rate_fpm=None if rate is None else round(rate * MS_TO_FPM),
+        registered_country=country,
     )
     return Tracked(flight, icao24, position_time)
 

@@ -10,7 +10,7 @@ import logging
 import threading
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -46,6 +46,8 @@ class Found:
     aircraft_type: str | None
     origin: Airport | None  # origin and destination are both set, or both None
     destination: Airport | None
+    # Extra detail for the card (airline, tail number, ...); see FlightRoute.
+    details: dict[str, str] = field(default_factory=dict)
 
 
 def estimate_duration_min(origin: Airport, destination: Airport) -> int:
@@ -77,15 +79,40 @@ def to_route(found: Found, flight: Flight) -> FlightRoute:
         or found.destination is None
         or not is_plausible(flight, found.origin, found.destination)
     ):
-        return FlightRoute(aircraft_type=found.aircraft_type)
+        return FlightRoute(aircraft_type=found.aircraft_type).model_copy(update=found.details)
     minutes = estimate_duration_min(found.origin, found.destination)
-    return FlightRoute(
+    route = FlightRoute(
         aircraft_type=found.aircraft_type,
         origin=found.origin,
         destination=found.destination,
         duration_min=minutes,
         duration_estimated=True,
     )
+    return route.model_copy(update=found.details)
+
+
+def _text(data: Any, key: str) -> str | None:
+    """A non-empty string field of an adsbdb object, or None."""
+    value = data.get(key) if isinstance(data, dict) else None
+    return value.strip() or None if isinstance(value, str) else None
+
+
+def _details(aircraft: Any, flightroute: Any) -> dict[str, str]:
+    """The card's extra detail, by FlightRoute field name; only what adsbdb told us.
+
+    The airline comes from the callsign, so it still holds when the route itself was
+    rejected as being for another leg.
+    """
+    airline = flightroute.get("airline") if isinstance(flightroute, dict) else None
+    wanted = {
+        "airline": _text(airline, "name"),
+        "airline_country": _text(airline, "country"),
+        "registration": _text(aircraft, "registration"),
+        "manufacturer": _text(aircraft, "manufacturer"),
+        "model": _text(aircraft, "type"),
+        "operator": _text(aircraft, "registered_owner"),
+    }
+    return {k: v for k, v in wanted.items() if v is not None}
 
 
 def _airport(data: Any) -> Airport | None:
@@ -99,6 +126,8 @@ def _airport(data: Any) -> Airport | None:
             name=str(data["name"]),
             latitude=float(data["latitude"]),
             longitude=float(data["longitude"]),
+            city=_text(data, "municipality"),
+            country=_text(data, "country_name"),
         )
     except (KeyError, TypeError, ValueError):
         return None
@@ -178,6 +207,7 @@ class RouteService:
             )
             if origin is None or destination is None:
                 origin = destination = None
-        if aircraft_type is None and origin is None:
+        details = _details(aircraft, flightroute)
+        if aircraft_type is None and origin is None and not details:
             return None
-        return Found(aircraft_type, origin, destination)
+        return Found(aircraft_type, origin, destination, details)

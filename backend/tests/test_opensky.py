@@ -31,11 +31,13 @@ def make_row(
     track: float | None = 90.0,
     geo: float | None = 10100.0,
     time_position: float | None = T0,
+    rate: float | None = 0.0,
+    country: str | None = "United Kingdom",
 ) -> list[Any]:
     """An OpenSky state vector (18 fields)."""
     return [
-        icao24, callsign, "United Kingdom", time_position, T0, lon, lat, baro, ground,
-        velocity, track, 0.0, None, geo, None, False, 0, 0,
+        icao24, callsign, country, time_position, T0, lon, lat, baro, ground,
+        velocity, track, rate, None, geo, None, False, 0, 0,
     ]  # fmt: skip
 
 
@@ -57,6 +59,21 @@ def test_map_state_converts_units_and_cleans_callsign() -> None:
     # No type database was given, and OpenSky has no duration or route: all unknown.
     assert flight.aircraft_type is None and flight.duration_min is None
     assert flight.origin is None and flight.destination is None
+
+
+def test_map_state_keeps_the_climb_rate_and_registration_country() -> None:
+    flight = mapped(make_row(rate=10.0, country=" Ireland "))
+    assert flight.vertical_rate_fpm == 1968  # 10 m/s
+    assert flight.registered_country == "Ireland"
+    descending = mapped(make_row(rate=-5.0))
+    assert descending.vertical_rate_fpm == -984
+    unknown = mapped(make_row(rate=None, country=None))
+    assert unknown.vertical_rate_fpm is None and unknown.registered_country is None
+
+
+def test_map_state_copes_with_a_short_row() -> None:
+    flight = mapped(make_row()[:11])
+    assert flight.vertical_rate_fpm is None
 
 
 def test_map_state_looks_up_the_type_by_icao24() -> None:

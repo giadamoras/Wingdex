@@ -5,6 +5,9 @@ export interface Airport {
   name: string
   latitude: number // degrees
   longitude: number // degrees
+  // Only a live route lookup knows these.
+  city?: string | null
+  country?: string | null
 }
 
 // Mirrors the backend Flight model (GET /flights).
@@ -26,6 +29,10 @@ export interface Flight {
   // null when the data source doesn't know the route (e.g. live feeds).
   origin: Airport | null
   destination: Airport | null
+  // Live feed only: feet per minute (+ climbing, - descending) and the country
+  // the plane is registered in. Missing for the mock and in older Journal entries.
+  vertical_rate_fpm?: number | null
+  registered_country?: string | null
 }
 
 // Mirrors the backend FlightRoute model (GET /flights/{id}/route): what a
@@ -36,6 +43,13 @@ export interface FlightRoute {
   destination: Airport | null
   duration_min: number | null
   duration_estimated: boolean
+  // Extra detail for the card, shown as text; never used for gameplay.
+  airline?: string | null
+  airline_country?: string | null
+  registration?: string | null // the tail number
+  manufacturer?: string | null
+  model?: string | null
+  operator?: string | null // the registered owner, who may not be the airline
 }
 
 export interface JournalEntry {

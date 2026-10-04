@@ -11,6 +11,9 @@ class Airport(BaseModel):
     name: str
     latitude: float = Field(ge=-90, le=90)  # degrees
     longitude: float = Field(ge=-180, le=180)  # degrees
+    # Only a live route lookup knows these.
+    city: str | None = None  # e.g. "London"
+    country: str | None = None  # e.g. "United Kingdom"
 
 
 class Flight(BaseModel):
@@ -30,6 +33,10 @@ class Flight(BaseModel):
     duration_estimated: bool = False  # True when worked out from the route, not scheduled
     origin: Airport | None = None
     destination: Airport | None = None
+    # Live feed only (the mock has neither): feet per minute, + climbing / - descending,
+    # and the country the plane is registered in.
+    vertical_rate_fpm: int | None = None
+    registered_country: str | None = None
 
 
 class FlightRoute(BaseModel):
@@ -43,6 +50,13 @@ class FlightRoute(BaseModel):
     destination: Airport | None = None
     duration_min: int | None = Field(default=None, gt=0)
     duration_estimated: bool = False
+    # The rest is shown as extra detail on the card, never used for gameplay.
+    airline: str | None = None  # e.g. "Ryanair"
+    airline_country: str | None = None
+    registration: str | None = None  # the tail number, e.g. "EI-EJH"
+    manufacturer: str | None = None  # e.g. "Airbus"
+    model: str | None = None  # e.g. "A330 202"
+    operator: str | None = None  # the registered owner, who may not be the airline
 
 
 class LatLon(BaseModel):

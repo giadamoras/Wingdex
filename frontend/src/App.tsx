@@ -160,6 +160,7 @@ function App() {
                   flight={current}
                   weather={weatherAreas}
                   routeStatus={lookup.status}
+                  details={lookup.route}
                   lost={lost}
                   caught={caughtToday}
                   replaying={replay?.flight.id === current.id}

@@ -18,7 +18,14 @@ from app.routes import (
 LHR = Airport(icao="EGLL", iata="LHR", name="London Heathrow", latitude=51.47, longitude=-0.46)
 JFK = Airport(icao="KJFK", iata="JFK", name="New York JFK", latitude=40.64, longitude=-73.78)
 
-AIRCRAFT = {"type": "Boeing 777-300ER", "icao_type": "B77W", "mode_s": "ABC123"}
+AIRCRAFT = {
+    "type": "777-336ER",
+    "icao_type": "B77W",
+    "manufacturer": "Boeing",
+    "mode_s": "ABC123",
+    "registration": "G-STBA",
+    "registered_owner": "British Airways",
+}
 
 
 def airport_json(a: Airport, iata: str | None = None) -> dict[str, Any]:
@@ -28,10 +35,18 @@ def airport_json(a: Airport, iata: str | None = None) -> dict[str, Any]:
         "name": a.name,
         "latitude": a.latitude,
         "longitude": a.longitude,
+        "municipality": a.name.split()[0],  # "London", "New"
+        "country_name": "Somewhere",
     }
 
 
-ROUTE = {"callsign": "BAW117", "origin": airport_json(LHR), "destination": airport_json(JFK)}
+AIRLINE = {"name": "British Airways", "country": "United Kingdom", "icao": "BAW"}
+ROUTE = {
+    "callsign": "BAW117",
+    "airline": AIRLINE,
+    "origin": airport_json(LHR),
+    "destination": airport_json(JFK),
+}
 
 
 def flight_at(lat: float, lon: float, callsign: str = "BAW117") -> Flight:
@@ -215,3 +230,41 @@ def test_plausibility() -> None:
     assert not is_plausible(flight_at(0.0, -150.0), LHR, JFK)  # wrong ocean
     assert not is_plausible(flight_at(10.0, 100.0), LHR, JFK)  # behind the origin
     assert not is_plausible(mid_atlantic(), LHR, LHR)  # not a route at all
+
+
+def test_extra_detail_comes_from_the_aircraft_and_the_airline() -> None:
+    fake = FakeAdsbdb({COMBINED: (200, {"response": {"aircraft": AIRCRAFT, "flightroute": ROUTE}})})
+    route = service(fake).lookup(mid_atlantic(), "abc123")
+    assert route is not None
+    assert (route.airline, route.airline_country) == ("British Airways", "United Kingdom")
+    assert (route.registration, route.manufacturer, route.model) == (
+        "G-STBA",
+        "Boeing",
+        "777-336ER",
+    )
+    assert route.operator == "British Airways"
+    assert route.origin is not None and route.origin.city == "London"
+    assert route.origin.country == "Somewhere"
+
+
+def test_detail_that_adsbdb_lacks_stays_unknown() -> None:
+    aircraft = {"icao_type": "B77W", "registration": "  "}
+    fake = FakeAdsbdb({COMBINED: (200, {"response": {"aircraft": aircraft, "flightroute": ROUTE}})})
+    route = service(fake).lookup(mid_atlantic(), "abc123")
+    assert route is not None
+    assert route.registration is None and route.model is None
+
+
+def test_the_airline_and_aircraft_survive_a_route_for_another_leg() -> None:
+    fake = FakeAdsbdb({COMBINED: (200, {"response": {"aircraft": AIRCRAFT, "flightroute": ROUTE}})})
+    route = service(fake).lookup(flight_at(-30.0, 100.0), "abc123")  # nowhere near the route
+    assert route is not None and route.origin is None
+    assert route.airline == "British Airways" and route.registration == "G-STBA"
+
+
+def test_detail_alone_is_still_an_answer() -> None:
+    aircraft = {"registration": "G-STBA"}  # no type code
+    fake = FakeAdsbdb({"aircraft/abc123": (200, {"response": {"aircraft": aircraft}})})
+    route = service(fake).lookup(mid_atlantic(), "abc123")
+    assert route is not None and route.aircraft_type is None
+    assert route.registration == "G-STBA"
