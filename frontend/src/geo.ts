@@ -63,6 +63,45 @@ export function progressAlong(a: Point, b: Point, p: Point): number {
   return Math.min(1, Math.max(0, angularDistance(a, p) / total))
 }
 
+// 0 at both ends of the route and 1 at `peak` (the plane's fraction of the way),
+// easing in and out so the bend is smooth, with no kink at the plane.
+function bump(t: number, peak: number): number {
+  if (t <= peak) return peak <= 0 ? 1 : Math.sin((Math.PI / 2) * (t / peak))
+  return peak >= 1 ? 1 : Math.cos((Math.PI / 2) * ((t - peak) / (1 - peak)))
+}
+
+// A point `t` (0..1) of the way along a route from a to b that passes through
+// `via` (the plane). A real plane is rarely on the great circle (airways, ocean
+// tracks, winds), so the arc is shifted sideways, by nothing at the airports and
+// by exactly the plane's offset where the plane is. A plane on the arc leaves
+// the arc unchanged.
+export function curvePoint(a: Point, b: Point, via: Point, t: number): Point {
+  const peak = progressAlong(a, b, via)
+  const here = interpolate(a, b, peak)
+  const dLat = via.latitude - here.latitude
+  // Take the short way round if the offset crosses the date line.
+  const dLon = ((via.longitude - here.longitude + 540) % 360) - 180
+  const p = interpolate(a, b, t)
+  const w = bump(t, peak)
+  return { latitude: p.latitude + dLat * w, longitude: p.longitude + dLon * w }
+}
+
+// Points along that curve from fraction `from` to `to`, ends included, so a
+// section that starts or ends at the plane's own fraction touches the plane.
+export function curveThrough(
+  a: Point,
+  b: Point,
+  via: Point,
+  from = 0,
+  to = 1,
+  segments = 64,
+): Point[] {
+  const n = Math.max(1, Math.ceil(segments * (to - from)))
+  return Array.from({ length: n + 1 }, (_, i) =>
+    curvePoint(a, b, via, from + ((to - from) * i) / n),
+  )
+}
+
 // Points along the great circle from fraction `from` to `to` (0..1), so the
 // curve looks smooth on the flat map. Always includes both ends.
 export function routePoints(

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
 import { timeOfDay } from './attributes'
 import { CountryBorders } from './CountryBorders'
-import { routePoints } from './geo'
+import { curveThrough } from './geo'
 import { centredOn, centreOf, fitBounds } from './panzoom'
 import { PlaneIcon } from './PlaneIcon'
 import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
@@ -21,10 +21,10 @@ const NO_WEATHER: WeatherArea[] = []
 const europe = project(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
 const START_VIEW = centredOn(europe.x / 100, europe.y / 100, 5)
 
-// The view that shows a flight's whole route.
+// The view that shows a flight's whole route (the curve through the plane).
 function routeView(flight: Flight) {
-  const points = routePoints(flight.origin!, flight.destination!).map((p) =>
-    project(p.latitude, p.longitude),
+  const points = curveThrough(flight.origin!, flight.destination!, flight).map(
+    (p) => project(p.latitude, p.longitude),
   )
   const xs = points.map((p) => p.x / 100)
   const ys = points.map((p) => p.y / 100)
@@ -119,10 +119,15 @@ export function FlightMap({
     action()
   }
 
+  // Focus mode (index.css): the other planes dim while a flight is selected and
+  // all but vanish during its journey replay, so its route stays readable.
+  const focus = replay ? 'replay' : selected ? 'selected' : undefined
+
   return (
     <div
       className="map"
       data-map-time={mapTime}
+      data-focus={focus}
       ref={mapRef}
       onClick={() => {
         setWeatherId(null)

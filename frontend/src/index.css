@@ -321,8 +321,14 @@ h1 {
   border: none;
   background: none;
   cursor: pointer;
-  /* Centre on the position, and undo the map's zoom so planes keep their size. */
-  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
+  /* Centre on the position, and undo the map's zoom so planes keep their size.
+     Zoomed far out they shrink (down to 0.6, at zoom 2.4 and below), because
+     28 px planes pile up into a wall when the whole world is in view. */
+  transform: translate(-50%, -50%)
+    scale(calc(clamp(0.6, var(--zoom, 1) / 4, 1) / var(--zoom, 1)));
+  /* Above the land and weather; the selected route is above this (2) and the
+     selected plane above that (3), so the route reads over the traffic. */
+  z-index: 1;
   /* Glide for one poll interval (5 s, POLL_INTERVAL_MS) so movement looks continuous. */
   transition:
     left 5s linear,
@@ -335,7 +341,32 @@ h1 {
   transition: none;
 }
 
+.plane.selected {
+  z-index: 3;
+}
+
+/* Focus mode (FlightMap's data-focus): with a flight selected the other planes
+   dim, and during its journey replay they all but vanish and can't be clicked,
+   so the route stays readable. The dimming is on the icon, not the plane,
+   which has its own fade-in animation. */
+.map[data-focus] .plane:not(.selected) .plane-icon {
+  opacity: 0.3;
+}
+
+.map[data-focus='replay'] .plane:not(.selected) {
+  pointer-events: none;
+}
+
+.map[data-focus='replay'] .plane:not(.selected) .plane-icon {
+  opacity: 0; /* fully: even a faint drop shadow left smudges on the sea */
+}
+
+.map[data-focus='replay'] .plane:not(.selected)::after {
+  display: none; /* the featured and target rings too */
+}
+
 .plane-icon {
+  transition: opacity 0.3s;
   width: 100%;
   height: 100%;
   fill: var(--accent);
@@ -392,6 +423,20 @@ h1 {
   height: 100%;
   overflow: visible;
   pointer-events: none;
+  z-index: 2; /* above the other planes (1), under the selected one (3) */
+}
+
+/* A paper-coloured outline under each route line, so it reads over land and
+   planes. Wider than the line, same zoom compensation. */
+.route-lines .route-casing {
+  /* (Selector as long as `.route-lines polyline`, which would set the stroke to ink.) */
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: calc(7px / var(--zoom, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.85;
 }
 
 .route-lines polyline {
@@ -418,6 +463,7 @@ h1 {
 /* Airport at each end of the route: a dot with its code in a small chip. */
 .route-end {
   position: absolute;
+  z-index: 2; /* with the route line */
   width: 10px;
   height: 10px;
   transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
@@ -447,6 +493,7 @@ h1 {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 3; /* over the route and the other planes */
 }
 
 /* Replay ghost: a see-through copy of the plane. */

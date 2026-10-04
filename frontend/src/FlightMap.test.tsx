@@ -159,6 +159,54 @@ test('the map carries a time-of-day attribute for the palette CSS to key off', (
   expect(['dawn', 'day', 'dusk', 'night']).toContain(mapTime)
 })
 
+test('focus mode: the map is marked while a flight is selected, and during a replay', () => {
+  const lhr = {
+    icao: 'EGLL',
+    iata: 'LHR',
+    name: 'Heathrow',
+    latitude: 51.47,
+    longitude: -0.45,
+  }
+  const jfk = {
+    icao: 'KJFK',
+    iata: 'JFK',
+    name: 'JFK',
+    latitude: 40.64,
+    longitude: -73.78,
+  }
+  const routed = { ...flight('1', 52, -30), origin: lhr, destination: jfk }
+  const focusOf = (container: HTMLElement) =>
+    container.querySelector('.map')!.getAttribute('data-focus')
+
+  const { container, rerender } = render(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBeNull() // nothing selected: nothing dims
+
+  rerender(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId="1"
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBe('selected')
+
+  rerender(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId="1"
+      replay={{ flight: routed, startedAt: 0, phase: 'flying', progress: 0.5 }}
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBe('replay')
+})
+
 test('featured planes get the ring class', () => {
   render(
     <FlightMap

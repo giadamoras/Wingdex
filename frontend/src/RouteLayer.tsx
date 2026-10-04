@@ -1,4 +1,4 @@
-import { bearing, interpolate, progressAlong, routePoints } from './geo'
+import { bearing, curvePoint, curveThrough, progressAlong } from './geo'
 import type { Point } from './geo'
 import { PlaneIcon } from './PlaneIcon'
 import { project } from './projection'
@@ -36,9 +36,29 @@ function Endpoint({ airport }: { airport: Airport }) {
   )
 }
 
-// The selected flight's great-circle route, drawn under the planes:
+// A route line with a paper-coloured outline underneath ("casing"), so it
+// stays readable over the land, the borders and the planes around it.
+function RouteLine({
+  className,
+  points,
+}: {
+  className: string
+  points: string
+}) {
+  return (
+    <>
+      <polyline className="route-casing" points={points} />
+      <polyline className={className} points={points} />
+    </>
+  )
+}
+
+// The selected flight's route, drawn above the other planes (but under the
+// selected one, see index.css). It is the great circle from origin to
+// destination, bent so it passes exactly through the plane (see curveThrough):
 // - normally: solid from the origin to the plane, dashed ahead of it;
-// - during a replay: all dashed, with a ghost plane leaving a solid trail;
+// - during a replay: all dashed, with a ghost plane leaving a solid trail
+//   along the same curve;
 // - while landing: the normal style, with the ghost and trail fading out.
 // Nothing is drawn when the route is unknown.
 export function RouteLayer({
@@ -55,15 +75,20 @@ export function RouteLayer({
   const landing = replay?.phase === 'landing'
   const done = progressAlong(origin, destination, flight)
 
-  // Ghost position, and its heading from just before the end so it never
-  // has to aim at the point it's already on.
-  const ghostAt = replay && interpolate(origin, destination, replay.progress)
-  const ghostHeading =
-    replay &&
-    bearing(
-      interpolate(origin, destination, Math.min(replay.progress, 0.999)),
-      destination,
-    )
+  // Every line and the ghost follow the curve through the plane.
+  const curve = (from = 0, to = 1) =>
+    curveThrough(origin, destination, flight, from, to)
+  const curveAt = (t: number) => curvePoint(origin, destination, flight, t)
+
+  // Ghost position, and its heading from a point just ahead of it on the curve
+  // (stepping back near the end), so it never has to aim at where it already is.
+  const ghostAt = replay && curveAt(replay.progress)
+  const ghostHeading = replay
+    ? bearing(
+        curveAt(Math.min(replay.progress, 0.99)),
+        curveAt(Math.min(replay.progress, 0.99) + 0.01),
+      )
+    : null
 
   return (
     <>
@@ -74,26 +99,17 @@ export function RouteLayer({
         aria-hidden="true"
       >
         {flying ? (
-          <polyline
-            className="route-ahead"
-            points={toSvg(routePoints(origin, destination))}
-          />
+          <RouteLine className="route-ahead" points={toSvg(curve())} />
         ) : (
           <>
-            <polyline
-              className="route-flown"
-              points={toSvg(routePoints(origin, destination, 0, done))}
-            />
-            <polyline
-              className="route-ahead"
-              points={toSvg(routePoints(origin, destination, done, 1))}
-            />
+            <RouteLine className="route-flown" points={toSvg(curve(0, done))} />
+            <RouteLine className="route-ahead" points={toSvg(curve(done, 1))} />
           </>
         )}
         {replay && (
           <polyline
             className={landing ? 'route-trail fading' : 'route-trail'}
-            points={toSvg(routePoints(origin, destination, 0, replay.progress))}
+            points={toSvg(curve(0, replay.progress))}
           />
         )}
       </svg>
