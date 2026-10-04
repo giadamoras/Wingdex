@@ -1,0 +1,183 @@
+"""Route and aircraft type for one flight, looked up on demand from adsbdb (api.adsbdb.com).
+
+Live position data has no route, so when a player taps a live flight the backend asks
+adsbdb for it. Only tapped flights are looked up, and results are kept in memory only
+(adsbdb's route data may not be copied into other databases), never written to disk.
+Every failure ends as "unknown": the frontend just hides what it doesn't have.
+"""
+
+import logging
+import threading
+import time
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any
+
+import httpx
+
+from app.geo import distance_nm
+from app.mock_flights import GROUND_MIN
+from app.models import Airport, Flight, FlightRoute
+from app.providers import ProviderError
+
+log = logging.getLogger(__name__)
+
+BASE_URL = "https://api.adsbdb.com/v0"
+
+HIT_TTL_S = 24 * 3600  # an answer found today is good for the day
+MISS_TTL_S = 3600  # an unknown callsign is retried after an hour
+MAX_CACHE_ENTRIES = 2000
+
+CRUISE_KT = 440  # typical average speed: the mock's long-haul flights use 440-480
+# The plane must be roughly on the way: going origin -> plane -> destination can't be much
+# longer than going straight. The slack keeps short routes and small diversions valid.
+MAX_DETOUR = 1.25
+DETOUR_SLACK_NM = 40.0
+
+
+class LookupUnavailable(ProviderError):
+    """adsbdb could not be reached or answered with an error (not a plain "unknown")."""
+
+
+@dataclass(frozen=True)
+class Found:
+    """What adsbdb said, before checking it against where the plane is."""
+
+    aircraft_type: str | None
+    origin: Airport | None  # origin and destination are both set, or both None
+    destination: Airport | None
+
+
+def estimate_duration_min(origin: Airport, destination: Airport) -> int:
+    """Gate-to-gate minutes: great-circle distance at a typical speed plus ground time."""
+    distance = distance_nm(
+        (origin.latitude, origin.longitude), (destination.latitude, destination.longitude)
+    )
+    return round(distance / CRUISE_KT * 60 + GROUND_MIN)
+
+
+def is_plausible(flight: Flight, origin: Airport, destination: Airport) -> bool:
+    """Is the plane somewhere along origin -> destination? Callsigns get reused on other legs."""
+    here = (flight.latitude, flight.longitude)
+    a, b = (origin.latitude, origin.longitude), (destination.latitude, destination.longitude)
+    direct = distance_nm(a, b)
+    if direct < 1:  # same airport twice: not a route
+        return False
+    return distance_nm(a, here) + distance_nm(here, b) <= direct * MAX_DETOUR + DETOUR_SLACK_NM
+
+
+def to_route(found: Found, flight: Flight) -> FlightRoute:
+    """The answer for this plane now: the route only counts if the plane is on it.
+
+    Checked on every lookup, not once when cached: a callsign can be flown on another leg
+    later in the day, and the cached route would then be wrong for the new flight.
+    """
+    if (
+        found.origin is None
+        or found.destination is None
+        or not is_plausible(flight, found.origin, found.destination)
+    ):
+        return FlightRoute(aircraft_type=found.aircraft_type)
+    minutes = estimate_duration_min(found.origin, found.destination)
+    return FlightRoute(
+        aircraft_type=found.aircraft_type,
+        origin=found.origin,
+        destination=found.destination,
+        duration_min=minutes,
+        duration_estimated=True,
+    )
+
+
+def _airport(data: Any) -> Airport | None:
+    if not isinstance(data, dict):
+        return None
+    try:
+        icao = str(data["icao_code"])
+        return Airport(
+            icao=icao,
+            iata=str(data.get("iata_code") or icao),  # small airfields have no IATA code
+            name=str(data["name"]),
+            latitude=float(data["latitude"]),
+            longitude=float(data["longitude"]),
+        )
+    except (KeyError, TypeError, ValueError):
+        return None
+
+
+class RouteService:
+    def __init__(
+        self,
+        http: httpx.Client | None = None,
+        clock: Callable[[], float] = time.time,
+    ) -> None:
+        self._http = http or httpx.Client(timeout=8)
+        self._clock = clock
+        self._lock = threading.Lock()  # guards the cache only, never held during a request
+        self._cache: dict[str, tuple[float, Found | None]] = {}
+
+    def lookup(self, flight: Flight, icao24: str | None) -> FlightRoute | None:
+        """What adsbdb knows about this flight, or None if it knows nothing usable.
+
+        Raises LookupUnavailable when adsbdb is down (not cached, so the next tap retries).
+        """
+        has_callsign = flight.callsign != "Unknown"
+        key = f"{icao24 or ''}|{flight.callsign if has_callsign else ''}"
+        now = self._clock()
+        with self._lock:
+            cached = self._cache.get(key)
+        if cached is not None and cached[0] > now:
+            found = cached[1]
+        else:
+            found = self._fetch(icao24 or None, flight.callsign if has_callsign else None)
+            with self._lock:
+                if len(self._cache) >= MAX_CACHE_ENTRIES:
+                    self._cache = {k: v for k, v in self._cache.items() if v[0] > now}
+                if len(self._cache) < MAX_CACHE_ENTRIES:
+                    self._cache[key] = (now + (HIT_TTL_S if found else MISS_TTL_S), found)
+        return to_route(found, flight) if found else None
+
+    def _get(self, path: str) -> dict[str, Any] | None:
+        """One adsbdb request: the "response" object, or None for a 404 (unknown)."""
+        try:
+            response = self._http.get(f"{BASE_URL}/{path}")
+            if response.status_code == 404:
+                return None
+            response.raise_for_status()
+            body = response.json()
+        except (httpx.HTTPError, ValueError) as error:
+            log.warning("adsbdb lookup failed (%s)", error)
+            raise LookupUnavailable(str(error)) from error
+        inner = body.get("response") if isinstance(body, dict) else None
+        return inner if isinstance(inner, dict) else None
+
+    def _fetch(self, icao24: str | None, callsign: str | None) -> Found | None:
+        aircraft: Any = None
+        flightroute: Any = None
+        if icao24 and callsign:
+            # One request for both. adsbdb answers 404 if either half is unknown, so on a
+            # 404 ask for each half separately.
+            both = self._get(f"aircraft/{icao24}?callsign={callsign}")
+            if both is not None:
+                aircraft, flightroute = both.get("aircraft"), both.get("flightroute")
+        if aircraft is None and flightroute is None:
+            if icao24:
+                found = self._get(f"aircraft/{icao24}")
+                aircraft = found.get("aircraft") if found else None
+            if callsign:
+                found = self._get(f"callsign/{callsign}")
+                flightroute = found.get("flightroute") if found else None
+
+        aircraft_type = None
+        if isinstance(aircraft, dict) and aircraft.get("icao_type"):
+            aircraft_type = str(aircraft["icao_type"]).strip().upper() or None
+        origin = destination = None
+        if isinstance(flightroute, dict):
+            origin, destination = (
+                _airport(flightroute.get("origin")),
+                _airport(flightroute.get("destination")),
+            )
+            if origin is None or destination is None:
+                origin = destination = None
+        if aircraft_type is None and origin is None:
+            return None
+        return Found(aircraft_type, origin, destination)

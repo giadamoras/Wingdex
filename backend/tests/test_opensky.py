@@ -8,8 +8,6 @@ from app.models import Flight
 from app.opensky import (
     MAX_EXTRAPOLATE_S,
     NO_CALLSIGN,
-    PLACEHOLDER_DURATION_MIN,
-    PLACEHOLDER_TYPE,
     OpenSkyProvider,
     Tracked,
     advance,
@@ -56,9 +54,25 @@ def test_map_state_converts_units_and_cleans_callsign() -> None:
     assert flight.altitude_ft == 32808  # 10,000 m
     assert flight.speed_kt == 486  # 250 m/s
     assert (flight.latitude, flight.longitude, flight.heading) == (51.0, -0.5, 90.0)
-    assert flight.aircraft_type == PLACEHOLDER_TYPE
-    assert flight.duration_min == PLACEHOLDER_DURATION_MIN
+    # No type database was given, and OpenSky has no duration or route: all unknown.
+    assert flight.aircraft_type is None and flight.duration_min is None
     assert flight.origin is None and flight.destination is None
+
+
+def test_map_state_looks_up_the_type_by_icao24() -> None:
+    types = {"abc123": "B738"}
+    tracked = map_state(make_row(icao24="ABC123"), types)
+    assert tracked is not None and tracked.flight.aircraft_type == "B738"
+    assert tracked.icao24 == "abc123"
+    other = map_state(make_row(icao24="def456"), types)
+    assert other is not None and other.flight.aircraft_type is None
+
+
+def test_snapshot_log_counts_known_types(caplog: pytest.LogCaptureFixture) -> None:
+    rows = [make_row(icao24="aaaaaa"), make_row(icao24="bbbbbb", callsign="KLM1")]
+    with caplog.at_level("INFO", logger="app.opensky"):
+        map_states(rows, max_flights=100, types={"aaaaaa": "A320"})
+    assert "2 flights kept (cap 100), 1 with a known type" in caplog.text
 
 
 def test_map_state_falls_back_to_geometric_altitude() -> None:
@@ -124,7 +138,7 @@ def test_map_states_cap_is_exact_and_stable() -> None:
 
 def test_advance_flies_along_the_track() -> None:
     flight = mapped(make_row(lat=0.0, lon=0.0, velocity=250.0, track=90.0))
-    after = advance(Tracked(flight, T0), T0 + 120)
+    after = advance(Tracked(flight, "abc123", T0), T0 + 120)
     moved = distance_nm((0, 0), (after.latitude, after.longitude))
     assert moved == pytest.approx(flight.speed_kt * 120 / 3600, rel=0.01)
     assert after.latitude == pytest.approx(0.0, abs=1e-6)  # due east stays on the equator
@@ -132,8 +146,8 @@ def test_advance_flies_along_the_track() -> None:
 
 def test_advance_stops_extrapolating_after_a_while() -> None:
     flight = mapped(make_row())
-    capped = advance(Tracked(flight, T0), T0 + MAX_EXTRAPOLATE_S)
-    much_later = advance(Tracked(flight, T0), T0 + 10 * MAX_EXTRAPOLATE_S)
+    capped = advance(Tracked(flight, "abc123", T0), T0 + MAX_EXTRAPOLATE_S)
+    much_later = advance(Tracked(flight, "abc123", T0), T0 + 10 * MAX_EXTRAPOLATE_S)
     assert capped == much_later
 
 
@@ -182,6 +196,7 @@ class Clock:
 
 
 def make_provider(fake: FakeOpenSky, clock: Clock, **kwargs: Any) -> OpenSkyProvider:
+    kwargs.setdefault("aircraft_types", {})  # skip loading the 500,000-entry type file
     return OpenSkyProvider(
         "id",
         "secret",
@@ -189,6 +204,20 @@ def make_provider(fake: FakeOpenSky, clock: Clock, **kwargs: Any) -> OpenSkyProv
         clock=clock,
         **kwargs,
     )
+
+
+def test_find_flight_returns_the_flight_and_its_icao24() -> None:
+    fake, clock = FakeOpenSky(), Clock()
+    provider = make_provider(fake, clock)
+    assert provider.find_flight("BAW117") is None  # nothing fetched yet
+    provider.get_flights()
+    clock.now += 60
+    found = provider.find_flight("BAW117")
+    assert found is not None
+    flight, icao24 = found
+    assert icao24 == "abc123"
+    assert flight.longitude > -0.5  # flown on, like the flights list
+    assert provider.find_flight("NOPE") is None
 
 
 def test_provider_returns_valid_flights_and_sends_the_token() -> None:

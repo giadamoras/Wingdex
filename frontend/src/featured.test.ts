@@ -3,7 +3,7 @@ import { pickFeatured } from './featured'
 import type { Quest } from './quest'
 import type { Flight } from './types'
 
-const flight = (id: string, aircraft_type: string): Flight => ({
+const flight = (id: string, aircraft_type: string | null): Flight => ({
   id,
   callsign: id.toUpperCase(),
   aircraft_type,
@@ -37,6 +37,22 @@ test('picks the rarest aircraft types, one flight per type', () => {
   expect(ids).toContain('t1')
   const types = ids.map((id) => flights.find((f) => f.id === id)!.aircraft_type)
   expect(new Set(types).size).toBe(3)
+})
+
+test('a flight with no known type is never featured for its type', () => {
+  const mixed = [flight('u1', null), flight('u2', null), flight('a1', 'A320')]
+  expect(pickFeatured(mixed, null, none, day)).toEqual(['a1'])
+})
+
+test('a flight with no known type can still be featured for the quest', () => {
+  const quest: Quest = {
+    id: 'q',
+    title: 'q',
+    conceptFact: '',
+    matches: (f) => f.id === 'u1',
+  }
+  const mixed = [flight('u1', null), flight('a1', 'A320')]
+  expect(pickFeatured(mixed, quest, none, day)).toContain('u1')
 })
 
 test('includes a flight that completes the quest', () => {

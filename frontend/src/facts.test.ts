@@ -26,6 +26,11 @@ test('the same flight gets the same fact all day', () => {
   expect(getFact(flight, evening)).toBe(getFact(flight, evening))
 })
 
+test('a flight with no known type still gets a fact', () => {
+  const unknown = { ...flight, aircraft_type: null }
+  expect(getFact(unknown, noon).length).toBeGreaterThan(0)
+})
+
 test('different flights can get different facts', () => {
   const facts = new Set(
     Array.from({ length: 30 }, (_, i) =>

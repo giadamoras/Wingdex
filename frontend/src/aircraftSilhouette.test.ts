@@ -20,6 +20,10 @@ test('an unrecognized type code falls back to the narrow-body default', () => {
   expect(aircraftFamily('ZZZZ')).toBe('narrowBody')
 })
 
+test('an unknown (null) type gets the narrow-body default', () => {
+  expect(aircraftFamily(null)).toBe('narrowBody')
+})
+
 test('every family has a non-empty silhouette path', () => {
   for (const family of Object.values(SILHOUETTES)) {
     expect(family.body.length).toBeGreaterThan(0)

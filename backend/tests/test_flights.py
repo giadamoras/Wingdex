@@ -72,7 +72,14 @@ def test_mock_flights_have_altitudes_either_side_of_30000ft() -> None:
 
 def test_enough_long_haul_flights_for_the_quest() -> None:
     # The Milestone 1 quest needs flights over 6 hours.
-    assert sum(f.duration_min > 360 for f in get_mock_flights(EPOCH)) >= 4
+    assert sum((f.duration_min or 0) > 360 for f in get_mock_flights(EPOCH)) >= 4
+
+
+def test_mock_flights_are_complete_with_scheduled_durations() -> None:
+    # The mock keeps every optional field filled, so mock mode behaves as before.
+    for f in get_mock_flights(EPOCH):
+        assert f.aircraft_type and f.duration_min and f.origin and f.destination
+        assert f.duration_estimated is False
 
 
 def test_duration_matches_distance_and_speed() -> None:

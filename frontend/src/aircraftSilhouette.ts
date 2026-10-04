@@ -28,7 +28,8 @@ const QUAD_OR_DOUBLE_DECK = new Set([
 // narrow-body default, quad/double-deck is a call-out from WIDE_BODY, and
 // anything else wide-body falls back to the twin-jet shape. An unrecognized
 // code (future mock data, or a live feed) gets the narrow-body default.
-export function aircraftFamily(aircraftType: string): AircraftFamily {
+export function aircraftFamily(aircraftType: string | null): AircraftFamily {
+  if (aircraftType === null) return 'narrowBody'
   if (TURBOPROP.has(aircraftType)) return 'turboprop'
   if (REGIONAL_JET.has(aircraftType)) return 'regionalJet'
   if (QUAD_OR_DOUBLE_DECK.has(aircraftType)) return 'quadOrDoubleDeck'

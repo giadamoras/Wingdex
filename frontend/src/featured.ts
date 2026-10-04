@@ -26,12 +26,17 @@ export function pickFeatured(
     quest && candidates.find((f) => quest.matches(f, now, weather))
   if (questMatch) picked.push(questMatch)
 
-  // How many flights of each type are flying (fewer means rarer).
+  // How many flights of each type are flying (fewer means rarer). A flight with
+  // no known type has no rarity, so it is never picked for its type.
   const typeCount = new Map<string, number>()
   for (const f of flights)
-    typeCount.set(f.aircraft_type, (typeCount.get(f.aircraft_type) ?? 0) + 1)
+    if (f.aircraft_type !== null)
+      typeCount.set(f.aircraft_type, (typeCount.get(f.aircraft_type) ?? 0) + 1)
+  const typed = candidates.filter(
+    (f): f is Flight & { aircraft_type: string } => f.aircraft_type !== null,
+  )
   // Stable sort: equal counts keep their shuffled order.
-  const byRarity = [...candidates].sort(
+  const byRarity = [...typed].sort(
     (a, b) => typeCount.get(a.aircraft_type)! - typeCount.get(b.aircraft_type)!,
   )
   const types = new Set(picked.map((f) => f.aircraft_type))

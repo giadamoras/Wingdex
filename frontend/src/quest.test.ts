@@ -27,6 +27,30 @@ test('long-haul does not match exactly 6 hours, but matches just over', () => {
   )
 })
 
+test('a flight with no known type or duration never matches those quests', () => {
+  const unknown = { ...flight, aircraft_type: null, duration_min: null }
+  expect(quest('wide-body').matches(unknown)).toBe(false)
+  expect(quest('turboprop').matches(unknown)).toBe(false)
+  expect(quest('long-haul').matches(unknown)).toBe(false)
+})
+
+test('long-haul is never picked from a live feed, which has no durations', () => {
+  const live = [
+    { ...flight, aircraft_type: null, duration_min: null },
+    { ...flight, id: 'f2', aircraft_type: 'B77W', duration_min: null },
+  ]
+  // pickQuest skips a template no flight can satisfy, whatever day it starts on.
+  for (let day = 1; day <= 28; day++) {
+    const picked = pickQuest(
+      QUEST_TEMPLATES,
+      live,
+      `2026-09-${String(day).padStart(2, '0')}`,
+    )
+    expect(picked?.id).not.toBe('long-haul')
+    expect(picked).not.toBeNull() // other quests can still be picked
+  }
+})
+
 test('high and low altitude quests exclude their thresholds', () => {
   expect(quest('high').matches({ ...flight, altitude_ft: 36000 })).toBe(false)
   expect(quest('high').matches({ ...flight, altitude_ft: 36001 })).toBe(true)

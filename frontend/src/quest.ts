@@ -124,14 +124,15 @@ export const QUEST_TEMPLATES: Quest[] = [
     title: 'Catch a wide-body jet',
     conceptFact:
       'Wide-body jets have two aisles and a fuselage over 5 m wide. They are built for long routes and big crowds: room for lots of seats, cargo and the extra fuel a long flight needs.',
-    matches: (f) => WIDE_BODY.has(f.aircraft_type),
+    // A flight with no known type never matches a type quest.
+    matches: (f) => f.aircraft_type !== null && WIDE_BODY.has(f.aircraft_type),
   },
   {
     id: 'turboprop',
     title: 'Catch a propeller plane',
     conceptFact:
       'A turboprop is a jet engine that spins a propeller. At lower speeds and heights, a propeller pushes more air more efficiently than a jet exhaust, which makes turboprops a great fit for short routes.',
-    matches: (f) => TURBOPROP.has(f.aircraft_type),
+    matches: (f) => f.aircraft_type !== null && TURBOPROP.has(f.aircraft_type),
   },
   {
     id: 'ocean',
@@ -152,7 +153,10 @@ export const QUEST_TEMPLATES: Quest[] = [
     title: `Catch a long-haul flight (over ${LONG_HAUL_MIN / 60} hours)`,
     conceptFact:
       "Long flights often look curved on a flat map, but they're taking the shortest path. On a globe, the shortest route between two cities is a 'great circle', which bends toward the poles. That's why flights from Europe to North America pass near Iceland and Greenland.",
-    matches: (f) => f.duration_min > LONG_HAUL_MIN,
+    // Live flights carry no duration in the feed (only a tapped one gets an
+    // estimate), so this quest can only be picked from mock data: pickQuest
+    // skips a template no flight in the feed can satisfy.
+    matches: (f) => f.duration_min !== null && f.duration_min > LONG_HAUL_MIN,
   },
   ...WEATHER_QUESTS.map(({ hazard, title, conceptFact }): Quest => ({
     id: `weather-${hazard}`,

@@ -17,6 +17,7 @@ from typing import Any
 
 import httpx
 
+from app.aircraft_types import load_aircraft_types
 from app.geo import destination_point
 from app.models import Flight
 from app.providers import ProviderError
@@ -31,12 +32,7 @@ STATES_URL = "https://opensky-network.org/api/states/all"
 M_TO_FT = 3.28084
 MS_TO_KT = 1.94384
 
-# State vectors carry no aircraft type or duration (Milestone 7 step 2 fills them in).
-# Placeholders keep the Flight contract valid until then; a 1-minute "duration" never
-# matches the long-haul quest, and no fact or quest is keyed to the type "UNKNOWN".
-PLACEHOLDER_TYPE = "UNKNOWN"
-PLACEHOLDER_DURATION_MIN = 1
-NO_CALLSIGN = "Unknown"
+NO_CALLSIGN = "Unknown"  # shown for a plane that sends no callsign
 
 # Credit guard defaults: the "normal" preset in docs/opensky-credit-guard.md.
 DEFAULT_CACHE_TTL_S = 90.0  # usual time between refreshes
@@ -53,19 +49,21 @@ TOKEN_MARGIN_S = 60  # renew the token this long before it expires
 
 @dataclass(frozen=True)
 class Tracked:
-    """A mapped flight plus when OpenSky last heard its position (Unix seconds)."""
+    """A mapped flight, its transponder address and when OpenSky last heard its position."""
 
     flight: Flight
-    position_time: float
+    icao24: str
+    position_time: float  # Unix seconds
 
 
 def _num(value: Any) -> float | None:
     return float(value) if isinstance(value, int | float) else None
 
 
-def map_state(row: list[Any]) -> Tracked | None:
+def map_state(row: list[Any], types: Mapping[str, str] | None = None) -> Tracked | None:
     """Turn one OpenSky state vector into a Flight, or None if it can't be a valid one.
 
+    `types` maps icao24 to an ICAO type code; a plane it doesn't know has no type.
     Field indexes: 0 icao24, 1 callsign, 3 time_position, 4 last_contact, 5 longitude,
     6 latitude, 7 baro_altitude (m), 8 on_ground, 9 velocity (m/s), 10 true_track,
     13 geo_altitude (m).
@@ -101,18 +99,19 @@ def map_state(row: list[Any]) -> Tracked | None:
         # The callsign names the flight; the airframe address stands in when there is none.
         id=callsign or icao24,
         callsign=callsign or NO_CALLSIGN,
-        aircraft_type=PLACEHOLDER_TYPE,
+        aircraft_type=types.get(icao24) if types else None,
         latitude=latitude,
         longitude=longitude,
         altitude_ft=max(0, round(altitude_m * M_TO_FT)),
         heading=heading,
         speed_kt=speed_kt,
-        duration_min=PLACEHOLDER_DURATION_MIN,
     )
-    return Tracked(flight, position_time)
+    return Tracked(flight, icao24, position_time)
 
 
-def map_states(rows: list[Any], max_flights: int) -> list[Tracked]:
+def map_states(
+    rows: list[Any], max_flights: int, types: Mapping[str, str] | None = None
+) -> list[Tracked]:
     """Map every row, keep the freshest report per id, and cap the total."""
     by_id: dict[str, Tracked] = {}
     on_ground = unusable = duplicates = 0
@@ -120,7 +119,7 @@ def map_states(rows: list[Any], max_flights: int) -> list[Tracked]:
         if not isinstance(row, list):
             unusable += 1
             continue
-        tracked = map_state(row)
+        tracked = map_state(row, types)
         if tracked is None:
             if len(row) > 8 and row[8]:
                 on_ground += 1
@@ -140,13 +139,14 @@ def map_states(rows: list[Any], max_flights: int) -> list[Tracked]:
         kept = sorted(kept, key=lambda t: zlib.crc32(t.flight.id.encode()))[:max_flights]
     log.info(
         "OpenSky snapshot: %d rows, %d on ground, %d unusable, %d duplicate callsigns, "
-        "%d flights kept (cap %d)",
+        "%d flights kept (cap %d), %d with a known type",
         len(rows),
         on_ground,
         unusable,
         duplicates,
         len(kept),
         max_flights,
+        sum(t.flight.aircraft_type is not None for t in kept),
     )
     return kept
 
@@ -198,9 +198,11 @@ class OpenSkyProvider:
         max_credits_per_hour: int = DEFAULT_MAX_CREDITS_PER_HOUR,
         credit_reserve: int = DEFAULT_CREDIT_RESERVE,
         max_flights: int = 1500,
+        aircraft_types: Mapping[str, str] | None = None,  # None: the bundled type file
         http: httpx.Client | None = None,
         clock: Callable[[], float] = time.time,
     ) -> None:
+        self._types = load_aircraft_types() if aircraft_types is None else aircraft_types
         self._client_id = client_id
         self._client_secret = client_secret
         self._bbox = bbox
@@ -277,6 +279,14 @@ class OpenSkyProvider:
             return "reserve"
         return None
 
+    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
+        """The flight with this id as it is now, plus its icao24; None if it isn't in the feed."""
+        snapshot = self._snapshot  # read without the lock, so a tap never waits for a refresh
+        for tracked in snapshot or []:
+            if tracked.flight.id == flight_id:
+                return advance(tracked, self._clock()), tracked.icao24
+        return None
+
     def get_flights(self) -> list[Flight]:
         with self._lock:
             now = self._clock()
@@ -321,7 +331,7 @@ class OpenSkyProvider:
         response.raise_for_status()
         body = response.json()
         rows = body.get("states") if isinstance(body, dict) else None
-        return map_states(rows if isinstance(rows, list) else [], self._max_flights)
+        return map_states(rows if isinstance(rows, list) else [], self._max_flights, self._types)
 
     def _note_remaining(self, response: httpx.Response) -> None:
         """Remember the credits OpenSky says are left, and when to probe if they're low."""

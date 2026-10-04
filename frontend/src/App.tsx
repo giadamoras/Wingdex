@@ -9,9 +9,11 @@ import { FlightMap } from './FlightMap'
 import { Onboarding } from './Onboarding'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
+import { mergeRoute } from './route'
 import type { Flight, WeatherArea } from './types'
 import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
+import { useFlightRoute } from './useFlightRoute'
 import { useFlights } from './useFlights'
 import { useJournalContext } from './useJournalContext'
 import { useOnboarding } from './useOnboarding'
@@ -43,6 +45,13 @@ function App() {
   const live = selected && flights?.find((f) => f.id === selected.id)
   if (live && live !== selected) setSelected(live)
 
+  // A live flight has no route in the feed: look it up once it is selected and
+  // merge the answer in at render time (the snapshot above is replaced on every
+  // poll). `current` is what the card, the map's route line, the replay and the
+  // Journal all use.
+  const lookup = useFlightRoute(selected)
+  const current = selected && mergeRoute(selected, lookup.route)
+
   // Selecting another flight or closing the card cancels a replay.
   const select = (id: string | null) => {
     stop()
@@ -54,14 +63,14 @@ function App() {
   // A catch that finishes the quest also scrolls to the top, where the quest
   // strip and its "Done!" stamp are, so it's noticed while reading the card.
   const catchFlight = () => {
-    if (!selected) return
+    if (!current) return
     const questId =
       quest !== null &&
       !questDone &&
-      quest.matches(selected, new Date(), weatherAreas)
+      quest.matches(current, new Date(), weatherAreas)
         ? quest.id
         : undefined
-    addCatch(selected, questId, weatherAreas)
+    addCatch(current, questId, weatherAreas)
     if (questId !== undefined)
       window.scrollTo({
         top: 0,
@@ -106,8 +115,13 @@ function App() {
       (id) => !todaysCatches.some((e) => e.flight.id === id),
     ),
   )
-  // A lost flight stays on the map at its last position until dismissed.
-  const mapFlights = lost ? [...(flights ?? []), selected] : (flights ?? [])
+  // A lost flight stays on the map at its last position until dismissed. The
+  // selected flight is drawn with its looked-up route, so its route line shows.
+  const mapFlights = current
+    ? lost
+      ? [...(flights ?? []), current]
+      : (flights ?? []).map((f) => (f.id === current.id ? current : f))
+    : (flights ?? [])
 
   return (
     // has-onboarding leaves room under the page for the docked mascot.
@@ -141,19 +155,24 @@ function App() {
                 weather={weatherAreas}
                 onSelect={select}
               />
-              {selected && (
+              {current && (
                 <FlightCard
-                  flight={selected}
+                  flight={current}
                   weather={weatherAreas}
+                  routeStatus={lookup.status}
                   lost={lost}
                   caught={caughtToday}
-                  replaying={replay?.flight.id === selected.id}
-                  replayed={playedId === selected.id}
+                  replaying={replay?.flight.id === current.id}
+                  replayed={playedId === current.id}
                   onCatch={catchFlight}
-                  onReplay={() => start(selected)}
+                  onReplay={() => start(current)}
                   onStopReplay={stop}
                 />
               )}
+              <p className="credits">
+                Live flights: OpenSky Network. Aircraft types: OpenSky aircraft
+                database. Routes: adsbdb.
+              </p>
             </>
           )}
           <AnimatePresence>

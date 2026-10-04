@@ -294,7 +294,7 @@ export function getFact(
     ].text
 
   const tags = new Set([
-    `type:${flight.aircraft_type}`,
+    ...(flight.aircraft_type ? [`type:${flight.aircraft_type}`] : []),
     `airline:${airlineOf(flight.callsign)}`,
     `altitude:${altitudeBand(flight.altitude_ft)}`,
     ...regionsOf(flight.latitude, flight.longitude).map((r) => `region:${r}`),

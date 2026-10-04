@@ -18,16 +18,31 @@ class Flight(BaseModel):
 
     id: str
     callsign: str
-    aircraft_type: str  # plain string for now, e.g. "A320"
+    # Type, duration and route are optional: live position feeds (e.g. OpenSky state
+    # vectors) don't include them, and a plane missing from the type database has none.
+    aircraft_type: str | None = None  # ICAO type code, e.g. "A320"
     latitude: float = Field(ge=-90, le=90)  # degrees
     longitude: float = Field(ge=-180, le=180)  # degrees
     altitude_ft: int = Field(ge=0)  # feet above sea level
     heading: float = Field(ge=0, lt=360)  # degrees clockwise from north
     speed_kt: int = Field(gt=0)  # ground speed, knots
-    duration_min: int = Field(gt=0)  # total scheduled flight duration, minutes
-    # Route is optional: live position feeds (e.g. OpenSky state vectors) don't include it.
+    duration_min: int | None = Field(default=None, gt=0)  # total flight duration, minutes
+    duration_estimated: bool = False  # True when worked out from the route, not scheduled
     origin: Airport | None = None
     destination: Airport | None = None
+
+
+class FlightRoute(BaseModel):
+    """What a lookup learned about one flight: the stable contract of GET /flights/{id}/route.
+
+    Every field is optional, because each part can be unknown on its own.
+    """
+
+    aircraft_type: str | None = None
+    origin: Airport | None = None
+    destination: Airport | None = None
+    duration_min: int | None = Field(default=None, gt=0)
+    duration_estimated: bool = False
 
 
 class LatLon(BaseModel):

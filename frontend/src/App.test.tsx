@@ -144,21 +144,130 @@ test('the fact on the card stays the same across polls', async () => {
   expect(container.querySelector('.fact')?.textContent).toBe(fact)
 })
 
+// A live feed: no type, duration or route in /flights, and the backend's
+// /flights/{id}/route answered by `route` (a status, a body, or "down").
+const liveFlight = {
+  ...flights[0],
+  aircraft_type: null,
+  duration_min: null,
+  origin: null,
+  destination: null,
+}
+const liveFeed = (route: 'down' | { status: number; body?: unknown }) =>
+  vi.fn((url: string) => {
+    if (!url.includes('/route'))
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve([liveFlight]),
+      })
+    if (route === 'down') return Promise.reject(new Error('down'))
+    return Promise.resolve({
+      ok: route.status < 400,
+      status: route.status,
+      json: () => Promise.resolve(route.body),
+    })
+  })
+
+const foundRoute = {
+  aircraft_type: 'B77W',
+  origin: flights[0].origin,
+  destination: flights[0].destination,
+  duration_min: 95,
+  duration_estimated: true,
+}
+
 test('the card hides the route when the source does not know it', async () => {
-  const noRoute = { ...flights[0], origin: null, destination: null }
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(() =>
-      Promise.resolve({ ok: true, json: () => Promise.resolve([noRoute]) }),
-    ),
-  )
+  vi.stubGlobal('fetch', liveFeed({ status: 404 }))
   const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.queryByText(/→/)).toBeNull()
-  // No route: no journey button and no route line on the map.
+  expect(screen.getByText('Route unknown')).toBeTruthy()
+  // No route: no journey button, no route line, and no type or duration chip.
   expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
   expect(container.querySelector('.route-lines')).toBeNull()
+  expect(container.querySelector('.chip.estimate')).toBeNull()
+  expect(container.querySelectorAll('.card-head .chip')).toHaveLength(3) // ft, heading, kt
+})
+
+test('a live flight is looked up when tapped, and the card fills in', async () => {
+  const fetchMock = liveFeed({ status: 200, body: foundRoute })
+  vi.stubGlobal('fetch', fetchMock)
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  expect(screen.getByText('Looking up route…')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
+
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText('Looking up route…')).toBeNull()
+  expect(screen.getByText('LHR → CDG')).toBeTruthy()
+  expect(screen.getByText('B77W')).toBeTruthy() // the type, learned by the lookup
+  // The duration is an estimate, so it is marked with "~" and a dashed chip.
+  const estimate = container.querySelector('.chip.estimate')
+  expect(estimate?.textContent).toBe('~1h 35m')
+  expect(screen.getByRole('button', { name: 'See the journey' })).toBeTruthy()
+  expect(container.querySelector('.route-flown')).toBeTruthy()
+  expect(String(fetchMock.mock.calls.at(-1)?.[0])).toMatch(
+    /\/flights\/f1\/route$/,
+  )
+})
+
+test('the route is kept: reselecting a flight does not look it up again', async () => {
+  const fetchMock = liveFeed({ status: 200, body: foundRoute })
+  vi.stubGlobal('fetch', fetchMock)
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1')) // deselect
+  fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('LHR → CDG')).toBeTruthy()
+  const routeCalls = fetchMock.mock.calls.filter(([url]) =>
+    String(url).includes('/route'),
+  )
+  expect(routeCalls).toHaveLength(1)
+})
+
+test('when the lookup service is down the card says the route is unknown', async () => {
+  vi.stubGlobal('fetch', liveFeed('down'))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Route unknown')).toBeTruthy()
+  // The rest of the card still works, including catching.
+  expect(screen.getByRole('button', { name: 'Catch' })).toBeTruthy()
+})
+
+test('a catch keeps the looked-up route in the Journal', async () => {
+  vi.stubGlobal('fetch', liveFeed({ status: 200, body: foundRoute }))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
+  // The Journal stamp is about the destination, which only the lookup knew.
+  expect(screen.getByRole('listitem').textContent).toContain('CDG')
+})
+
+test('a flight whose feed already has a route makes no lookup', async () => {
+  const fetchMock = vi.fn((url: string) => {
+    void url // typed so the calls below can be inspected
+    return ok()
+  })
+  vi.stubGlobal('fetch', fetchMock)
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('LHR → CDG')).toBeTruthy()
+  expect(
+    fetchMock.mock.calls.some(([url]) => String(url).includes('/route')),
+  ).toBe(false)
 })
 
 test('selecting a flight draws its route with both airport codes', async () => {

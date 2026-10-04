@@ -17,6 +17,10 @@ class FlightProvider(Protocol):
 
     def get_flights(self) -> list[Flight]: ...
 
+    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
+        """The flight with this id as it is now, plus its icao24 if known (None: not in feed)."""
+        ...
+
     def status(self) -> dict[str, str | int | None]:
         """Extra facts for /health (empty when there is nothing to report)."""
         ...
@@ -27,6 +31,12 @@ class MockFlightProvider:
 
     def get_flights(self) -> list[Flight]:
         return get_mock_flights()
+
+    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
+        for flight in get_mock_flights():
+            if flight.id == flight_id:
+                return flight, None
+        return None
 
     def status(self) -> dict[str, str | int | None]:
         return {}

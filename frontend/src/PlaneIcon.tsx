@@ -7,7 +7,7 @@ export function PlaneIcon({
   aircraftType,
 }: {
   heading: number
-  aircraftType: string
+  aircraftType: string | null // null (unknown) gets the default shape
 }) {
   const { body, engines } = SILHOUETTES[aircraftFamily(aircraftType)]
   return (

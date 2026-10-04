@@ -41,6 +41,9 @@ class StubProvider:
             raise ProviderError("down")
         return []
 
+    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
+        return None
+
     def status(self) -> dict[str, str | int | None]:
         return {"guard": "ok"}
 

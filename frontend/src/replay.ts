@@ -52,7 +52,10 @@ export function useReplay() {
     let frame = 0
     const tick = () => {
       const t = Date.now()
-      const { phase } = replayAt(t - run.startedAt, run.flight.duration_min)
+      const { phase } = replayAt(
+        t - run.startedAt,
+        run.flight.duration_min ?? 0,
+      )
       if (phase === 'done' || prefersReducedMotion()) setRun(null)
       else {
         setNow(t)
@@ -65,7 +68,7 @@ export function useReplay() {
 
   const replay: ReplayState | null = run && {
     ...run,
-    ...replayAt(Math.max(0, now - run.startedAt), run.flight.duration_min),
+    ...replayAt(Math.max(0, now - run.startedAt), run.flight.duration_min ?? 0),
   }
 
   return {

@@ -24,7 +24,8 @@ export const BADGES: Badge[] = [
     name: 'Plane Spotter',
     description: 'Catch 5 different aircraft types.',
     isUnlocked: (journal) =>
-      new Set(journal.map((e) => e.flight.aircraft_type)).size >= 5,
+      // Catches of a plane with no known type don't count towards a type.
+      new Set(journal.flatMap((e) => e.flight.aircraft_type ?? [])).size >= 5,
   },
   {
     id: 'three-quest-days',

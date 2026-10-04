@@ -11,16 +11,31 @@ export interface Airport {
 export interface Flight {
   id: string
   callsign: string
-  aircraft_type: string
+  // ICAO type code, e.g. "A320". null when unknown: a live plane missing from
+  // the backend's type database.
+  aircraft_type: string | null
   latitude: number // degrees
   longitude: number // degrees
   altitude_ft: number
   heading: number // degrees clockwise from north
   speed_kt: number // ground speed, knots
-  duration_min: number
+  duration_min: number | null // null when unknown (live flights have no route yet)
+  // True when worked out from the route, not scheduled. Missing in entries
+  // saved before live data, where it means false.
+  duration_estimated?: boolean
   // null when the data source doesn't know the route (e.g. live feeds).
   origin: Airport | null
   destination: Airport | null
+}
+
+// Mirrors the backend FlightRoute model (GET /flights/{id}/route): what a
+// lookup learned about one flight. Every part can be missing on its own.
+export interface FlightRoute {
+  aircraft_type: string | null
+  origin: Airport | null
+  destination: Airport | null
+  duration_min: number | null
+  duration_estimated: boolean
 }
 
 export interface JournalEntry {

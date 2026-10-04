@@ -41,6 +41,16 @@ test('five-types needs 5 distinct aircraft types, not 5 catches', () => {
   expect(unlockedBadgeIds(fiveTypes)).toContain('five-types')
 })
 
+test('five-types does not count catches of a plane with no known type', () => {
+  const types = ['A320', 'B738', 'A333', 'B744'].map((type) =>
+    entry({ flight: { ...baseFlight, aircraft_type: type } }),
+  )
+  const unknown = [1, 2, 3].map((n) =>
+    entry({ flight: { ...baseFlight, id: `u${n}`, aircraft_type: null } }),
+  )
+  expect(unlockedBadgeIds([...types, ...unknown])).not.toContain('five-types')
+})
+
 test('three-quest-days ignores catches that did not complete a quest', () => {
   const noQuest = [1, 2, 3].map((day) =>
     entry({ caughtAt: `2026-09-2${day}T12:00:00.000Z` }),
