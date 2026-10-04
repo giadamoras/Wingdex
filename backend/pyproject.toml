@@ -6,12 +6,12 @@ requires-python = ">=3.11"
 dependencies = [
     "fastapi",
     "uvicorn[standard]",
+    "httpx",  # OpenSky client (also what FastAPI's TestClient uses)
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest",
-    "httpx",  # required by FastAPI's TestClient
     "ruff",
     "mypy",
 ]

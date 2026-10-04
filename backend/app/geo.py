@@ -37,6 +37,20 @@ def interpolate(a: LatLon, b: LatLon, fraction: float) -> LatLon:
     return math.degrees(math.atan2(z, math.hypot(x, y))), math.degrees(math.atan2(y, x))
 
 
+def destination_point(start: LatLon, bearing: float, distance: float) -> LatLon:
+    """Where you end up flying `distance` nm from `start` on a constant initial `bearing`."""
+    angle = distance / EARTH_RADIUS_NM
+    lat1, lon1, brg = map(math.radians, (*start, bearing))
+    sin_lat2 = math.sin(lat1) * math.cos(angle) + math.cos(lat1) * math.sin(angle) * math.cos(brg)
+    lat2 = math.asin(max(-1.0, min(1.0, sin_lat2)))
+    lon2 = lon1 + math.atan2(
+        math.sin(brg) * math.sin(angle) * math.cos(lat1),
+        math.cos(angle) - math.sin(lat1) * math.sin(lat2),
+    )
+    # Wrap the longitude back into -180..180.
+    return math.degrees(lat2), (math.degrees(lon2) + 540) % 360 - 180
+
+
 def initial_bearing(a: LatLon, b: LatLon) -> float:
     """Direction to fly from a toward b, in degrees clockwise from north (0..360)."""
     lat1, lon1, lat2, lon2 = map(math.radians, (*a, *b))

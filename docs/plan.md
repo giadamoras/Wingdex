@@ -3,7 +3,7 @@
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
 - **Done.** Milestone 1 (walking skeleton: one playable spot-catch-quest-Journal loop), Milestone 2 (living map: real-speed routes, world map with pan/zoom, journey replay), Milestone 3 (daily variety: tagged facts, quest templates, featured flights), Milestone 4 (Collection, badges and the catch moment), Milestone 5 (visual pass, mascot and onboarding) and Milestone 6 (weather). All six are summarized in the Implementation roadmap.
-- **Next.** Milestone 7 (live data and deployment) is described there. It has not been started.
+- **In progress.** Milestone 7 (live data and deployment) is described there. Step 1a (the OpenSky flight provider, backend only) is built and was run live once; the rest of step 1 and steps 2-4 are open.
 
 ## Context
 
@@ -189,7 +189,25 @@ Aviation-curious people without deep aviation background — including the creat
 **Milestone 7 — Live data and deployment:** real flights and weather, publicly hosted.
 
 1. `OpenSkyProvider` behind the existing `/flights` contract: OAuth2 client credentials, server-side caching to protect the daily quota, a callsign-based `id`, and metres converted to feet. The provider interface is introduced here, once a second implementation exists.
-2. Fill in the missing type and duration from a metadata source, or scale back the templates that depend on them.
+   - **Quota re-verified (2026-10-04, OpenSky REST docs and the user's account page).** 4,000 credits per day for a standard account, with no monthly cap found. A global `/states/all` costs 4 credits, and so does any box over 400 sq°, so a bounding box saves no credits. Remaining credits come back in `X-Rate-Limit-Remaining`; at zero the API answers 429 with `X-Rate-Limit-Retry-After-Seconds`.
+   - **Step 1a (backend only, done; run live once by the user on 2026-10-04).** The live check confirmed `/health` and the credit figures (OpenSky reported 3,988 credits left after about three requests that day) and showed the two open items under Step 1b.
+     - `providers.py` holds the `FlightProvider` Protocol and `create_provider`. `FLIGHT_SOURCE=mock` (the default) or `opensky` picks the source, so a missing secret never breaks the app.
+     - `opensky.py` has the token handling, the mapping, the cache and dead reckoning. The cache is one shared snapshot, refreshed on demand after 90 s, so no visitors means no quota use. On failure it serves the stale snapshot and backs off (30 s, or as long as a 429 asks).
+     - **Credit guard** (normal preset): a 60 s refresh floor, a 200-credit hourly cap and a 400-credit reserve read from OpenSky's `X-Rate-Limit-Remaining`. `/health` shows its state. The cautious and risky presets and the arithmetic are in `docs/opensky-credit-guard.md`.
+     - `id` is the callsign, or the `icao24` address when there is none (the callsign then shows as "Unknown"). On-ground aircraft and rows missing a field are dropped, and duplicate callsigns keep the freshest report.
+     - The whole world is served, capped at 1,500 flights by a hash-of-id sample. That keeps the altitude mix, so every quest can still match, and the same planes stay between refreshes. The sample is pseudo-random and uniform, so it mirrors real traffic: Europe looks full and the oceans, Africa and South America sparse (ADS-B receiver coverage is also uneven). **Decided: keep it uniform for now.** A truly random pick each refresh was rejected, because planes would flicker and selection, the once-a-day catch rule and fact choice would shift. Each refresh logs how many rows were on the ground, unusable or duplicate, and how many flights were kept.
+     - `aircraft_type` is the placeholder `"UNKNOWN"` and `duration_min` is `1` until step 2. Until then the type and long-haul quests, type facts and the 5-types badge cannot fire on live data, and the mock weather areas will rarely meet real traffic.
+   - **Step 1b (open, to revisit after step 2).**
+     - **Density.** Seen live: the map is very full. It is unmeasured whether ~1,500 animated markers also cost performance. Three options were weighed, and the choice is deferred until step 2, since type and route change what readability can use.
+       - **A, learning first:** show only the flights with the most to learn (quest and featured planes, rare types, extremes, weather), with more as you zoom. Needs aircraft type, so it waits for step 2.
+       - **B, variety first:** cap the sample per grid cell, so Europe is thinned and sparse regions keep every plane, and seed it with the local date so each day's mix differs. Server-side and small, but it makes the map less like real traffic and reverses the "keep it uniform" decision.
+       - **C, readability first (leaning this way):** frontend only, no credits. Draw only planes in the visible area, cap how many show at once (about 150), reveal more as you zoom, keep quest, featured and selected planes always visible and the rest dimmer, and space out overlapping markers like the country labels. Quest and featured picks still come from the full feed, which avoids the problem a server-side visible-area filter would cause.
+       - Current lean: C first, B on top only if the map still feels lopsided, A after step 2.
+     - **Motion.** Planes move in fits and starts on live data. It is not confirmed that this is normal. Dead reckoning should keep motion smooth between refreshes, so measure it (poll and transition timing is the first suspect) before accepting it.
+     - **UI credit.** Add a small "Flight data: OpenSky Network" line.
+     - **Empty-quest cases.** Review which quests can fire on live data (see the limits above).
+     - **Mock data.** Later, the mock feed may need planes spread over the whole world, to match a world-wide live feed.
+2. Fill in the missing type, route and duration from a metadata source, or scale back the templates that depend on them. On live data the Flight card currently shows type "UNKNOWN", no route (so no journey replay, and Journal stamps fall back to the callsign) and a "1 min" duration. Candidate sources, none checked yet: a bundled aircraft database keyed by `icao24` for the type; a free callsign-to-route lookup for the route; OpenSky's own metadata and flights endpoints, which may be historical rather than real-time. Verify each (coverage, limits, terms) before choosing, and settle whether the three fields become optional in the contract.
 3. Real weather behind the existing `/weather` contract: a provider that maps the AWC `isigmet` JSON into `WeatherArea` (field notes and unconfirmed details are in Milestone 6), with server-side caching inside its rate limit. Decide what to do with real SIGMETs being sparse and issued around real events: the weather quests may often have nothing to match, and a quest saved for the day can outlive its hazard.
 4. Deploy the frontend (static host) and the backend, which settles the hosting open item.
 

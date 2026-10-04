@@ -1,0 +1,366 @@
+"""Live flights from the OpenSky Network (https://openskynetwork.github.io/opensky-api/rest.html).
+
+One shared snapshot of the world is fetched on demand and cached, so any number of browsers
+cost one OpenSky request per TTL (a global request costs 4 of the 4,000 daily credits).
+Between refreshes each plane is moved along its track ("dead reckoning") so the map keeps
+gliding instead of jumping once per refresh.
+"""
+
+import logging
+import threading
+import time
+import zlib
+from collections import deque
+from collections.abc import Callable, Mapping
+from dataclasses import dataclass
+from typing import Any
+
+import httpx
+
+from app.geo import destination_point
+from app.models import Flight
+from app.providers import ProviderError
+
+log = logging.getLogger(__name__)
+
+TOKEN_URL = (
+    "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token"
+)
+STATES_URL = "https://opensky-network.org/api/states/all"
+
+M_TO_FT = 3.28084
+MS_TO_KT = 1.94384
+
+# State vectors carry no aircraft type or duration (Milestone 7 step 2 fills them in).
+# Placeholders keep the Flight contract valid until then; a 1-minute "duration" never
+# matches the long-haul quest, and no fact or quest is keyed to the type "UNKNOWN".
+PLACEHOLDER_TYPE = "UNKNOWN"
+PLACEHOLDER_DURATION_MIN = 1
+NO_CALLSIGN = "Unknown"
+
+# Credit guard defaults: the "normal" preset in docs/opensky-credit-guard.md.
+DEFAULT_CACHE_TTL_S = 90.0  # usual time between refreshes
+DEFAULT_MIN_TTL_S = 60.0  # refreshes never come closer together than this
+DEFAULT_MAX_CREDITS_PER_HOUR = 200
+DEFAULT_CREDIT_RESERVE = 400  # stop refreshing when OpenSky says this few credits are left
+HOUR_S = 3600
+RESERVE_PROBE_S = 1800  # under the reserve, check again at most this often
+
+MAX_EXTRAPOLATE_S = 600  # never move a plane further than 10 minutes past its last report
+FAILURE_BACKOFF_S = 30  # wait this long after a failed request before trying again
+TOKEN_MARGIN_S = 60  # renew the token this long before it expires
+
+
+@dataclass(frozen=True)
+class Tracked:
+    """A mapped flight plus when OpenSky last heard its position (Unix seconds)."""
+
+    flight: Flight
+    position_time: float
+
+
+def _num(value: Any) -> float | None:
+    return float(value) if isinstance(value, int | float) else None
+
+
+def map_state(row: list[Any]) -> Tracked | None:
+    """Turn one OpenSky state vector into a Flight, or None if it can't be a valid one.
+
+    Field indexes: 0 icao24, 1 callsign, 3 time_position, 4 last_contact, 5 longitude,
+    6 latitude, 7 baro_altitude (m), 8 on_ground, 9 velocity (m/s), 10 true_track,
+    13 geo_altitude (m).
+    """
+    if len(row) < 11 or row[8]:  # too short, or parked on the ground
+        return None
+    longitude, latitude = _num(row[5]), _num(row[6])
+    altitude_m = _num(row[7])
+    if altitude_m is None and len(row) > 13:
+        altitude_m = _num(row[13])
+    velocity, track = _num(row[9]), _num(row[10])
+    position_time = _num(row[3]) or _num(row[4])
+    if (
+        longitude is None
+        or latitude is None
+        or altitude_m is None
+        or velocity is None
+        or track is None
+        or position_time is None
+    ):
+        return None
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return None
+    speed_kt = round(velocity * MS_TO_KT)
+    icao24 = str(row[0]).strip().lower()
+    if speed_kt < 1 or not icao24:
+        return None
+    heading = track % 360
+    if heading >= 360:  # a tiny negative track can round up to exactly 360
+        heading = 0.0
+    callsign = row[1].strip().upper() if isinstance(row[1], str) else ""
+    flight = Flight(
+        # The callsign names the flight; the airframe address stands in when there is none.
+        id=callsign or icao24,
+        callsign=callsign or NO_CALLSIGN,
+        aircraft_type=PLACEHOLDER_TYPE,
+        latitude=latitude,
+        longitude=longitude,
+        altitude_ft=max(0, round(altitude_m * M_TO_FT)),
+        heading=heading,
+        speed_kt=speed_kt,
+        duration_min=PLACEHOLDER_DURATION_MIN,
+    )
+    return Tracked(flight, position_time)
+
+
+def map_states(rows: list[Any], max_flights: int) -> list[Tracked]:
+    """Map every row, keep the freshest report per id, and cap the total."""
+    by_id: dict[str, Tracked] = {}
+    on_ground = unusable = duplicates = 0
+    for row in rows:
+        if not isinstance(row, list):
+            unusable += 1
+            continue
+        tracked = map_state(row)
+        if tracked is None:
+            if len(row) > 8 and row[8]:
+                on_ground += 1
+            else:
+                unusable += 1
+            continue
+        seen = by_id.get(tracked.flight.id)
+        if seen is not None:
+            duplicates += 1
+        if seen is None or tracked.position_time > seen.position_time:
+            by_id[tracked.flight.id] = tracked
+    kept = list(by_id.values())
+    if len(kept) > max_flights:
+        # Too many planes for the map: keep a sample picked by a hash of the id. It is
+        # uniform (the mix of altitudes survives, so every quest can still match) and it
+        # stays nearly the same between refreshes, so planes don't flicker in and out.
+        kept = sorted(kept, key=lambda t: zlib.crc32(t.flight.id.encode()))[:max_flights]
+    log.info(
+        "OpenSky snapshot: %d rows, %d on ground, %d unusable, %d duplicate callsigns, "
+        "%d flights kept (cap %d)",
+        len(rows),
+        on_ground,
+        unusable,
+        duplicates,
+        len(kept),
+        max_flights,
+    )
+    return kept
+
+
+def advance(tracked: Tracked, now: float) -> Flight:
+    """The flight where it should be at `now`, flown on from its last reported position."""
+    flight = tracked.flight
+    age = min(max(now - tracked.position_time, 0.0), MAX_EXTRAPOLATE_S)
+    latitude, longitude = destination_point(
+        (flight.latitude, flight.longitude), flight.heading, flight.speed_kt * age / 3600
+    )
+    return flight.model_copy(update={"latitude": latitude, "longitude": longitude})
+
+
+def request_cost(bbox: tuple[float, float, float, float] | None) -> int:
+    """Credits one /states/all request costs, by the area asked for (OpenSky's table)."""
+    if bbox is None:
+        return 4
+    lamin, lomin, lamax, lomax = bbox
+    area = (lamax - lamin) * (lomax - lomin)  # square degrees
+    if area <= 25:
+        return 1
+    if area <= 100:
+        return 2
+    if area <= 400:
+        return 3
+    return 4
+
+
+class RateLimited(ProviderError):
+    """OpenSky answered 429; `retry_after` is how long it asked us to wait (seconds)."""
+
+    def __init__(self, retry_after: float) -> None:
+        super().__init__(f"OpenSky rate limit reached, retry in {retry_after:.0f}s")
+        self.retry_after = retry_after
+
+
+class OpenSkyProvider:
+    name = "opensky"
+
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        *,
+        bbox: tuple[float, float, float, float] | None = None,  # lamin, lomin, lamax, lomax
+        cache_ttl_s: float = DEFAULT_CACHE_TTL_S,
+        min_ttl_s: float = DEFAULT_MIN_TTL_S,
+        max_credits_per_hour: int = DEFAULT_MAX_CREDITS_PER_HOUR,
+        credit_reserve: int = DEFAULT_CREDIT_RESERVE,
+        max_flights: int = 1500,
+        http: httpx.Client | None = None,
+        clock: Callable[[], float] = time.time,
+    ) -> None:
+        self._client_id = client_id
+        self._client_secret = client_secret
+        self._bbox = bbox
+        self._cost = request_cost(bbox)
+        # Credit guard (presets and reasoning: docs/opensky-credit-guard.md). The refresh
+        # interval can't be set below the floor, so a bad setting can't burn the quota.
+        self._ttl = max(cache_ttl_s, min_ttl_s)
+        self._max_per_hour = max_credits_per_hour
+        self._reserve = credit_reserve
+        self._spend: deque[tuple[float, int]] = deque()  # (time, credits) of recent requests
+        self._remaining: int | None = None  # credits left, as last reported by OpenSky
+        self._reserve_retry_at = 0.0  # while under the reserve, probe again only after this
+        self._last_pause: str | None = None
+        self._max_flights = max_flights
+        self._http = http or httpx.Client(timeout=20)
+        self._clock = clock
+        self._lock = threading.Lock()  # one refresh at a time, however many requests wait
+        self._snapshot: list[Tracked] | None = None
+        self._fetched_at = 0.0
+        self._next_attempt = 0.0  # no request before this time (backoff after a failure)
+        self._token: str | None = None
+        self._token_expires = 0.0
+
+    @classmethod
+    def from_env(cls, env: Mapping[str, str]) -> "OpenSkyProvider":
+        client_id = env.get("OPENSKY_CLIENT_ID")
+        client_secret = env.get("OPENSKY_CLIENT_SECRET")
+        if not client_id or not client_secret:
+            raise ValueError(
+                "FLIGHT_SOURCE=opensky needs OPENSKY_CLIENT_ID and OPENSKY_CLIENT_SECRET "
+                "(see backend/.env.example)"
+            )
+        bbox = None
+        if raw := env.get("OPENSKY_BBOX"):
+            lamin, lomin, lamax, lomax = (float(x) for x in raw.split(","))
+            bbox = (lamin, lomin, lamax, lomax)
+        return cls(
+            client_id,
+            client_secret,
+            bbox=bbox,
+            cache_ttl_s=float(env.get("OPENSKY_CACHE_TTL_S", DEFAULT_CACHE_TTL_S)),
+            min_ttl_s=float(env.get("OPENSKY_MIN_TTL_S", DEFAULT_MIN_TTL_S)),
+            max_credits_per_hour=int(
+                env.get("OPENSKY_MAX_CREDITS_PER_HOUR", DEFAULT_MAX_CREDITS_PER_HOUR)
+            ),
+            credit_reserve=int(env.get("OPENSKY_CREDIT_RESERVE", DEFAULT_CREDIT_RESERVE)),
+            max_flights=int(env.get("OPENSKY_MAX_FLIGHTS", "1500")),
+        )
+
+    def status(self) -> dict[str, str | int | None]:
+        """What /health shows: whether the credit guard is holding refreshes back."""
+        now = self._clock()
+        reason = self._pause_reason(now)
+        return {
+            "guard": "ok" if reason is None else f"paused ({reason})",
+            "credits_remaining": self._remaining,
+            "credits_spent_last_hour": self._spent_last_hour(now),
+        }
+
+    def _spent_last_hour(self, now: float) -> int:
+        return sum(credits for t, credits in list(self._spend) if now - t < HOUR_S)
+
+    def _pause_reason(self, now: float) -> str | None:
+        """Why the next refresh must wait ("hourly cap" or "reserve"), or None to go ahead."""
+        if self._spent_last_hour(now) + self._cost > self._max_per_hour:
+            return "hourly cap"
+        # OpenSky's own count survives restarts. Under the reserve we only probe now and
+        # then (a few credits) to notice when the allowance has come back.
+        if (
+            self._remaining is not None
+            and self._remaining - self._cost < self._reserve
+            and now < self._reserve_retry_at
+        ):
+            return "reserve"
+        return None
+
+    def get_flights(self) -> list[Flight]:
+        with self._lock:
+            now = self._clock()
+            if self._snapshot is None or now - self._fetched_at >= self._ttl:
+                self._refresh(now)
+            snapshot = self._snapshot
+            if snapshot is None:
+                raise ProviderError("No OpenSky data yet")
+            return [advance(t, now) for t in snapshot]
+
+    def _refresh(self, now: float) -> None:
+        """Fetch a new snapshot; on failure keep serving the old one (if there is one)."""
+        if now < self._next_attempt:
+            return
+        reason = self._pause_reason(now)
+        if reason != self._last_pause:  # log only when the guard switches on or off
+            log.warning("OpenSky credit guard: %s", f"paused ({reason})" if reason else "resumed")
+            self._last_pause = reason
+        if reason is not None:
+            return  # keep serving the last snapshot until the guard lets go
+        try:
+            self._snapshot = self._fetch()
+            self._fetched_at = now
+        except (httpx.HTTPError, ProviderError, ValueError) as error:
+            backoff = error.retry_after if isinstance(error, RateLimited) else FAILURE_BACKOFF_S
+            self._next_attempt = now + backoff
+            log.warning("OpenSky request failed (%s); retrying in %.0fs", error, backoff)
+            if self._snapshot is None:
+                raise ProviderError(f"OpenSky unavailable: {error}") from error
+
+    def _fetch(self) -> list[Tracked]:
+        response = self._get_states()
+        if response.status_code == 401:  # token rejected: get a fresh one and try once more
+            self._token = None
+            response = self._get_states()
+        self._note_remaining(response)
+        if response.status_code == 429:
+            header = response.headers.get("X-Rate-Limit-Retry-After-Seconds", "")
+            # Header values are text; anything unreadable falls back to the default wait.
+            retry = float(header) if header.isdigit() else FAILURE_BACKOFF_S
+            raise RateLimited(retry)
+        response.raise_for_status()
+        body = response.json()
+        rows = body.get("states") if isinstance(body, dict) else None
+        return map_states(rows if isinstance(rows, list) else [], self._max_flights)
+
+    def _note_remaining(self, response: httpx.Response) -> None:
+        """Remember the credits OpenSky says are left, and when to probe if they're low."""
+        header = response.headers.get("X-Rate-Limit-Remaining", "")
+        if header.isdigit():
+            self._remaining = int(header)
+            log.info("OpenSky credits remaining: %d", self._remaining)
+        self._reserve_retry_at = self._clock() + RESERVE_PROBE_S
+
+    def _get_states(self) -> httpx.Response:
+        params: dict[str, float] = {}
+        if self._bbox:
+            params = dict(zip(("lamin", "lomin", "lamax", "lomax"), self._bbox, strict=True))
+        headers = {"Authorization": f"Bearer {self._bearer()}"}
+        # Count every request against the hourly cap (a retried one costs again).
+        now = self._clock()
+        self._spend.append((now, self._cost))
+        while self._spend and now - self._spend[0][0] >= HOUR_S:
+            self._spend.popleft()
+        return self._http.get(STATES_URL, params=params, headers=headers)
+
+    def _bearer(self) -> str:
+        """The OAuth2 access token, fetched when missing or about to expire (30 min life)."""
+        now = self._clock()
+        if self._token is None or now >= self._token_expires:
+            response = self._http.post(
+                TOKEN_URL,
+                data={
+                    "grant_type": "client_credentials",
+                    "client_id": self._client_id,
+                    "client_secret": self._client_secret,
+                },
+            )
+            response.raise_for_status()
+            body = response.json()
+            token = body.get("access_token") if isinstance(body, dict) else None
+            lifetime = _num(body.get("expires_in")) if isinstance(body, dict) else None
+            if not isinstance(token, str):
+                raise ProviderError("OpenSky token response had no access_token")
+            self._token = token
+            self._token_expires = now + (lifetime or 300) - TOKEN_MARGIN_S
+        return self._token
