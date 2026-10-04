@@ -4,7 +4,7 @@ Read `docs/plan.md` before making significant changes. It is the source of truth
 
 ## Current scope
 
-Milestones 1–6 are complete. Milestone 7 (live data and deployment) is in progress. It deals with big topics, so we handle it one step at a time rather than all at once: work only on the step the user names, and do not start the next step (or Milestone 8 or later) unless explicitly asked. Step 1a (the OpenSky flight provider, backend only) and step 2 (aircraft type, route and duration for live flights) are built; the open items are listed in `docs/plan.md`.
+Milestones 1–6 are complete. Milestone 7 (live data and deployment) is in progress. It deals with big topics, so we handle it one step at a time rather than all at once: work only on the step the user names, and do not start the next step (or Milestone 8 or later) unless explicitly asked. The open items are listed in `docs/plan.md`.
 
 ## Development principles
 
