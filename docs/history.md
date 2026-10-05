@@ -1,6 +1,6 @@
 # Airspace Explorer — History
 
-The finished work, moved out of `docs/plan.md` unchanged: Milestones 1-6 and Milestone 7 steps 1-4, with the measurements, lessons and decisions behind them. `docs/plan.md` holds the current plan and the rules that still shape the code. Section names such as "Step 3" refer to this file.
+The finished work, moved out of `docs/plan.md` unchanged: Milestones 1-6 and Milestone 7 steps 1-5, with the measurements, lessons and decisions behind them. `docs/plan.md` holds the current plan and the rules that still shape the code. Section names such as "Step 3" refer to this file.
 
 **Completed milestones.** Summaries only. The step-by-step history is in the git log.
 
@@ -163,3 +163,5 @@ The finished work, moved out of `docs/plan.md` unchanged: Milestones 1-6 and Mil
   - A plane in a mountain-wave area no longer counts as "in turbulence" for the turbulence quest.
   - Real SIGMET polygons can be large (hundreds of km), and the icon count assumes a map about 1000 px wide.
   - Movement (`dir`, `spd`) is parsed but not drawn.
+
+**Step 5 — Quests (done 2026-10-05).** Reviewed against live data: long-haul and the type quests cannot always fire (no duration, ~18% of planes without a type), and `pickQuest` already skips a quest no flight satisfies. Added a mountain-wave quest, climbing, descending and fast (ground speed over 550 kt) quests from the live fields, and four airline quests (RYR, UAE, DLH, KLM) matched on the callsign prefix. A saved weather quest that is not done and that no flight satisfies any more is replaced (a done one is kept; there is still no flown track, see "Track history" in the backlog). The banner says so when a loaded feed has no usable quest. All 20 quest lessons were rewritten as longer ones that differ from the short card facts, and the banner shows a playful rest-day line when a loaded feed has no usable quest. Counts after this step: 20 quests (16 can fire on mock data, 19 on live) and 50 facts (46 mock, 50 live). A 787 type fact was added as the 50th, outside the plan, at the user's request. Gaps noted but not built: no fact or quest uses the registered country, the route or the flight phase. Checked by tests (224 pass), tsc, oxlint and Prettier; not run in a browser.

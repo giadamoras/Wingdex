@@ -61,7 +61,7 @@ const FACTS: Fact[] = [
   {
     kind: 'type',
     value: 'B738',
-    text: 'Many early 737s had "eyebrow windows" above the cockpit windows, which gave pilots better visibility in turns.',
+    text: '"Eyebrow windows" are an optional feature on some 737s. They sit above the cockpit windows and give pilots better visibility in turns.',
   },
   {
     kind: 'type',
@@ -72,6 +72,11 @@ const FACTS: Fact[] = [
     kind: 'type',
     value: 'B748',
     text: 'At about 76 m, the 747-8 is one of the longest airliners ever built.',
+  },
+  {
+    kind: 'type',
+    value: 'B789',
+    text: 'The 787 has no window shades. Passengers dim the glass electronically, and its windows are among the largest on any airliner.',
   },
   {
     kind: 'type',
@@ -128,7 +133,7 @@ const FACTS: Fact[] = [
   {
     kind: 'airline',
     value: 'SAS',
-    text: 'SAS stands for Scandinavian Airlines System, and it began as a joint venture between Denmark, Norway and Sweden.',
+    text: 'SAS stands for Scandinavian Airlines System, and it began in 1946 when the national airlines of Denmark, Norway and Sweden joined forces.',
   },
   {
     kind: 'airline',
@@ -155,7 +160,7 @@ const FACTS: Fact[] = [
   {
     kind: 'altitude',
     value: 'cruise',
-    text: 'Airliners cruise at 30,000 to 38,000 ft because the thin air there means less drag, while the engines still get enough oxygen to run efficiently.',
+    text: 'Airliners typically cruise at 31,000 to 41,000 ft because the thin air there means less drag, while the engines still get enough air to run efficiently.',
   },
   {
     kind: 'altitude',
@@ -177,7 +182,7 @@ const FACTS: Fact[] = [
   {
     kind: 'region',
     value: 'north-atlantic',
-    text: 'Transatlantic flights follow "tracks" published every day, laid out to catch tailwinds from the jet stream.',
+    text: "Transatlantic flights follow 'tracks' published every day. They are laid out to use the jet stream's tailwinds eastbound and to dodge its headwinds westbound.",
   },
   {
     kind: 'region',
@@ -199,7 +204,7 @@ const FACTS: Fact[] = [
   {
     kind: 'time',
     value: 'night',
-    text: 'At night you can tell which way a plane is heading from its lights: red on the left wing, green on the right, white at the tail.',
+    text: "At night you can tell which way a plane is heading from its lights: red on the plane's left wing, green on its right, white at the tail.",
   },
   {
     kind: 'time',
@@ -214,24 +219,24 @@ const FACTS: Fact[] = [
   {
     kind: 'time',
     value: 'day',
-    text: "A contrail only forms when the air is cold and humid enough for the engines' water vapour to freeze into ice crystals.",
+    text: 'A contrail forms when hot, moist engine exhaust meets very cold air and freezes into ice crystals. In dry air it vanishes quickly, and in humid air it can last for hours.',
   },
 
   // Weather hazards. Shown only to a flight that is inside one (see getFact).
   {
     kind: 'weather',
     value: 'thunderstorm',
-    text: 'Pilots steer around thunderstorms instead of flying through them. The tall clouds hide violent up-and-down air currents, hail and lightning, and the weather radar in the nose shows which way to go.',
+    text: 'Pilots steer around thunderstorms instead of flying through them. The tall clouds contain violent up-and-down air currents, hail and lightning, and the weather radar in the nose shows which way to go.',
   },
   {
     kind: 'weather',
     value: 'thunderstorm',
-    text: "A thunderstorm cloud can tower far above the height airliners cruise at, so climbing over it isn't an option. Pilots go around it instead, often keeping about 20 nautical miles away from the worst of it.",
+    text: "A thunderstorm cloud can tower far above the height airliners cruise at, so climbing over it often isn't an option. Pilots go around it instead, often keeping about 20 nautical miles away from the worst of it.",
   },
   {
     kind: 'weather',
     value: 'turbulence',
-    text: 'Turbulence is bumpy air, made by jet streams, mountains and storms. It can feel scary, but airliners are built to flex far more than it ever asks. The real rule is to keep your seat belt on.',
+    text: "Turbulence is bumpy air, made by jet streams, mountains and storms. It can feel scary, but airliners are built to flex far more than normal turbulence asks of them. The real risk is people who aren't belted in, so keep your seat belt on.",
   },
   {
     kind: 'weather',
@@ -241,7 +246,7 @@ const FACTS: Fact[] = [
   {
     kind: 'weather',
     value: 'mountain_wave',
-    text: 'When strong winds flow across a mountain range in a suitable atmospheric environment, they can create waves of air that extend downwind. These mountain waves can produce turbulence, sometimes even when the air is too dry for clouds to form.',
+    text: 'When strong wind blows across a mountain range and the air above is stable, it can set the air rippling in waves that carry on far downwind. These waves can cause turbulence, even in clear air with no clouds.',
   },
   {
     kind: 'weather',
@@ -251,12 +256,12 @@ const FACTS: Fact[] = [
   {
     kind: 'weather',
     value: 'icing',
-    text: 'Ice can build up on the wings and change their shape, so they make less lift. Airliners heat the wing edges and engine intakes, and pilots can climb or descend to leave an icy layer.',
+    text: 'Ice can build up on the wings and change their shape, so they make less lift. Many airliners heat the wing edges and engine intakes, and pilots can climb or descend to leave an icy layer.',
   },
   {
     kind: 'weather',
     value: 'icing',
-    text: 'Icing comes from supercooled water: cloud droplets that are still liquid below freezing and turn to ice the moment they touch a plane. That is why a warning comes with a range of heights. Above or below the layer, the air is fine.',
+    text: 'Icing comes from supercooled water: cloud droplets that are still liquid below freezing and turn to ice the moment they touch a plane. This only happens in a layer of cloud at the right temperature, which is why a warning comes with a range of heights. Above or below it, icing is much less likely.',
   },
   {
     kind: 'weather',
@@ -276,12 +281,11 @@ const FACTS: Fact[] = [
   {
     kind: 'weather',
     value: 'tropical_cyclone',
-    text: "A tropical cyclone's storm clouds can reach the heights airliners cruise at, so there is no flying over one. Forecasters track each storm so routes can be planned to skirt it.",
+    text: "A tropical cyclone's storm clouds can tower well above the height airliners cruise at, so planes can't fly over one. Forecasters track each storm so routes can be planned to skirt it.",
   },
 ]
 
-const FALLBACK_FACT =
-  "Every aircraft type has its own quirks. This one's on you to find!"
+const FALLBACK_FACT = "Every flight has a story. This one's on you to uncover!"
 
 // One fact for this flight, from the pool entries matching its attributes.
 // The pick is seeded by flight id and local day, not random per call: the card

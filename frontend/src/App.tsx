@@ -7,6 +7,7 @@ import { pickFeatured } from './featured'
 import { FlightCard } from './FlightCard'
 import { FlightMap } from './FlightMap'
 import { Onboarding } from './Onboarding'
+import { isQuestDone } from './quest'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
 import { mergeRoute } from './route'
@@ -29,7 +30,7 @@ function App() {
   const weather = useWeather()
   const weatherAreas = weather ?? NO_WEATHER
   const { journal, addCatch } = useJournalContext()
-  const quest = useDailyQuest(flights, weather)
+  const quest = useDailyQuest(flights, weather, journal)
   const { replay, playedId, start, stop } = useReplay()
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
   const onboarding = useOnboarding(flights, journal.length)
@@ -83,16 +84,8 @@ function App() {
   const lost = selected !== null && !live
   // Derived from the Journal on every render, never stored separately.
   const todaysCatches = journal.filter((e) => isToday(e.caughtAt))
-  // Each catch is judged at its own catch time (matters for night quests). The
-  // entry that completed the quest also carries its id, which keeps a weather
-  // quest done after the weather it was caught in has moved on.
   const questDone =
-    quest !== null &&
-    todaysCatches.some(
-      (e) =>
-        e.questId === quest.id ||
-        quest.matches(e.flight, new Date(e.caughtAt), weatherAreas),
-    )
+    quest !== null && isQuestDone(quest, todaysCatches, weatherAreas)
   const caughtToday = todaysCatches.some((e) => e.flight.id === selected?.id)
 
   // Featured flights: picked once per session, when the feed, weather and
@@ -139,7 +132,11 @@ function App() {
         <Collection />
       ) : (
         <>
-          <QuestBanner quest={quest} done={questDone} />
+          <QuestBanner
+            quest={quest}
+            done={questDone}
+            searching={flights === null || weather === null}
+          />
           {flights === null ? (
             <p>{error ? 'Could not load flights.' : 'Loading flights...'}</p>
           ) : (

@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { pickQuest, QUEST_TEMPLATES, type Quest } from './quest'
+import { isQuestDone, pickQuest, QUEST_TEMPLATES, type Quest } from './quest'
 import type { Hazard, WeatherArea } from './types'
 
 const flight = {
@@ -147,6 +147,7 @@ const hazardArea = (hazard: Hazard): WeatherArea => ({
 const HAZARDS: Hazard[] = [
   'thunderstorm',
   'turbulence',
+  'mountain_wave',
   'icing',
   'volcanic_ash',
   'tropical_cyclone',
@@ -187,4 +188,51 @@ test('a weather quest can be picked only when a flight is in that weather', () =
   expect(
     pickQuest(only, [flight], '2026-09-28', NOW, [hazardArea('icing')]),
   ).toBe(only[0])
+})
+
+test('climbing and descending quests need a live vertical rate', () => {
+  expect(
+    quest('climbing').matches({ ...flight, vertical_rate_fpm: 1500 }),
+  ).toBe(true)
+  expect(
+    quest('climbing').matches({ ...flight, vertical_rate_fpm: 1000 }),
+  ).toBe(false)
+  expect(quest('climbing').matches(flight)).toBe(false)
+  expect(
+    quest('descending').matches({ ...flight, vertical_rate_fpm: -1500 }),
+  ).toBe(true)
+  expect(
+    quest('descending').matches({ ...flight, vertical_rate_fpm: null }),
+  ).toBe(false)
+})
+
+test('the fast quest excludes its threshold', () => {
+  expect(quest('fast').matches({ ...flight, speed_kt: 550 })).toBe(false)
+  expect(quest('fast').matches({ ...flight, speed_kt: 551 })).toBe(true)
+})
+
+test('an airline quest matches the callsign prefix only', () => {
+  expect(quest('airline-RYR').matches({ ...flight, callsign: 'RYR12AB' })).toBe(
+    true,
+  )
+  expect(quest('airline-RYR').matches({ ...flight, callsign: 'DLH123' })).toBe(
+    false,
+  )
+  expect(quest('airline-RYR').matches({ ...flight, callsign: 'N123AB' })).toBe(
+    false,
+  )
+})
+
+test('isQuestDone uses the saved quest id or a matching catch', () => {
+  const entry = (questId?: string) => ({
+    flight,
+    fact: '',
+    caughtAt: NOW.toISOString(),
+    questId,
+  })
+  const q = quest('weather-icing')
+  expect(isQuestDone(q, [], [])).toBe(false)
+  expect(isQuestDone(q, [entry()], [])).toBe(false)
+  expect(isQuestDone(q, [entry('weather-icing')], [])).toBe(true)
+  expect(isQuestDone(q, [entry()], [hazardArea('icing')])).toBe(true)
 })

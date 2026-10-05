@@ -2,8 +2,8 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestones 1-6 and Milestone 7 steps 1-4 (OpenSky provider, live aircraft type and route, density, real weather). They are summarised in `docs/history.md`.
-- **In progress.** Milestone 7, the last steps of the MVP: quests (step 5), world-wide mock data (step 6), deployment (step 7). After the MVP, a backlog in priority order is under "Implementation roadmap".
+- **Done.** Milestones 1-6 and Milestone 7 steps 1-5 (OpenSky provider, live aircraft type and route, density, real weather, quests). They are summarised in `docs/history.md`.
+- **In progress.** Milestone 7, the last steps of the MVP: world-wide mock data (step 6), deployment (step 7). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
 
@@ -88,7 +88,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Implementation roadmap
 
-Finished work (Milestones 1-6 and Milestone 7 steps 1-4) is in `docs/history.md`, with the measurements and lessons behind it. The rules from it that still shape the code are under "Standing rules" below.
+Finished work (Milestones 1-6 and Milestone 7 steps 1-5) is in `docs/history.md`, with the measurements and lessons behind it. The rules from it that still shape the code are under "Standing rules" below.
 
 ### Standing rules
 
@@ -105,9 +105,7 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-4) is in `docs/history.md`
 
 ### Now: finish Milestone 7 (the MVP)
 
-Done one step at a time: work only on the step the user names. Order: quests, world-wide mock data, deployment. The quest review comes first because it is small and fixes the weakest point seen live; the mock spread only matters for demos without credentials.
-
-**Step 5 — Quests.** Review which quests can fire on live data (no long-haul, type quests only for the 82% with a known type, weather depending on step 4), fix the empty-quest cases, and add new quests that suit live traffic. Airline-based quests and facts are one candidate and need their own decision. Also from step 4: (1) a mountain-wave quest; (2) a weather quest saved for the day can outlive its hazard, and there is no flown track to credit a plane that passed through (see "Track history" in the backlog); (3) the quest text and the fact on the card read almost the same for a flight inside a hazard (seen live), so reword the quests as short lessons with more detail and keep the fact for something different.
+Done one step at a time: work only on the step the user names. Order: world-wide mock data, deployment. The mock spread only matters for demos without credentials.
 
 **Step 6 — World-wide mock data.** Spread the mock feed over the whole world to match a world-wide live feed, so a demo without OpenSky credentials looks like the real thing. The mock's weather areas may need the same.
 
