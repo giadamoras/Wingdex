@@ -42,7 +42,7 @@ DEFAULT_MAX_CREDITS_PER_HOUR = 200
 DEFAULT_CREDIT_RESERVE = 400  # stop refreshing when OpenSky says this few credits are left
 # Flights served at most. Only a safety ceiling: about 10,800 are airborne at once, so by
 # default the whole world is sent. The frontend decides what to draw, and gzip keeps the
-# poll small (measured in docs/plan.md, step 3).
+# poll small (measured in docs/history.md, step 3).
 DEFAULT_MAX_FLIGHTS = 15000
 HOUR_S = 3600
 RESERVE_PROBE_S = 1800  # under the reserve, check again at most this often

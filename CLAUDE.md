@@ -4,7 +4,7 @@ Read `docs/plan.md` before making significant changes. It is the source of truth
 
 ## Current scope
 
-Milestones 1–6 are complete. Milestone 7 (live data and deployment) is in progress. It deals with big topics, so we handle it one step at a time rather than all at once: work only on the step the user names, and do not start the next step (or Milestone 8 or later) unless explicitly asked. The open items are listed in `docs/plan.md`.
+Milestones 1–6 and steps 1–4 of Milestone 7 are complete; their history is in `docs/history.md`. Milestone 7 (live data and deployment) is in progress, with steps 5–7 left (quests, world-wide mock data, deployment). It deals with big topics, so we handle it one step at a time rather than all at once: work only on the step the user names, and do not start the next step or anything in the post-MVP backlog unless explicitly asked. The open items and the backlog order are in `docs/plan.md`.
 
 ## Development principles
 
