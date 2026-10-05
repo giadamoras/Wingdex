@@ -3,7 +3,7 @@ import { formatAltitudeBand } from './format'
 import { HazardIcon } from './HazardIcon'
 import { project } from './projection'
 import type { LatLon, WeatherArea } from './types'
-import { HAZARD_NAMES, iconCount, iconOrder } from './weatherIcons'
+import { hazardTitle, iconCount, iconOrder } from './weatherIcons'
 
 // Percent position for an HTML element on the world layer.
 const placeAt = (p: LatLon) => {
@@ -56,7 +56,7 @@ export function WeatherLayer({
       )}
       {areas.flatMap((area) => {
         const spots = orders.get(area.id)!.slice(0, iconCount(area, zoom))
-        const name = `${HAZARD_NAMES[area.hazard]}, ${area.region}`
+        const name = `${hazardTitle(area)}, ${area.region}`
         return spots.map((spot, i) => (
           <button
             key={`${area.id}-${i}`}
@@ -82,7 +82,7 @@ export function WeatherLayer({
           className="weather-label"
           style={placeAt(orders.get(selected.id)![0])}
         >
-          <strong>{HAZARD_NAMES[selected.hazard]}</strong> · {selected.region}
+          <strong>{hazardTitle(selected)}</strong> · {selected.region}
           <br />
           {formatAltitudeBand(
             selected.altitude_min_ft,

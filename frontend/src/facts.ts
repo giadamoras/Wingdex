@@ -236,7 +236,17 @@ const FACTS: Fact[] = [
   {
     kind: 'weather',
     value: 'turbulence',
-    text: 'Mountains send waves of air rippling downwind, like water flowing over a rock in a stream. Planes crossing mountain ranges like the Alps can feel those waves as bumps, even when the sky is clear.',
+    text: "Clear-air turbulence happens in cloudless skies, often when the fast winds of a jet stream shear against slower air. Ordinary weather radar can't directly detect it, so pilots radio warnings to each other and to air traffic control about the bumps they have felt.",
+  },
+  {
+    kind: 'weather',
+    value: 'mountain_wave',
+    text: 'When strong winds flow across a mountain range in a suitable atmospheric environment, they can create waves of air that extend downwind. These mountain waves can produce turbulence, sometimes even when the air is too dry for clouds to form.',
+  },
+  {
+    kind: 'weather',
+    value: 'mountain_wave',
+    text: 'Smooth, lens-shaped clouds called lenticular clouds can form near the top of a mountain wave. They may look almost motionless even though strong winds are flowing through them. Glider pilots can use the rising air around mountain waves to gain altitude.',
   },
   {
     kind: 'weather',

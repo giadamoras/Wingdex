@@ -23,6 +23,13 @@ const GLYPHS: Record<Hazard, ReactNode> = {
       <path className="line" d="M3 16q2.25-3 4.5 0t4.5 0 4.5 0 4.5 0" />
     </>
   ),
+  // A mountain with a wave of air rippling over it.
+  mountain_wave: (
+    <>
+      <path d="M3 20 9.5 11l4 5.5 2.5-3L21 20z" />
+      <path className="line" d="M3 7q2.25-3 4.5 0t4.5 0 4.5 0 4.5 0" />
+    </>
+  ),
   // Snowflake.
   icing: (
     <>

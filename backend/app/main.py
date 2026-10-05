@@ -2,13 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from app.mock_weather import get_mock_weather
 from app.models import Flight, FlightRoute, WeatherArea
-from app.providers import ProviderError, create_provider
+from app.providers import ProviderError, create_provider, create_weather_provider
 from app.routes import LookupUnavailable, RouteService
 
 app = FastAPI(title="Airspace Explorer API")
 provider = create_provider()  # FLIGHT_SOURCE=mock (default) or opensky
+weather_provider = create_weather_provider()  # WEATHER_SOURCE=mock (default) or awc
 route_service = RouteService()
 
 # The flight list is large and repetitive JSON; gzip shrinks it about 8x.
@@ -25,7 +25,13 @@ app.add_middleware(
 
 @app.get("/health")
 def health() -> dict[str, str | int | None]:
-    return {"status": "ok", "source": provider.name, **provider.status()}
+    return {
+        "status": "ok",
+        "source": provider.name,
+        **provider.status(),
+        "weather_source": weather_provider.name,
+        **{f"weather_{key}": value for key, value in weather_provider.status().items()},
+    }
 
 
 @app.get("/flights")
@@ -66,4 +72,10 @@ def flight_route(flight_id: str) -> FlightRoute:
 
 @app.get("/weather")
 def weather() -> list[WeatherArea]:
-    return get_mock_weather()
+    try:
+        return weather_provider.get_weather()
+    except ProviderError as error:
+        # The frontend treats a failed weather poll as "no weather".
+        raise HTTPException(
+            status_code=503, detail="Weather data temporarily unavailable"
+        ) from error

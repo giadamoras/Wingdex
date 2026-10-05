@@ -3,7 +3,7 @@
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
 - **Done.** Milestones 1-6 (walking skeleton, living map, daily variety, Collection and badges, visual pass and onboarding, weather), summarized in the Implementation roadmap.
-- **In progress.** Milestone 7 (live data and deployment). Done: the OpenSky provider (step 1), live aircraft type, route and duration (step 2), the extra card detail, the journey readability fix and density (step 3). Next, in order: real weather (step 4), quests (step 5), world-wide mock data (step 6), deployment (step 7).
+- **In progress.** Milestone 7 (live data and deployment). Done: the OpenSky provider (step 1), live aircraft type, route and duration (step 2), the extra card detail, the journey readability fix and density (step 3), real weather (step 4). Next, in order: quests (step 5), world-wide mock data (step 6), deployment (step 7).
 
 ## Context
 
@@ -67,7 +67,7 @@ Aviation-curious people without deep aviation background — including the creat
 ## Open items for future planning passes
 
 - **Hosting** (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend) is not decided. It is settled in Milestone 7, step 7.
-- **Fact pools** are still small (47 facts, 10 of them weather) and can grow at any time.
+- **Fact pools** are still small (49 facts, 12 of them weather) and can grow at any time.
 - **Ideas, not scheduled:** draw the real flown track of a selected flight; flight photos (see "Photos" in Milestone 7); airline-based quests and facts; learning missing aircraft types in the background; 3D aircraft models.
 
 ## Technical direction
@@ -78,7 +78,7 @@ Aviation-curious people without deep aviation background — including the creat
   - `Flight`: `id`, `callsign`, `latitude`/`longitude` (degrees), `altitude_ft`, `heading` (0-360), `speed_kt`, and optional `aircraft_type`, `duration_min` (with `duration_estimated`), `origin`/`destination` (`Airport`: `icao`, `iata`, `name`, `latitude`, `longitude`, optional `city` and `country`), `vertical_rate_fpm` and `registered_country`. The optional fields are null when a source does not know them. OpenSky reports metres and m/s, so the provider converts to these units.
   - `WeatherArea` (Milestone 6) and `FlightRoute` (the `/route` response, Milestone 7).
   - Richer models are deferred until a feature needs them.
-- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Swapping sources changes only the backend, never the `/flights` contract or the frontend.
+- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract (the frontend only needed to learn the new hazard and labels once, in step 4).
 - **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific. Fact-pool content is a static file bundled into the frontend, not an endpoint. (The "move content to a database" idea below would revisit this.)
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
 - **Tooling:** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, and `tsc`; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`.
@@ -142,9 +142,9 @@ Aviation-curious people without deep aviation background — including the creat
 
 **Milestone 6 — Weather (done).** Backend plus frontend; the `/flights` contract did not change.
 
-- **Real source, mock data.** The intended real source is the Aviation Weather Center's global SIGMET feed (`https://aviationweather.gov/api/data/isigmet?format=json`): free, no key, about 100 requests/min and 400 results per query. It was checked against a live response. It is worldwide (about 100 advisories), unlike the AWC's `airsigmet` and G-AIRMET products, which are US-only. Open-Meteo was the alternative and was dropped (dense but not aviation-specific).
+- **Real source, mock data.** The intended real source is the Aviation Weather Center's global SIGMET feed (`https://aviationweather.gov/api/data/isigmet?format=json`): free, no key, about 100 requests/min and 400 results per query. It was checked against a live response. It is worldwide (about 100 advisories), unlike the AWC's `airsigmet` and G-AIRMET products, which are US-only. Open-Meteo was the alternative and was dropped (dense but not aviation-specific). Why SIGMETs rather than METAR or TAF: `docs/aviation-weather-products.md`.
   - **Fields seen:** `icaoId`, `firId`, `firName`, `validTimeFrom`/`validTimeTo` (epoch seconds), `seriesId`, `hazard` (TS, TURB, ICE, MTW, VA, TC), `qualifier`, `base`/`top` (feet), `geom` ("AREA"), `coords` (lat/lon points), `dir`, `spd`, `chng`, `rawSigmet`.
-  - **Not confirmed.** There is no severity field on global SIGMETs. `qualifier` held a volcano name in the two entries read, so its other values are unknown. Only `geom: "AREA"` was seen, so lines or points may exist. Check a larger sample before writing the provider.
+  - **Checked in Milestone 7, step 4** against a full live response (162 advisories); see that step for what the feed really holds.
 - **Backend.** `GET /weather` returns `WeatherArea`s: `id`, `hazard` (thunderstorm, turbulence, icing, volcanic_ash, tropical_cyclone), `region`, altitude band, `valid_from`/`valid_to` (Unix seconds), a closed `polygon` and optional movement. It is a separate endpoint because a hazard belongs to an area, not to one plane, and flights and weather will come from different sources. The mock (`mock_weather.py`) is a static snapshot of 9 rectangular areas whose validity is recomputed around "now".
 - **Icons (`WeatherLayer.tsx`, `HazardIcon.tsx`, `weatherIcons.ts`).** Round stickers under the planes: one icon for a small area, up to 4 as you zoom in, placed inside the polygon. The outline and label appear when an icon is clicked. A ☁ button hides or shows all weather.
 - **Game attribute.** `weatherAt` (`attributes.ts`) says a flight is "in" a hazard when it is inside the polygon, within the altitude band and the advisory is valid. A flight above an icing layer is not in it. Five weather quest templates, ten weather facts (shown only for a flight inside a hazard), and the quest-completing featured flight can be a weather one.
@@ -160,7 +160,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 **Milestone 7 — Live data and deployment:** real flights and weather, publicly hosted. Done one step at a time.
 
-**Order of the remaining steps:** 3 density, 4 real weather, 5 quests, 6 world-wide mock data, 7 deployment. Density comes first because it ties to the stutter measured below and changes what the other steps look like. The quest review follows weather because real weather changes which weather quests can match.
+**Order of the remaining steps:** 5 quests, 6 world-wide mock data, 7 deployment (steps 3 density and 4 real weather are done). Density came first because it ties to the stutter measured below and changes what the other steps look like. The quest review follows weather because real weather changes which weather quests can match.
 
 **Step 1a — OpenSky provider (backend only, done).** Run live once by the user on 2026-10-04.
 
@@ -231,9 +231,26 @@ Aviation-curious people without deep aviation background — including the creat
   - A per-view server request (`/flights?bbox=`, like FlightRadar24 may do) or a hybrid base-plus-detail feed, if sending the whole world proves too heavy (payload, server time or a phone). Weighed in the second pass; not needed yet.
   - Testing on a real GPU and a phone (the measurements so far are headless software rendering).
 
-**Step 4 — Real weather.** A provider behind the existing `/weather` contract that maps the AWC `isigmet` JSON into `WeatherArea` (field notes and unconfirmed details are in Milestone 6), with server-side caching inside its rate limit. Decide what to do with real SIGMETs being sparse and issued around real events: the weather quests may often have nothing to match, and a quest saved for the day can outlive its hazard.
+**Step 4 — Real weather (done 2026-10-05).** A provider behind the unchanged `/weather` contract, fed by the AWC international SIGMET feed. Why SIGMETs rather than METAR or TAF: `docs/aviation-weather-products.md`. Checked against a full live response and mapped end to end in tests; the user ran it live in a browser and said the map looks good. Not verified by Claude: the full flow in a browser.
 
-**Step 5 — Quests.** Review which quests can fire on live data (no long-haul, type quests only for the 82% with a known type, weather depending on step 4), fix the empty-quest cases, and add new quests that suit live traffic. Airline-based quests and facts are one candidate and need their own decision.
+- **The feed (read 2026-10-05).** AWC allows 100 requests/min and 400 entries per query, forbids cross-origin calls (only the backend calls it) and errors on undocumented query parameters, so the request is `?format=json` and nothing else. It asks for a custom User-Agent: `AirspaceExplorer/0.1` (no contact, the repo is private; `WEATHER_USER_AGENT` overrides it, and a project URL can go there after step 7).
+  - **Contents.** 162 advisories from 69 FIRs: thunderstorm 83, turbulence 41 (9 of them mountain wave), icing 20, volcanic ash 11, tropical cyclone 7. An earlier summary said 289 entries and was wrong, so recount from the raw JSON, not from a summary.
+  - **Validity.** Each advisory has its own times: 2-4 h for thunderstorms, turbulence and icing, about 6 h for cyclones and ash. The "issued hourly, valid 2 hours" wording on the AWC site describes US convective SIGMETs, which this app does not use.
+  - **Quirks.** `spd` is already knots even when the raw text says KMH; `dir` is a compass word, "-" or null; `base` is null in 95 entries (82 of them thunderstorms, meaning down to the surface) and `top` in 7; 31 rings are open; one `AREAS` entry holds 3 rings; one entry has `geom: null`. Entries described as lines in the raw text still arrive with a polygon.
+- **Backend.** `awc.py`: one shared snapshot, cached 5 min (never below 60 s), served stale with a 60 s backoff on failure (or as long as a 429 asks); a 204 means no weather. `/health` shows `weather_source` and, for AWC, the area count and age. Mock stays the default.
+  - **Mapping.** Mountain wave (qualifier `SEV MTW`) is its own hazard, `mountain_wave`. Open rings are closed and `AREAS` is split into one area per ring. A missing base becomes 0 ft and a missing top 60,000 ft (our own bounds). Compass words become degrees; "-" or null means no movement. A repeated id keeps the newest issue. A malformed or unusable advisory is skipped and logged, and the log line counts what was dropped. A response near the 400 cap logs a warning.
+  - **Result on the full feed:** 162 advisories became 164 areas, none dropped.
+  - **Contract additions.** `mountain_wave` in `Hazard`, and optional display-only `severity` ("Severe", "Embedded", "Frequent", "Occasional") and `name` (volcano or storm, e.g. "Mt Dukono", "Koguma"). Quests and facts never use them.
+- **Frontend.** A mountain-wave icon (mountain with a wave line, peach sticker) and `hazardTitle()`, which builds the label text ("Severe thunderstorm", "Tropical cyclone (Koguma)"). Two mountain-wave facts: the existing one moved over from turbulence, plus a new one on lens-shaped clouds and gliders. Turbulence got a new clear-air-turbulence fact, so every hazard has two. Credit line: "Weather: Aviation Weather Center." There is no mountain-wave quest yet (step 5).
+- **Bug found live by the user: the label hid under planes.** The weather label had no `z-index`, so planes (1-3) covered it in busy skies. It is now at 4, above planes and route. The icons themselves still sit under the planes.
+- **Decisions.** Sparse weather is accepted (no mock areas mixed into live data). A weather quest outliving its hazard cannot be fixed with "was the plane there", because no flown track exists (only the current position), so it stays open for step 5. No hazards beyond the six and no extra data (pilot reports are US and North Atlantic only) were added.
+- **Known limits.**
+  - An advisory that straddles the date line is dropped, silently. None was in the sample; splitting it in two is the fix if one matters.
+  - A plane in a mountain-wave area no longer counts as "in turbulence" for the turbulence quest.
+  - Real SIGMET polygons can be large (hundreds of km), and the icon count assumes a map about 1000 px wide.
+  - Movement (`dir`, `spd`) is parsed but not drawn.
+
+**Step 5 — Quests.** Review which quests can fire on live data (no long-haul, type quests only for the 82% with a known type, weather depending on step 4), fix the empty-quest cases, and add new quests that suit live traffic. Airline-based quests and facts are one candidate and need their own decision. Also from step 4: (1) a mountain-wave quest; (2) a weather quest saved for the day can outlive its hazard, and there is no flown track to credit a plane that passed through; (3) the quest text and the fact on the card read almost the same for a flight inside a hazard (seen live), so reword the quests as short lessons with more detail and keep the fact for something different.
 
 **Step 6 — World-wide mock data.** Spread the mock feed over the whole world to match a world-wide live feed, so a demo without OpenSky credentials looks like the real thing. The mock's weather areas may need the same.
 

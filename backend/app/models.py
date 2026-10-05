@@ -66,7 +66,9 @@ class LatLon(BaseModel):
     longitude: float = Field(ge=-180, le=180)  # degrees
 
 
-Hazard = Literal["thunderstorm", "turbulence", "icing", "volcanic_ash", "tropical_cyclone"]
+Hazard = Literal[
+    "thunderstorm", "turbulence", "mountain_wave", "icing", "volcanic_ash", "tropical_cyclone"
+]
 
 
 class WeatherArea(BaseModel):
@@ -88,3 +90,6 @@ class WeatherArea(BaseModel):
     # Optional: not every advisory says how the area is moving.
     movement_dir: float | None = Field(default=None, ge=0, lt=360)  # degrees towards
     movement_speed_kt: int | None = Field(default=None, ge=0)
+    # Display only, never used by quests or facts. Live data only (the mock has neither).
+    severity: str | None = None  # e.g. "Severe", "Embedded"
+    name: str | None = None  # the volcano or storm, e.g. "Mt Dukono", "Koguma"

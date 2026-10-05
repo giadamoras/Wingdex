@@ -5,7 +5,8 @@ from collections.abc import Mapping
 from typing import Protocol
 
 from app.mock_flights import get_mock_flights
-from app.models import Flight
+from app.mock_weather import get_mock_weather
+from app.models import Flight, WeatherArea
 
 
 class ProviderError(Exception):
@@ -40,6 +41,39 @@ class MockFlightProvider:
 
     def status(self) -> dict[str, str | int | None]:
         return {}
+
+
+class WeatherProvider(Protocol):
+    name: str  # shown by /health, e.g. "mock" or "awc"
+
+    def get_weather(self) -> list[WeatherArea]: ...
+
+    def status(self) -> dict[str, str | int | None]:
+        """Extra facts for /health (empty when there is nothing to report)."""
+        ...
+
+
+class MockWeatherProvider:
+    name = "mock"
+
+    def get_weather(self) -> list[WeatherArea]:
+        return get_mock_weather()
+
+    def status(self) -> dict[str, str | int | None]:
+        return {}
+
+
+def create_weather_provider(env: Mapping[str, str] | None = None) -> WeatherProvider:
+    """Pick the provider from WEATHER_SOURCE (default "mock", like FLIGHT_SOURCE)."""
+    env = os.environ if env is None else env
+    source = env.get("WEATHER_SOURCE", "mock")
+    if source == "mock":
+        return MockWeatherProvider()
+    if source == "awc":
+        from app.awc import AwcWeatherProvider  # imported here: awc imports this module
+
+        return AwcWeatherProvider.from_env(env)
+    raise ValueError(f"Unknown WEATHER_SOURCE {source!r}: use 'mock' or 'awc'")
 
 
 def create_provider(env: Mapping[str, str] | None = None) -> FlightProvider:

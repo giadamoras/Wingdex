@@ -90,6 +90,7 @@ const stormArea = (hazard: Hazard): WeatherArea => ({
 const HAZARDS: Hazard[] = [
   'thunderstorm',
   'turbulence',
+  'mountain_wave',
   'icing',
   'volcanic_ash',
   'tropical_cyclone',

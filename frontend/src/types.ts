@@ -69,7 +69,12 @@ export interface LatLon {
 }
 
 export type Hazard =
-  'thunderstorm' | 'turbulence' | 'icing' | 'volcanic_ash' | 'tropical_cyclone'
+  | 'thunderstorm'
+  | 'turbulence'
+  | 'mountain_wave'
+  | 'icing'
+  | 'volcanic_ash'
+  | 'tropical_cyclone'
 
 // Mirrors the backend WeatherArea model (GET /weather): a hazard area with an
 // altitude band and a closed polygon.
@@ -84,4 +89,7 @@ export interface WeatherArea {
   polygon: LatLon[] // closed ring: the last point repeats the first
   movement_dir: number | null // degrees towards, when known
   movement_speed_kt: number | null
+  // Display only, live data only: e.g. "Severe", and the volcano or storm name.
+  severity?: string | null
+  name?: string | null
 }

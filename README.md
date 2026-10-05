@@ -42,6 +42,12 @@ credits. Live data is cached for 90 s, so the daily credits (4,000, 4 per global
 only spent while someone is using the app, and a guard pauses refreshing if spending runs high.
 Presets and settings: `docs/opensky-credit-guard.md`.
 
+### Live weather (optional)
+
+Weather is mock by default. For real advisories from the Aviation Weather Center (free, no key),
+set `WEATHER_SOURCE=awc` in `backend/.env` and start the backend the same way. It is independent
+of `FLIGHT_SOURCE`. Why this source: `docs/aviation-weather-products.md`.
+
 Live flights get their aircraft type from a bundled file built from OpenSky's aircraft database
 (`docs/opensky-aircraft-database.md`, which also holds the citation OpenSky asks for), and their
 route when you tap one, looked up from [adsbdb](https://github.com/mrjackwills/adsbdb) by the

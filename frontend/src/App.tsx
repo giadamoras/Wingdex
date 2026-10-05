@@ -172,7 +172,7 @@ function App() {
               )}
               <p className="credits">
                 Live flights: OpenSky Network. Aircraft types: OpenSky aircraft
-                database. Routes: adsbdb.
+                database. Routes: adsbdb. Weather: Aviation Weather Center.
               </p>
             </>
           )}

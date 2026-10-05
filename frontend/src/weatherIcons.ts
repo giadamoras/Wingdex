@@ -5,9 +5,20 @@ import type { Hazard, LatLon, WeatherArea } from './types'
 export const HAZARD_NAMES: Record<Hazard, string> = {
   thunderstorm: 'Thunderstorm',
   turbulence: 'Turbulence',
+  mountain_wave: 'Mountain wave',
   icing: 'Icing',
   volcanic_ash: 'Volcanic ash',
   tropical_cyclone: 'Tropical cyclone',
+}
+
+// What an area is called in its label, e.g. "Severe thunderstorm" or
+// "Tropical cyclone (Koguma)". Severity and name exist for live data only.
+export function hazardTitle(area: WeatherArea): string {
+  const hazard = HAZARD_NAMES[area.hazard]
+  const base = area.severity
+    ? `${area.severity} ${hazard.toLowerCase()}`
+    : hazard
+  return area.name ? `${base} (${area.name})` : base
 }
 
 // Most icons one area gets, however big it looks.

@@ -8,7 +8,7 @@ client = TestClient(app)
 def test_health() -> None:
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "source": "mock"}
+    assert response.json() == {"status": "ok", "source": "mock", "weather_source": "mock"}
 
 
 def test_cors_allows_dev_frontend() -> None:

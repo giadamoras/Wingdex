@@ -253,6 +253,29 @@ const storm: WeatherArea = {
   movement_speed_kt: null,
 }
 
+test('a live area is labelled with its severity and name', () => {
+  const live: WeatherArea = {
+    ...storm,
+    hazard: 'tropical_cyclone',
+    severity: null,
+    name: 'Koguma',
+  }
+  const { container } = render(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      onSelect={() => {}}
+      weather={[live]}
+    />,
+  )
+  fireEvent.click(
+    screen.getAllByTitle('Tropical cyclone (Koguma), North Atlantic')[0],
+  )
+  expect(container.querySelector('.weather-label')!.textContent).toContain(
+    'Tropical cyclone (Koguma)',
+  )
+})
+
 test('draws weather icons for each area, and none without weather', () => {
   const { rerender } = render(
     <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,

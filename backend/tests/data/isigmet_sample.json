@@ -1,0 +1,750 @@
+[
+ {
+  "icaoId": "SABE",
+  "firId": "SAEF",
+  "firName": "SAEF EZEIZA",
+  "validTimeFrom": 1791203640,
+  "validTimeTo": 1791210840,
+  "seriesId": "C1",
+  "hazard": "TS",
+  "qualifier": "FRQ",
+  "base": 6000,
+  "top": 38000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": -61.217,
+    "lat": -36.617
+   },
+   {
+    "lon": -58.95,
+    "lat": -36.417
+   },
+   {
+    "lon": -58.567,
+    "lat": -36.85
+   },
+   {
+    "lon": -59.483,
+    "lat": -37.383
+   },
+   {
+    "lon": -61.117,
+    "lat": -37.017
+   },
+   {
+    "lon": -61.217,
+    "lat": -36.617
+   }
+  ],
+  "dir": "SE",
+  "spd": "20",
+  "chng": "WKN"
+ },
+ {
+  "icaoId": "FAOR",
+  "firId": "FACA",
+  "firName": "FACA CAPE TOWN",
+  "validTimeFrom": 1791194400,
+  "validTimeTo": 1791208800,
+  "seriesId": "G01",
+  "hazard": "TS",
+  "qualifier": "EMBD",
+  "base": null,
+  "top": 28000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 15,
+    "lat": -35.15
+   },
+   {
+    "lon": 17.5,
+    "lat": -37
+   },
+   {
+    "lon": 15,
+    "lat": -37
+   }
+  ],
+  "dir": null,
+  "spd": null,
+  "chng": null
+ },
+ {
+  "icaoId": "EGRR",
+  "firId": "EGPX",
+  "firName": "EGPX SCOTTISH",
+  "validTimeFrom": 1791194400,
+  "validTimeTo": 1791208800,
+  "seriesId": "04",
+  "hazard": "TURB",
+  "qualifier": "SEV MTW",
+  "base": 4000,
+  "top": 22000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": -4.033,
+    "lat": 56.317
+   },
+   {
+    "lon": -4.8,
+    "lat": 57.167
+   },
+   {
+    "lon": -4.3,
+    "lat": 59.033
+   },
+   {
+    "lon": -1.567,
+    "lat": 59.067
+   },
+   {
+    "lon": -1.567,
+    "lat": 56.317
+   },
+   {
+    "lon": -4.033,
+    "lat": 56.317
+   }
+  ],
+  "dir": "-",
+  "spd": "0",
+  "chng": "WKN"
+ },
+ {
+  "icaoId": "WAAA",
+  "firId": "WAAF",
+  "firName": "WAAF UJUNG PANDANG",
+  "validTimeFrom": 1791183600,
+  "validTimeTo": 1791205200,
+  "seriesId": "07",
+  "hazard": "VA",
+  "qualifier": "ERUPTION MT DUKONO",
+  "base": 0,
+  "top": 7000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 127.833,
+    "lat": 1.717
+   },
+   {
+    "lon": 128.233,
+    "lat": 2.217
+   },
+   {
+    "lon": 128.55,
+    "lat": 2.117
+   },
+   {
+    "lon": 128.55,
+    "lat": 1.783
+   },
+   {
+    "lon": 127.883,
+    "lat": 1.633
+   },
+   {
+    "lon": 127.833,
+    "lat": 1.717
+   }
+  ],
+  "dir": "NE",
+  "spd": "15",
+  "chng": "INTSF"
+ },
+ {
+  "icaoId": "PHFO",
+  "firId": "KZAK",
+  "firName": "OAKLAND OCEANIC",
+  "validTimeFrom": 1791185400,
+  "validTimeTo": 1791207000,
+  "seriesId": "VICTOR 2",
+  "hazard": "TC",
+  "qualifier": "KOGUMA",
+  "base": null,
+  "top": 53000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 165,
+    "lat": 15.5
+   },
+   {
+    "lon": 168.75,
+    "lat": 16.5
+   },
+   {
+    "lon": 172,
+    "lat": 15
+   },
+   {
+    "lon": 168.25,
+    "lat": 10.5
+   },
+   {
+    "lon": 166.25,
+    "lat": 10.5
+   },
+   {
+    "lon": 164.25,
+    "lat": 13.25
+   },
+   {
+    "lon": 165,
+    "lat": 15.5
+   }
+  ],
+  "dir": "NNW",
+  "spd": "9",
+  "chng": "NC"
+ },
+ {
+  "icaoId": "MMMD",
+  "firId": "MMID",
+  "firName": "MMFO MAZATLAN OCEANICA",
+  "validTimeFrom": 1791190800,
+  "validTimeTo": 1791212400,
+  "seriesId": "2",
+  "hazard": "TC",
+  "qualifier": "RACHEL",
+  "base": null,
+  "top": null,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": -115.6,
+    "lat": 21.233
+   },
+   {
+    "lon": -115.446,
+    "lat": 21.221
+   },
+   {
+    "lon": -115.296,
+    "lat": 21.183
+   },
+   {
+    "lon": -115.155,
+    "lat": 21.122
+   },
+   {
+    "lon": -115.029,
+    "lat": 21.038
+   },
+   {
+    "lon": -114.919,
+    "lat": 20.936
+   },
+   {
+    "lon": -114.83,
+    "lat": 20.817
+   },
+   {
+    "lon": -114.765,
+    "lat": 20.685
+   },
+   {
+    "lon": -114.724,
+    "lat": 20.545
+   },
+   {
+    "lon": -114.711,
+    "lat": 20.4
+   },
+   {
+    "lon": -114.724,
+    "lat": 20.255
+   },
+   {
+    "lon": -114.765,
+    "lat": 20.115
+   },
+   {
+    "lon": -114.83,
+    "lat": 19.983
+   },
+   {
+    "lon": -114.919,
+    "lat": 19.864
+   },
+   {
+    "lon": -115.029,
+    "lat": 19.762
+   },
+   {
+    "lon": -115.155,
+    "lat": 19.678
+   },
+   {
+    "lon": -115.296,
+    "lat": 19.617
+   },
+   {
+    "lon": -115.446,
+    "lat": 19.579
+   },
+   {
+    "lon": -115.6,
+    "lat": 19.567
+   },
+   {
+    "lon": -115.754,
+    "lat": 19.579
+   },
+   {
+    "lon": -115.904,
+    "lat": 19.617
+   },
+   {
+    "lon": -116.045,
+    "lat": 19.678
+   },
+   {
+    "lon": -116.171,
+    "lat": 19.762
+   },
+   {
+    "lon": -116.281,
+    "lat": 19.864
+   },
+   {
+    "lon": -116.37,
+    "lat": 19.983
+   },
+   {
+    "lon": -116.435,
+    "lat": 20.115
+   },
+   {
+    "lon": -116.476,
+    "lat": 20.255
+   },
+   {
+    "lon": -116.489,
+    "lat": 20.4
+   },
+   {
+    "lon": -116.476,
+    "lat": 20.545
+   },
+   {
+    "lon": -116.435,
+    "lat": 20.685
+   },
+   {
+    "lon": -116.37,
+    "lat": 20.817
+   },
+   {
+    "lon": -116.281,
+    "lat": 20.936
+   },
+   {
+    "lon": -116.171,
+    "lat": 21.038
+   },
+   {
+    "lon": -116.045,
+    "lat": 21.122
+   },
+   {
+    "lon": -115.904,
+    "lat": 21.183
+   },
+   {
+    "lon": -115.754,
+    "lat": 21.221
+   },
+   {
+    "lon": -115.6,
+    "lat": 21.233
+   }
+  ],
+  "dir": null,
+  "spd": null,
+  "chng": null
+ },
+ {
+  "icaoId": "FCBB",
+  "firId": "FCCC",
+  "firName": "FCCC BRAZZAVILLE",
+  "validTimeFrom": 1791197700,
+  "validTimeTo": 1791212100,
+  "seriesId": "B1",
+  "hazard": "TS",
+  "qualifier": "EMBD",
+  "base": null,
+  "top": 42000,
+  "geom": "AREAS",
+  "coords": [
+   [
+    {
+     "lon": 9.883,
+     "lat": 5.6
+    },
+    {
+     "lon": 9.467,
+     "lat": 0.783
+    },
+    {
+     "lon": 7.467,
+     "lat": 0.783
+    },
+    {
+     "lon": 7.883,
+     "lat": 5.6
+    },
+    {
+     "lon": 9.883,
+     "lat": 5.6
+    }
+   ],
+   [
+    {
+     "lon": 20.067,
+     "lat": 7.617
+    },
+    {
+     "lon": 25.65,
+     "lat": 6.55
+    },
+    {
+     "lon": 25.65,
+     "lat": 8.55
+    },
+    {
+     "lon": 20.067,
+     "lat": 9.617
+    },
+    {
+     "lon": 20.067,
+     "lat": 7.617
+    }
+   ],
+   [
+    {
+     "lon": 23.833,
+     "lat": 6.3
+    },
+    {
+     "lon": 23.6,
+     "lat": 5
+    },
+    {
+     "lon": 25.6,
+     "lat": 5
+    },
+    {
+     "lon": 25.833,
+     "lat": 6.3
+    },
+    {
+     "lon": 23.833,
+     "lat": 6.3
+    }
+   ]
+  ],
+  "dir": "W",
+  "spd": "4",
+  "chng": "NC"
+ },
+ {
+  "icaoId": "SARE",
+  "firId": "SARR",
+  "firName": "SARR RESISTENCIA",
+  "validTimeFrom": 1791191100,
+  "validTimeTo": 1791205500,
+  "seriesId": "A1",
+  "hazard": "ICE",
+  "qualifier": "SEV",
+  "base": null,
+  "top": 14000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": -61.833,
+    "lat": -26.85
+   },
+   {
+    "lon": -60.717,
+    "lat": -30.067
+   },
+   {
+    "lon": -57.967,
+    "lat": -30.833
+   },
+   {
+    "lon": -56.917,
+    "lat": -29.517
+   },
+   {
+    "lon": -58.667,
+    "lat": -27.017
+   },
+   {
+    "lon": -58.25,
+    "lat": -26.067
+   },
+   {
+    "lon": -57.617,
+    "lat": -25.417
+   },
+   {
+    "lon": -58.367,
+    "lat": -24.917
+   },
+   {
+    "lon": -59.467,
+    "lat": -24.35
+   },
+   {
+    "lon": -59.667,
+    "lat": -26.35
+   },
+   {
+    "lon": -60.25,
+    "lat": -26.833
+   },
+   {
+    "lon": -61.833,
+    "lat": -26.85
+   }
+  ],
+  "dir": "E",
+  "spd": "3",
+  "chng": "INTSF"
+ },
+ {
+  "icaoId": "UACC",
+  "firId": "UACN",
+  "firName": "UACN ASTANA",
+  "validTimeFrom": 1791190800,
+  "validTimeTo": 1791205200,
+  "seriesId": "6",
+  "hazard": "TURB",
+  "qualifier": "SEV",
+  "base": 20000,
+  "top": 38000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 60.663,
+    "lat": 52.201
+   },
+   {
+    "lon": 60.05,
+    "lat": 51.961
+   },
+   {
+    "lon": 60.452,
+    "lat": 51.824
+   },
+   {
+    "lon": 60.401,
+    "lat": 51.647
+   },
+   {
+    "lon": 60.885,
+    "lat": 51.62
+   },
+   {
+    "lon": 61.004,
+    "lat": 51.49
+   },
+   {
+    "lon": 61.554,
+    "lat": 51.44
+   },
+   {
+    "lon": 61.479,
+    "lat": 50.91
+   },
+   {
+    "lon": 62.437,
+    "lat": 50.376
+   },
+   {
+    "lon": 62.614,
+    "lat": 48.661
+   },
+   {
+    "lon": 63.516,
+    "lat": 48.009
+   },
+   {
+    "lon": 64.539,
+    "lat": 47.167
+   },
+   {
+    "lon": 65.833,
+    "lat": 46.752
+   },
+   {
+    "lon": 69.404,
+    "lat": 45.412
+   },
+   {
+    "lon": 71.936,
+    "lat": 45.086
+   },
+   {
+    "lon": 71.82,
+    "lat": 47.995
+   },
+   {
+    "lon": 74.288,
+    "lat": 48.12
+   },
+   {
+    "lon": 76.175,
+    "lat": 48.822
+   },
+   {
+    "lon": 76.165,
+    "lat": 49.804
+   },
+   {
+    "lon": 78.198,
+    "lat": 50.709
+   },
+   {
+    "lon": 79.843,
+    "lat": 51.027
+   },
+   {
+    "lon": 79.229,
+    "lat": 51.891
+   },
+   {
+    "lon": 77.899,
+    "lat": 53.307
+   },
+   {
+    "lon": 76.522,
+    "lat": 54.048
+   },
+   {
+    "lon": 76.851,
+    "lat": 54.419
+   },
+   {
+    "lon": 75.866,
+    "lat": 54.202
+   },
+   {
+    "lon": 74.382,
+    "lat": 53.485
+   },
+   {
+    "lon": 73.909,
+    "lat": 53.65
+   },
+   {
+    "lon": 73.444,
+    "lat": 53.44
+   },
+   {
+    "lon": 73.243,
+    "lat": 53.599
+   },
+   {
+    "lon": 60.8,
+    "lat": 52.217
+   },
+   {
+    "lon": 60.663,
+    "lat": 52.201
+   }
+  ],
+  "dir": "NE",
+  "spd": "10",
+  "chng": "NC"
+ },
+ {
+  "icaoId": "RJTD",
+  "firId": "RJJJ",
+  "firName": "RJJJ FUKUOKA",
+  "validTimeFrom": 1791184140,
+  "validTimeTo": 1791205740,
+  "seriesId": "F02",
+  "hazard": "TC",
+  "qualifier": "CHOI",
+  "base": null,
+  "top": 55000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 147.833,
+    "lat": 23.75
+   },
+   {
+    "lon": 143.667,
+    "lat": 25.917
+   },
+   {
+    "lon": 145.75,
+    "lat": 26.417
+   },
+   {
+    "lon": 146.833,
+    "lat": 28.667
+   },
+   {
+    "lon": 149.333,
+    "lat": 27.083
+   },
+   {
+    "lon": 147.833,
+    "lat": 23.75
+   }
+  ],
+  "dir": null,
+  "spd": null,
+  "chng": "NC"
+ },
+ {
+  "icaoId": "RJTD",
+  "firId": "RJJJ",
+  "firName": "RJJJ FUKUOKA",
+  "validTimeFrom": 1791184140,
+  "validTimeTo": 1791205740,
+  "seriesId": "F02F",
+  "hazard": "TC",
+  "qualifier": "CHOI",
+  "base": null,
+  "top": 55000,
+  "geom": "AREA",
+  "coords": [
+   {
+    "lon": 147.833,
+    "lat": 23.75
+   },
+   {
+    "lon": 143.667,
+    "lat": 25.917
+   },
+   {
+    "lon": 145.75,
+    "lat": 26.417
+   },
+   {
+    "lon": 146.833,
+    "lat": 28.667
+   },
+   {
+    "lon": 149.333,
+    "lat": 27.083
+   },
+   {
+    "lon": 147.833,
+    "lat": 23.75
+   }
+  ],
+  "dir": null,
+  "spd": null,
+  "chng": "NC"
+ }
+]

@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { inRing } from './attributes'
 import type { LatLon, WeatherArea } from './types'
-import { iconCount, iconOrder, MAX_ICONS } from './weatherIcons'
+import { hazardTitle, iconCount, iconOrder, MAX_ICONS } from './weatherIcons'
 
 const area = (points: [number, number][]): WeatherArea => ({
   id: 'w',
@@ -105,4 +105,18 @@ test('a bigger area gets at least as many icons as a smaller one', () => {
 
 test('even a tiny area gets one icon', () => {
   expect(iconCount(box(40, 0, 40.1, 0.1), 1)).toBe(1)
+})
+
+test('hazardTitle names the hazard, with severity and name when live data has them', () => {
+  const base = box(0, 0, 2, 2)
+  expect(hazardTitle(base)).toBe('Thunderstorm')
+  expect(
+    hazardTitle({ ...base, severity: 'Severe', hazard: 'mountain_wave' }),
+  ).toBe('Severe mountain wave')
+  expect(
+    hazardTitle({ ...base, hazard: 'tropical_cyclone', name: 'Koguma' }),
+  ).toBe('Tropical cyclone (Koguma)')
+  expect(hazardTitle({ ...base, severity: null, name: null })).toBe(
+    'Thunderstorm',
+  )
 })

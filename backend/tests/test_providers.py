@@ -2,7 +2,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app import main
-from app.models import Flight
+from app.models import Flight, WeatherArea
 from app.providers import MockFlightProvider, ProviderError, create_provider
 
 
@@ -52,7 +52,12 @@ def test_flights_endpoint_uses_the_provider(monkeypatch: pytest.MonkeyPatch) -> 
     monkeypatch.setattr(main, "provider", StubProvider(error=False))
     client = TestClient(main.app)
     assert client.get("/flights").json() == []
-    assert client.get("/health").json() == {"status": "ok", "source": "stub", "guard": "ok"}
+    assert client.get("/health").json() == {
+        "status": "ok",
+        "source": "stub",
+        "guard": "ok",
+        "weather_source": "mock",
+    }
 
 
 def test_flights_endpoint_answers_503_when_the_provider_fails(
@@ -61,3 +66,33 @@ def test_flights_endpoint_answers_503_when_the_provider_fails(
     monkeypatch.setattr(main, "provider", StubProvider(error=True))
     response = TestClient(main.app).get("/flights")
     assert response.status_code == 503
+
+
+class StubWeather:
+    name = "stub"
+
+    def __init__(self, error: bool) -> None:
+        self.error = error
+
+    def get_weather(self) -> list[WeatherArea]:
+        if self.error:
+            raise ProviderError("down")
+        return []
+
+    def status(self) -> dict[str, str | int | None]:
+        return {"areas": 0}
+
+
+def test_weather_endpoint_uses_the_provider(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(main, "weather_provider", StubWeather(error=False))
+    client = TestClient(main.app)
+    assert client.get("/weather").json() == []
+    health = client.get("/health").json()
+    assert health["weather_source"] == "stub" and health["weather_areas"] == 0
+
+
+def test_weather_endpoint_answers_503_when_the_provider_fails(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(main, "weather_provider", StubWeather(error=True))
+    assert TestClient(main.app).get("/weather").status_code == 503
