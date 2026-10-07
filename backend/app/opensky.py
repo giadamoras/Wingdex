@@ -227,7 +227,8 @@ class OpenSkyProvider:
         self._reserve_retry_at = 0.0  # while under the reserve, probe again only after this
         self._last_pause: str | None = None
         self._max_flights = max_flights
-        self._http = http or httpx.Client(timeout=20)
+        self._owns_http = http is None  # close only a client made here, not one handed in
+        self._http = http if http is not None else httpx.Client(timeout=20)
         self._clock = clock
         self._lock = threading.Lock()  # one refresh at a time, however many requests wait
         self._snapshot: list[Tracked] | None = None
@@ -261,6 +262,11 @@ class OpenSkyProvider:
             credit_reserve=int(env.get("OPENSKY_CREDIT_RESERVE", DEFAULT_CREDIT_RESERVE)),
             max_flights=int(env.get("OPENSKY_MAX_FLIGHTS", str(DEFAULT_MAX_FLIGHTS))),
         )
+
+    def close(self) -> None:
+        """Release the HTTP connections (at shutdown)."""
+        if self._owns_http:
+            self._http.close()
 
     def status(self) -> dict[str, str | int | None]:
         """What /health shows: whether the credit guard is holding refreshes back."""

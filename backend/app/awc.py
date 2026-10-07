@@ -223,7 +223,8 @@ class AwcWeatherProvider:
     ) -> None:
         self._user_agent = user_agent
         self._ttl = max(cache_ttl_s, MIN_TTL_S)  # a bad setting can't hammer the API
-        self._http = http or httpx.Client(timeout=20)
+        self._owns_http = http is None  # close only a client made here, not one handed in
+        self._http = http if http is not None else httpx.Client(timeout=20)
         self._clock = clock
         self._lock = threading.Lock()  # one refresh at a time, however many requests wait
         self._snapshot: list[WeatherArea] | None = None
@@ -236,6 +237,11 @@ class AwcWeatherProvider:
             user_agent=env.get("WEATHER_USER_AGENT", DEFAULT_USER_AGENT),
             cache_ttl_s=float(env.get("WEATHER_CACHE_TTL_S", DEFAULT_CACHE_TTL_S)),
         )
+
+    def close(self) -> None:
+        """Release the HTTP connections (at shutdown)."""
+        if self._owns_http:
+            self._http.close()
 
     def status(self) -> dict[str, str | int | None]:
         """What /health shows: how many areas are held and how old they are."""

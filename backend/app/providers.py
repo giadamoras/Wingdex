@@ -26,6 +26,10 @@ class FlightProvider(Protocol):
         """Extra facts for /health (empty when there is nothing to report)."""
         ...
 
+    def close(self) -> None:
+        """Release connections and other resources (at shutdown)."""
+        ...
+
 
 class MockFlightProvider:
     name = "mock"
@@ -42,6 +46,9 @@ class MockFlightProvider:
     def status(self) -> dict[str, str | int | None]:
         return {}
 
+    def close(self) -> None:
+        pass
+
 
 class WeatherProvider(Protocol):
     name: str  # shown by /health, e.g. "mock" or "awc"
@@ -50,6 +57,10 @@ class WeatherProvider(Protocol):
 
     def status(self) -> dict[str, str | int | None]:
         """Extra facts for /health (empty when there is nothing to report)."""
+        ...
+
+    def close(self) -> None:
+        """Release connections and other resources (at shutdown)."""
         ...
 
 
@@ -61,6 +72,9 @@ class MockWeatherProvider:
 
     def status(self) -> dict[str, str | int | None]:
         return {}
+
+    def close(self) -> None:
+        pass
 
 
 def create_weather_provider(env: Mapping[str, str] | None = None) -> WeatherProvider:

@@ -1,7 +1,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app import main
+from app.main import app, get_provider, get_weather_provider
 from app.models import Flight, WeatherArea
 from app.providers import MockFlightProvider, ProviderError, create_provider
 
@@ -48,9 +48,9 @@ class StubProvider:
         return {"guard": "ok"}
 
 
-def test_flights_endpoint_uses_the_provider(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(main, "provider", StubProvider(error=False))
-    client = TestClient(main.app)
+def test_flights_endpoint_uses_the_provider() -> None:
+    app.dependency_overrides[get_provider] = lambda: StubProvider(error=False)
+    client = TestClient(app)
     assert client.get("/flights").json() == []
     assert client.get("/health").json() == {
         "status": "ok",
@@ -60,11 +60,9 @@ def test_flights_endpoint_uses_the_provider(monkeypatch: pytest.MonkeyPatch) -> 
     }
 
 
-def test_flights_endpoint_answers_503_when_the_provider_fails(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(main, "provider", StubProvider(error=True))
-    response = TestClient(main.app).get("/flights")
+def test_flights_endpoint_answers_503_when_the_provider_fails() -> None:
+    app.dependency_overrides[get_provider] = lambda: StubProvider(error=True)
+    response = TestClient(app).get("/flights")
     assert response.status_code == 503
 
 
@@ -83,16 +81,14 @@ class StubWeather:
         return {"areas": 0}
 
 
-def test_weather_endpoint_uses_the_provider(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(main, "weather_provider", StubWeather(error=False))
-    client = TestClient(main.app)
+def test_weather_endpoint_uses_the_provider() -> None:
+    app.dependency_overrides[get_weather_provider] = lambda: StubWeather(error=False)
+    client = TestClient(app)
     assert client.get("/weather").json() == []
     health = client.get("/health").json()
     assert health["weather_source"] == "stub" and health["weather_areas"] == 0
 
 
-def test_weather_endpoint_answers_503_when_the_provider_fails(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(main, "weather_provider", StubWeather(error=True))
-    assert TestClient(main.app).get("/weather").status_code == 503
+def test_weather_endpoint_answers_503_when_the_provider_fails() -> None:
+    app.dependency_overrides[get_weather_provider] = lambda: StubWeather(error=True)
+    assert TestClient(app).get("/weather").status_code == 503

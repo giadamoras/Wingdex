@@ -145,7 +145,8 @@ class RouteService:
         max_concurrent: int = MAX_CONCURRENT_LOOKUPS,
         queue_wait_s: float = QUEUE_WAIT_S,
     ) -> None:
-        self._http = http or httpx.Client(timeout=8)
+        self._owns_http = http is None  # close only a client made here, not one handed in
+        self._http = http if http is not None else httpx.Client(timeout=8)
         self._clock = clock
         self._max_entries = max_entries
         self._slots = threading.BoundedSemaphore(max_concurrent)
@@ -191,6 +192,11 @@ class RouteService:
                 self._down_until = 0.0
                 self._store(key, now, found)
         return to_route(found, flight) if found else None
+
+    def close(self) -> None:
+        """Release the HTTP connections (at shutdown)."""
+        if self._owns_http:
+            self._http.close()
 
     def _store(self, key: str, now: float, found: Found | None) -> None:
         """Cache an answer. When full: drop what has expired, then the entry closest to expiring."""
