@@ -10,8 +10,8 @@ from fastapi.testclient import TestClient
 from app import main
 from app.awc import AwcWeatherProvider
 from app.main import app, get_provider, get_route_service, get_weather_provider
+from app.mock_providers import MockFlightProvider, MockWeatherProvider
 from app.opensky import OpenSkyProvider
-from app.providers import MockFlightProvider, MockWeatherProvider
 from app.routes import RouteService
 
 

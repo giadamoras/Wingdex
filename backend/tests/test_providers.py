@@ -2,8 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.main import app, get_provider, get_weather_provider
+from app.mock_providers import MockFlightProvider
 from app.models import Flight, WeatherArea
-from app.providers import MockFlightProvider, ProviderError, create_provider
+from app.providers import ProviderError, create_provider
 
 
 def test_mock_is_the_default_source() -> None:

@@ -147,15 +147,6 @@ def flight_route(flight_id: str, provider: Flights, route_service: Routes) -> Fl
     if found is None:
         raise HTTPException(status_code=404, detail="Unknown flight")
     flight, icao24 = found
-    if flight.origin is not None and flight.destination is not None:
-        # The feed already has this route (the mock does): nothing to look up.
-        return FlightRoute(
-            aircraft_type=flight.aircraft_type,
-            origin=flight.origin,
-            destination=flight.destination,
-            duration_min=flight.duration_min,
-            duration_estimated=flight.duration_estimated,
-        )
     try:
         route = route_service.lookup(flight, icao24)
     except LookupUnavailable as error:

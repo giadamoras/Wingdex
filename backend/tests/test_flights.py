@@ -2,12 +2,12 @@ import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
 
+from app.constants import GROUND_MIN
 from app.geo import distance_nm, initial_bearing
 from app.main import app
 from app.mock_flights import (
     AIRPORTS,
     EPOCH,
-    GROUND_MIN,
     MOCK_FLIGHTS,
     build_mock_flights,
     get_mock_flights,

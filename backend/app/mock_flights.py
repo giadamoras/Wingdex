@@ -2,6 +2,7 @@ import random
 import time
 from typing import NamedTuple
 
+from app.constants import GROUND_MIN
 from app.geo import distance_nm, initial_bearing, interpolate
 from app.models import Airport, Flight
 
@@ -237,10 +238,6 @@ def build_mock_flights(seed: int = MOCK_SEED, count: int = MOCK_FLIGHT_COUNT) ->
 
 
 MOCK_FLIGHTS: list[MockFlight] = build_mock_flights()
-
-# Taxi, take-off and landing time on top of the time in the air: schedules count
-# gate to gate, so LHR->CDG is about an hour even though the flying takes ~35 min.
-GROUND_MIN = 25
 
 # Clock origin: at server start each flight is at its start_progress.
 EPOCH = time.time()

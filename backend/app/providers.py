@@ -4,8 +4,6 @@ import os
 from collections.abc import Mapping
 from typing import Protocol
 
-from app.mock_flights import get_mock_flights
-from app.mock_weather import get_mock_weather
 from app.models import Flight, WeatherArea
 
 
@@ -31,25 +29,6 @@ class FlightProvider(Protocol):
         ...
 
 
-class MockFlightProvider:
-    name = "mock"
-
-    def get_flights(self) -> list[Flight]:
-        return get_mock_flights()
-
-    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
-        for flight in get_mock_flights():
-            if flight.id == flight_id:
-                return flight, None
-        return None
-
-    def status(self) -> dict[str, str | int | None]:
-        return {}
-
-    def close(self) -> None:
-        pass
-
-
 class WeatherProvider(Protocol):
     name: str  # shown by /health, e.g. "mock" or "awc"
 
@@ -64,24 +43,15 @@ class WeatherProvider(Protocol):
         ...
 
 
-class MockWeatherProvider:
-    name = "mock"
-
-    def get_weather(self) -> list[WeatherArea]:
-        return get_mock_weather()
-
-    def status(self) -> dict[str, str | int | None]:
-        return {}
-
-    def close(self) -> None:
-        pass
-
-
 def create_weather_provider(env: Mapping[str, str] | None = None) -> WeatherProvider:
     """Pick the provider from WEATHER_SOURCE (default "mock", like FLIGHT_SOURCE)."""
     env = os.environ if env is None else env
     source = env.get("WEATHER_SOURCE", "mock")
     if source == "mock":
+        # Imported here, like the live ones: only the mock needs the mock data, which is built
+        # when its module is imported.
+        from app.mock_providers import MockWeatherProvider
+
         return MockWeatherProvider()
     if source == "awc":
         from app.awc import AwcWeatherProvider  # imported here: awc imports this module
@@ -95,6 +65,8 @@ def create_provider(env: Mapping[str, str] | None = None) -> FlightProvider:
     env = os.environ if env is None else env
     source = env.get("FLIGHT_SOURCE", "mock")
     if source == "mock":
+        from app.mock_providers import MockFlightProvider
+
         return MockFlightProvider()
     if source == "opensky":
         from app.opensky import OpenSkyProvider  # imported here: opensky imports this module

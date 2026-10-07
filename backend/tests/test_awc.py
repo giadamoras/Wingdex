@@ -15,8 +15,9 @@ from app.awc import (
     map_entries,
     map_entry,
 )
+from app.mock_providers import MockWeatherProvider
 from app.models import WeatherArea
-from app.providers import MockWeatherProvider, ProviderError, create_weather_provider
+from app.providers import ProviderError, create_weather_provider
 
 # A trimmed copy of the real feed (recorded 2026-10-05), one entry per odd case.
 SAMPLE: list[dict[str, Any]] = json.loads(

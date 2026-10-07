@@ -4,8 +4,8 @@ from typing import Any
 import httpx
 import pytest
 
+from app.constants import GROUND_MIN
 from app.geo import distance_nm, interpolate
-from app.mock_flights import GROUND_MIN
 from app.models import Airport, Flight
 from app.routes import (
     DOWN_PAUSE_S,
@@ -373,3 +373,24 @@ def test_detail_alone_is_still_an_answer() -> None:
     route = service(fake).lookup(mid_atlantic(), "abc123")
     assert route is not None and route.aircraft_type is None
     assert route.registration == "G-STBA"
+
+
+def test_a_route_the_feed_already_has_is_returned_without_asking_adsbdb() -> None:
+    fake = FakeAdsbdb()
+    feed = mid_atlantic().model_copy(
+        update={"origin": LHR, "destination": JFK, "duration_min": 433, "aircraft_type": "B77W"}
+    )
+    route = service(fake).lookup(feed, "abc123")
+    assert fake.calls == []
+    assert route is not None
+    assert route.origin == LHR and route.destination == JFK
+    assert route.duration_min == 433 and route.aircraft_type == "B77W"
+    assert route.duration_estimated is False
+
+
+def test_a_feed_with_only_half_a_route_is_looked_up_as_usual() -> None:
+    fake = FakeAdsbdb({COMBINED: (200, {"response": {"aircraft": AIRCRAFT, "flightroute": ROUTE}})})
+    half = mid_atlantic().model_copy(update={"origin": LHR})  # no destination
+    route = service(fake).lookup(half, "abc123")
+    assert fake.calls == [COMBINED]
+    assert route is not None and route.destination is not None

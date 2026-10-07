@@ -1,10 +1,11 @@
 from typing import Any
 
+import httpx
 from fastapi.testclient import TestClient
 
 from app.main import app, get_provider, get_route_service
 from app.models import Airport, Flight, FlightRoute
-from app.routes import LookupUnavailable
+from app.routes import LookupUnavailable, RouteService
 
 LIVE = Flight(
     id="BAW117",
@@ -78,9 +79,12 @@ def test_lookup_outage_is_503() -> None:
 def test_a_flight_that_already_has_a_route_is_not_looked_up() -> None:
     # Mock mode: the feed carries the route, so the endpoint answers from it.
     from app.mock_flights import MOCK_FLIGHTS
-    from app.providers import MockFlightProvider
+    from app.mock_providers import MockFlightProvider
 
-    service = StubService(AssertionError("must not be called"))
+    def refuse(request: httpx.Request) -> httpx.Response:
+        raise AssertionError("must not ask adsbdb")
+
+    service = RouteService(http=httpx.Client(transport=httpx.MockTransport(refuse)))
     app.dependency_overrides[get_provider] = lambda: MockFlightProvider()
     app.dependency_overrides[get_route_service] = lambda: service
     first = MOCK_FLIGHTS[0]
@@ -90,4 +94,3 @@ def test_a_flight_that_already_has_a_route_is_not_looked_up() -> None:
     assert body["origin"]["iata"] == first.origin
     assert body["destination"]["iata"] == first.destination
     assert body["duration_estimated"] is False
-    assert service.calls == []

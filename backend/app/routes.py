@@ -15,8 +15,8 @@ from typing import Any
 
 import httpx
 
+from app.constants import GROUND_MIN
 from app.geo import distance_nm
-from app.mock_flights import GROUND_MIN
 from app.models import Airport, Flight, FlightRoute
 from app.providers import ProviderError
 
@@ -94,6 +94,17 @@ def to_route(found: Found, flight: Flight) -> FlightRoute:
     return route.model_copy(update=found.details)
 
 
+def route_from_feed(flight: Flight) -> FlightRoute:
+    """The route a feed already carries (the mock's): nothing to look up, nothing to check."""
+    return FlightRoute(
+        aircraft_type=flight.aircraft_type,
+        origin=flight.origin,
+        destination=flight.destination,
+        duration_min=flight.duration_min,
+        duration_estimated=flight.duration_estimated,
+    )
+
+
 def _text(data: Any, key: str) -> str | None:
     """A non-empty string field of an adsbdb object, or None."""
     value = data.get(key) if isinstance(data, dict) else None
@@ -157,12 +168,15 @@ class RouteService:
         self._cache: dict[str, tuple[float, Found | None]] = {}
 
     def lookup(self, flight: Flight, icao24: str | None) -> FlightRoute | None:
-        """What adsbdb knows about this flight, or None if it knows nothing usable.
+        """The route of this flight: the feed's own if it has one, else what adsbdb knows.
+        None if nothing usable is known.
 
         Raises LookupUnavailable when adsbdb is down. The failure is not cached, but for
         DOWN_PAUSE_S seconds taps on uncached planes fail at once instead of each waiting for
         the request timeout. Cached answers are still served during the pause.
         """
+        if flight.origin is not None and flight.destination is not None:
+            return route_from_feed(flight)  # no request, no cache
         has_callsign = flight.callsign != "Unknown"
         key = f"{icao24 or ''}|{flight.callsign if has_callsign else ''}"
         now = self._clock()
