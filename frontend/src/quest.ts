@@ -102,7 +102,7 @@ const WEATHER_QUESTS: { hazard: Hazard; title: string; conceptFact: string }[] =
       hazard: 'volcanic_ash',
       title: 'Catch a flight in a volcanic ash area',
       conceptFact:
-        'Nine volcanic ash advisory centres around the world watch eruptions by satellite, and their advisories become warnings like this one. Ash is gritty enough to scratch windscreenss, and it can melt inside a hot engine and make it stop. A cloud can spread over a whole region in a day, so airlines reroute long before it arrives.',
+        'Nine volcanic ash advisory centres around the world watch eruptions by satellite, and their advisories become warnings like this one. Ash is gritty enough to scratch windscreens, and it can melt inside a hot engine and make it stop. A cloud can spread over a whole region in a day, so airlines reroute long before it arrives.',
     },
     {
       hazard: 'tropical_cyclone',
