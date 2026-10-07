@@ -1,5 +1,6 @@
 import { afterEach, expect, test, vi } from 'vitest'
 import {
+  isDataSources,
   isFlight,
   isFlightRoute,
   isJournalEntry,
@@ -177,4 +178,13 @@ test('keepValid does not repeat a warning for the same count, but says when it c
   poll([2, 4]) // all fine again
   poll([3, 4]) // 1 dropped, after a clean pass: warns
   expect(warn).toHaveBeenCalledTimes(3)
+})
+
+test('the source names from /health must both be text', () => {
+  expect(
+    isDataSources({ status: 'ok', source: 'mock', weather_source: 'awc' }),
+  ).toBe(true)
+  expect(isDataSources({ source: 'mock' })).toBe(false)
+  expect(isDataSources({ source: 1, weather_source: 'mock' })).toBe(false)
+  expect(isDataSources(null)).toBe(false)
 })

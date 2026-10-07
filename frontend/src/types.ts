@@ -96,3 +96,10 @@ export interface WeatherArea {
   severity?: string | null
   name?: string | null
 }
+
+// Where the backend gets its data from, as /health reports it ("mock",
+// "opensky", "awc", ...). Decides which credits are shown.
+export interface DataSources {
+  source: string
+  weather_source: string
+}

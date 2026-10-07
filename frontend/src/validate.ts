@@ -1,5 +1,11 @@
 import { HAZARDS } from './types'
-import type { Flight, FlightRoute, JournalEntry, WeatherArea } from './types'
+import type {
+  DataSources,
+  Flight,
+  FlightRoute,
+  JournalEntry,
+  WeatherArea,
+} from './types'
 
 // Checks for data that comes from outside the app (the backend, localStorage).
 // A bad row would otherwise crash a render or put a plane at NaN, and one bad
@@ -42,6 +48,11 @@ export function isFlight(v: unknown): v is Flight {
     isAirportOrNull(v.origin) &&
     isAirportOrNull(v.destination)
   )
+}
+
+// The source names from /health.
+export function isDataSources(v: unknown): v is DataSources {
+  return isRecord(v) && isString(v.source) && isString(v.weather_source)
 }
 
 // The route lookup is display only and every part of it is optional.

@@ -1,4 +1,11 @@
-import { airlineOf, regionsOf, timeOfDay, weatherAt } from './attributes'
+import {
+  airlineOf,
+  QUEST_HIGH_FT,
+  QUEST_LOW_FT,
+  regionsOf,
+  timeOfDay,
+  weatherAt,
+} from './attributes'
 import { hashString } from './hash'
 import type { Flight, Hazard, JournalEntry, WeatherArea } from './types'
 
@@ -13,9 +20,8 @@ export interface Quest {
   matches(flight: Flight, at?: Date, weather?: WeatherArea[]): boolean
 }
 
-// Thresholds in one place so they are easy to tune.
-const HIGH_FT = 36_000 // "cruising high"
-const LOW_FT = 20_000 // "flying low"
+// Thresholds in one place so they are easy to tune (the altitude ones live in
+// attributes.ts, next to the fact bands they differ from).
 const LONG_HAUL_MIN = 360 // 6 hours, gate to gate
 const STEEP_FPM = 1000 // "climbing" / "descending", feet per minute
 const FAST_KT = 550 // ground speed; airliners cruise ~450 kt through the air
@@ -145,17 +151,17 @@ const AIRLINE_QUESTS: { code: string; name: string; conceptFact: string }[] = [
 export const QUEST_TEMPLATES: Quest[] = [
   {
     id: 'high',
-    title: `Catch a flight above ${HIGH_FT.toLocaleString('en-US')} ft`,
+    title: `Catch a flight above ${QUEST_HIGH_FT.toLocaleString('en-US')} ft`,
     conceptFact:
       'Thin air means less drag, so engines burn less fuel for the same speed. But wings and engines also need air to work with, so every plane has a best height. It rises through the flight, because the plane gets lighter as fuel burns off. Air traffic control then gives planes on crossing routes different levels, so they stay apart vertically.',
-    matches: (f) => f.altitude_ft > HIGH_FT,
+    matches: (f) => f.altitude_ft > QUEST_HIGH_FT,
   },
   {
     id: 'low',
-    title: `Catch a flight below ${LOW_FT.toLocaleString('en-US')} ft`,
+    title: `Catch a flight below ${QUEST_LOW_FT.toLocaleString('en-US')} ft`,
     conceptFact:
       'On a short trip a plane spends most of its time climbing and descending, so it never reaches the high levels where jets are most efficient. Small and slow planes stay low on purpose, because their engines and wings work best in thicker air. Low levels are also where the airspace is shared between airliners, small planes and helicopters.',
-    matches: (f) => f.altitude_ft < LOW_FT,
+    matches: (f) => f.altitude_ft < QUEST_LOW_FT,
   },
   {
     id: 'wide-body',

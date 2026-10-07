@@ -1,5 +1,11 @@
-import type { Flight, FlightRoute, WeatherArea } from './types'
-import { isFlight, isFlightRoute, isWeatherArea, keepValid } from './validate'
+import type { DataSources, Flight, FlightRoute, WeatherArea } from './types'
+import {
+  isDataSources,
+  isFlight,
+  isFlightRoute,
+  isWeatherArea,
+  keepValid,
+} from './validate'
 
 // Backend base URL; override with VITE_API_URL in a .env file.
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -68,5 +74,16 @@ export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
     const data: unknown = await res.json()
     if (!Array.isArray(data)) throw new Error('GET /weather: expected a list')
     return keepValid(data, isWeatherArea, 'weather areas')
+  })
+}
+
+// Which sources the backend uses (mock or live), for the credit line.
+export function fetchDataSources(signal?: AbortSignal): Promise<DataSources> {
+  return withTimeout(signal, async (s) => {
+    const res = await fetch(`${API_URL}/health`, { signal: s })
+    if (!res.ok) throw new Error(`GET /health failed: ${res.status}`)
+    const data: unknown = await res.json()
+    if (!isDataSources(data)) throw new Error('GET /health: unexpected shape')
+    return { source: data.source, weather_source: data.weather_source }
   })
 }

@@ -2,6 +2,7 @@ import { AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { BadgePopup } from './BadgePopup'
 import { Collection } from './Collection'
+import { creditLine } from './credits'
 import { dayKey, isToday } from './dates'
 import { pickFeatured } from './featured'
 import { FlightCard } from './FlightCard'
@@ -14,6 +15,7 @@ import { mergeRoute } from './route'
 import type { Flight, WeatherArea } from './types'
 import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
+import { useDataSources } from './useDataSources'
 import { useFlightRoute } from './useFlightRoute'
 import { useFlights } from './useFlights'
 import { useJournalContext } from './useJournalContext'
@@ -38,6 +40,7 @@ function App() {
   // Null until the first response; quests and featured flights wait for it.
   const weather = useWeather()
   const weatherAreas = weather ?? NO_WEATHER
+  const credits = creditLine(useDataSources())
   const { journal, addCatch } = useJournalContext()
   const quest = useDailyQuest(flights, weather, journal)
   const { replay, playedId, start, stop } = useReplay()
@@ -197,10 +200,7 @@ function App() {
                   onStopReplay={stop}
                 />
               )}
-              <p className="credits">
-                Live flights: OpenSky Network. Aircraft types: OpenSky aircraft
-                database. Routes: adsbdb. Weather: Aviation Weather Center.
-              </p>
+              {credits && <p className="credits">{credits}</p>}
             </>
           )}
           <AnimatePresence>

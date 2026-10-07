@@ -31,7 +31,7 @@ DOWN_PAUSE_S = 15  # after a failed lookup, taps on uncached planes fail at once
 MAX_CONCURRENT_LOOKUPS = 8  # requests to adsbdb in progress at once (the thread pool has 40)
 QUEUE_WAIT_S = 2  # how long a lookup waits for a free slot before giving up
 
-CRUISE_KT = 440  # typical average speed: the mock's long-haul flights use 440-480
+CRUISE_KT = 440  # typical average speed: the mock's long-hauls use 450-490 (40 less westbound)
 # The plane must be roughly on the way: going origin -> plane -> destination can't be much
 # longer than going straight. The slack keeps short routes and small diversions valid.
 MAX_DETOUR = 1.25

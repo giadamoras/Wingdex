@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
-import { fetchWeather } from './api'
+import { fetchDataSources, fetchWeather } from './api'
 import { QUEST_STORAGE_KEY, saveDailyQuest } from './dailyQuest'
 import { dayKey } from './dates'
 import { saveJournal } from './journal'
@@ -19,6 +19,7 @@ import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './useWeather'
 vi.mock('./api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./api')>()),
   fetchWeather: vi.fn(),
+  fetchDataSources: vi.fn(),
 }))
 
 // Every render needs the Journal Context that main.tsx normally provides.
@@ -72,6 +73,10 @@ beforeEach(() => {
   scrollTo.mockClear()
   window.scrollTo = scrollTo
   vi.mocked(fetchWeather).mockResolvedValue([]) // no weather unless a test adds some
+  vi.mocked(fetchDataSources).mockResolvedValue({
+    source: 'mock',
+    weather_source: 'mock',
+  })
   // Onboarding is a separate feature (see the dedicated tests near the
   // bottom of this file), so keep it out of everything else's way.
   markOnboardingSeen()
@@ -1073,4 +1078,32 @@ test('a failed weather request does not block the daily quest', async () => {
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(localStorage.getItem(QUEST_STORAGE_KEY)).not.toBeNull()
+})
+
+test('on mock data there is no credit line', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(container.querySelector('.credits')).toBeNull()
+})
+
+test('live sources are credited under the map', async () => {
+  vi.mocked(fetchDataSources).mockResolvedValue({
+    source: 'opensky',
+    weather_source: 'awc',
+  })
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  const credits = container.querySelector('.credits')?.textContent
+  expect(credits).toContain('Live flights: OpenSky Network.')
+  expect(credits).toContain('Weather: Aviation Weather Center.')
+})
+
+test('no credit line is shown when the sources cannot be read', async () => {
+  vi.mocked(fetchDataSources).mockRejectedValue(new Error('down'))
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(container.querySelector('.credits')).toBeNull()
 })

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import {
+  fetchDataSources,
   fetchFlights,
   fetchRoute,
   fetchWeather,
@@ -183,4 +184,22 @@ test('an unknown route is null, and other errors throw', async () => {
     vi.fn(async () => ({ ok: false, status: 503 })),
   )
   await expect(fetchRoute('f1')).rejects.toThrow('503')
+})
+
+test('the data sources come from /health, and an unexpected body fails', async () => {
+  vi.stubGlobal(
+    'fetch',
+    answering({
+      status: 'ok',
+      source: 'opensky',
+      weather_source: 'mock',
+      extra: 1,
+    }),
+  )
+  await expect(fetchDataSources()).resolves.toEqual({
+    source: 'opensky',
+    weather_source: 'mock',
+  })
+  vi.stubGlobal('fetch', answering({ status: 'ok' }))
+  await expect(fetchDataSources()).rejects.toThrow('unexpected shape')
 })

@@ -8,12 +8,21 @@ import { WORLD_LAND } from './worldLandData'
 export type AltitudeBand = 'low' | 'mid' | 'cruise' | 'high'
 export type TimeOfDay = 'dawn' | 'day' | 'dusk' | 'night'
 
-// Feet: low is climb/descent and small aircraft, cruise is where most jets
-// spend their time, high is above the usual airliner levels.
+// Altitude thresholds in feet, all in one place. The bands describe the levels
+// airliners typically use: low is climb/descent and small aircraft, cruise is
+// where most jets spend their time, high is above the usual airliner levels.
+export const BAND_LOW_FT = 10_000 // below this: low
+export const BAND_MID_FT = 30_000 // below this: mid
+export const BAND_CRUISE_FT = 38_000 // up to and including this: cruise
+// The quests' "high" and "low" are their own, looser thresholds, chosen so the
+// quests can fire often. They are not the band edges above.
+export const QUEST_HIGH_FT = 36_000 // "cruising high"
+export const QUEST_LOW_FT = 20_000 // "flying low"
+
 export function altitudeBand(altitudeFt: number): AltitudeBand {
-  if (altitudeFt < 10_000) return 'low'
-  if (altitudeFt < 30_000) return 'mid'
-  if (altitudeFt <= 38_000) return 'cruise'
+  if (altitudeFt < BAND_LOW_FT) return 'low'
+  if (altitudeFt < BAND_MID_FT) return 'mid'
+  if (altitudeFt <= BAND_CRUISE_FT) return 'cruise'
   return 'high'
 }
 
