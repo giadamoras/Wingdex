@@ -107,7 +107,7 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`
 
 Done one step at a time: work only on the step the user names. Only deployment is left.
 
-**Step 7 — Deployment.** Deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL.
+**Step 7 — Deployment.** Deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL. Set `CORS_ORIGINS` on the backend to the deployed frontend URL and `VITE_API_URL` on the frontend to the backend URL (see `backend/.env.example`).
 
 ### After the MVP: backlog in priority order
 
@@ -125,7 +125,7 @@ Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked 
 
 **Learning extras (alongside, one at a time).** Short mini lessons on small aviation topics, written together with the user (the user learns while we write them), kept in `docs/lessons/` as Markdown with a PDF export and linked from the related fact or quest later. `docs/aviation-weather-products.md` is the first. No deadline, and no code until a few exist.
 
-**Smaller ideas, not scheduled.** Richer mascot dialogue; a "most interesting first" ranking for the draw cap (rare types, extremes, weather); clustering or count badges in dense areas; cheaper rendering (canvas or SVG) if phones struggle; a per-view server request (`/flights?bbox=`) if the whole-world feed proves too heavy; region and weather palette shifts; the airport-style "recently left the feed" state for mock planes.
+**Smaller ideas, not scheduled.** Richer mascot dialogue; a "most interesting first" ranking for the draw cap (rare types, extremes, weather); clustering or count badges in dense areas; cheaper rendering (canvas or SVG) if phones struggle; pausing the flight poll while the browser tab is hidden (and fetching at once when it returns) to save phone data and battery; a per-view server request (`/flights?bbox=`) if the whole-world feed proves too heavy; region and weather palette shifts; the airport-style "recently left the feed" state for mock planes.
 
 **Still out:** accounts, social features and rankings; weather forecasting or simulation.
 

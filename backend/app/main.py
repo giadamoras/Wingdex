@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -5,6 +7,18 @@ from fastapi.middleware.gzip import GZipMiddleware
 from app.models import Flight, FlightRoute, WeatherArea
 from app.providers import ProviderError, create_provider, create_weather_provider
 from app.routes import LookupUnavailable, RouteService
+
+# The Vite dev server, used when CORS_ORIGINS is not set.
+DEFAULT_CORS_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+
+
+def cors_origins() -> list[str]:
+    """Browser origins allowed to call the API: CORS_ORIGINS (comma-separated) or the dev server."""
+    entries = os.environ.get("CORS_ORIGINS", "").split(",")
+    # An origin has no trailing slash, so tolerate one in the setting.
+    origins = [entry.strip().rstrip("/") for entry in entries if entry.strip()]
+    return origins or DEFAULT_CORS_ORIGINS
+
 
 app = FastAPI(title="Airspace Explorer API")
 provider = create_provider()  # FLIGHT_SOURCE=mock (default) or opensky
@@ -14,10 +28,10 @@ route_service = RouteService()
 # The flight list is large and repetitive JSON; gzip shrinks it about 8x.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Allow the Vite dev server to call the API from the browser.
+# Allow the frontend's origin to call the API from the browser.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins(),
     allow_methods=["GET"],
     allow_headers=["*"],
 )
