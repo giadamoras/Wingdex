@@ -179,6 +179,8 @@ export function FlightMap({
               key={f.id}
               className={className}
               title={f.callsign}
+              aria-label={f.callsign}
+              aria-pressed={f.id === selectedId}
               style={{ left: `${x}%`, top: `${y}%` }}
               onClick={(e) => {
                 e.stopPropagation() // don't trigger the map's deselect

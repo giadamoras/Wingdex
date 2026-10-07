@@ -98,6 +98,32 @@ test('clicking a dot selects it, clicking the selected dot deselects', () => {
   expect(onSelect).toHaveBeenLastCalledWith(null)
 })
 
+test('each plane is a button named by its callsign, pressed while selected', () => {
+  const { rerender } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 51, 1)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const named = (pressed: boolean) =>
+    screen.getByRole('button', { name: 'CS1', pressed })
+  expect(named(false)).toBeTruthy()
+
+  rerender(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 51, 1)]}
+      selectedId="1"
+      onSelect={() => {}}
+    />,
+  )
+  expect(named(true)).toBeTruthy()
+  // Only the selected plane is pressed.
+  expect(
+    screen.getByRole('button', { name: 'CS2', pressed: false }),
+  ).toBeTruthy()
+})
+
 // jsdom has no layout, so give the map a size and stub pointer capture.
 const withMapBox = (map: HTMLElement) => {
   map.getBoundingClientRect = () =>

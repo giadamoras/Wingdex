@@ -678,6 +678,37 @@ h1 {
   box-shadow: 1px 1px 0 var(--ink);
 }
 
+/* Touch screens: bigger targets (about 40-44 px, the usual comfortable size)
+   without changing how anything looks. The map buttons grow. Planes and
+   weather icons get an invisible, larger hit area: a pseudo-element is part of
+   its button, so a tap near the icon still lands on it. It is kept modest
+   because in a crowded sky the hit areas overlap, and zooming in separates
+   them. Desktop keeps the exact sizes. */
+@media (pointer: coarse) {
+  /* A row, not a column: on a phone the map is only about 175 px tall (it keeps
+     its wide shape), too short for four 44 px buttons stacked. */
+  .map-controls {
+    flex-direction: row;
+  }
+
+  .map-controls button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .plane::before {
+    content: '';
+    position: absolute;
+    inset: -6px;
+  }
+
+  .weather-icon::before {
+    content: '';
+    position: absolute;
+    inset: -9px;
+  }
+}
+
 /* Fixed-position ticket panel below the map. Entrance is FlightCard.tsx's
    Framer Motion spring now, not this CSS animation. */
 .card {
