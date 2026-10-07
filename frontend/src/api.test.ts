@@ -70,6 +70,14 @@ test("the caller's signal aborts the request", async () => {
   expect(fetchMock.mock.calls[0][1]?.signal?.aborted).toBe(true)
 })
 
+test("the caller's signal also aborts a route lookup", async () => {
+  vi.stubGlobal('fetch', hangingFetch())
+  const controller = new AbortController()
+  const failed = expect(fetchRoute('f1', controller.signal)).rejects.toThrow()
+  controller.abort()
+  await failed
+})
+
 test('a signal that is already aborted fails without waiting', async () => {
   vi.stubGlobal('fetch', hangingFetch())
   const controller = new AbortController()

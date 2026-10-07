@@ -1,3 +1,4 @@
+import threading
 from typing import Any
 
 import httpx
@@ -7,6 +8,7 @@ from app.geo import distance_nm, interpolate
 from app.mock_flights import GROUND_MIN
 from app.models import Airport, Flight
 from app.routes import (
+    DOWN_PAUSE_S,
     HIT_TTL_S,
     MISS_TTL_S,
     LookupUnavailable,
@@ -200,12 +202,115 @@ def test_results_are_cached_for_a_day_and_misses_for_an_hour() -> None:
 
 
 def test_an_outage_raises_and_is_not_cached() -> None:
+    clock = Clock()
     fake = FakeAdsbdb({COMBINED: (500, {})})
-    svc = service(fake)
+    svc = service(fake, clock)
     with pytest.raises(LookupUnavailable):
         svc.lookup(mid_atlantic(), "abc123")
     fake.answers = {COMBINED: (200, {"response": {"aircraft": AIRCRAFT, "flightroute": ROUTE}})}
-    assert svc.lookup(mid_atlantic(), "abc123") is not None  # the next tap retries
+    clock.now += DOWN_PAUSE_S
+    assert svc.lookup(mid_atlantic(), "abc123") is not None  # the failure was not remembered
+
+
+def test_taps_during_an_outage_fail_at_once_without_asking_adsbdb() -> None:
+    clock = Clock()
+    fake = FakeAdsbdb({COMBINED: (500, {})})
+    svc = service(fake, clock)
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(mid_atlantic(), "abc123")
+    calls = len(fake.calls)
+    clock.now += DOWN_PAUSE_S - 1
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(mid_atlantic(), "abc123")
+    assert len(fake.calls) == calls  # no new request during the pause
+    clock.now += 1
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(mid_atlantic(), "abc123")
+    assert len(fake.calls) == 2 * calls  # the pause is over: it asked again, and failed again
+
+
+def test_the_pause_counts_from_the_failure_not_from_the_start_of_the_request() -> None:
+    clock = Clock()
+
+    def slow_failure(request: httpx.Request) -> httpx.Response:
+        clock.now += 8  # the request ran into the timeout
+        return httpx.Response(500)
+
+    svc = RouteService(http=httpx.Client(transport=httpx.MockTransport(slow_failure)), clock=clock)
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(mid_atlantic(), "abc123")
+    clock.now += DOWN_PAUSE_S - 1  # still inside a full pause measured from the failure
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(mid_atlantic(), "abc123")
+    assert clock.now == 1_000_000.0 + 8 + DOWN_PAUSE_S - 1  # no second request ran
+
+
+def test_lookups_beyond_the_limit_give_up_without_starting_the_pause() -> None:
+    inside = threading.Event()  # the first lookup has reached adsbdb
+    release = threading.Event()
+    calls: list[str] = []
+
+    def slow(request: httpx.Request) -> httpx.Response:
+        calls.append(request.url.path)
+        inside.set()
+        release.wait(timeout=5)
+        return httpx.Response(404)
+
+    svc = RouteService(
+        http=httpx.Client(transport=httpx.MockTransport(slow)),
+        max_concurrent=1,
+        queue_wait_s=0.05,
+    )
+    first = threading.Thread(target=svc.lookup, args=(mid_atlantic(), "abc123"))
+    first.start()
+    assert inside.wait(timeout=5)
+
+    other = flight_at(50.0, -30.0, callsign="KLM1")
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(other, "def456")  # no free slot
+    assert len(calls) == 1  # it never reached adsbdb
+
+    release.set()
+    first.join(timeout=5)
+    assert svc.lookup(other, "def456") is None  # the slot is free again, and no pause is set
+
+
+def test_a_success_ends_the_pause_and_cached_answers_are_served_during_it() -> None:
+    clock = Clock()
+    good = {COMBINED: (200, {"response": {"aircraft": AIRCRAFT, "flightroute": ROUTE}})}
+    fake = FakeAdsbdb(good)
+    svc = service(fake, clock)
+    assert svc.lookup(mid_atlantic(), "abc123") is not None  # now cached
+
+    other = flight_at(50.0, -30.0, callsign="KLM1")
+    fake.answers = {"aircraft/def456?callsign=KLM1": (500, {})}
+    with pytest.raises(LookupUnavailable):
+        svc.lookup(other, "def456")
+    assert svc.lookup(mid_atlantic(), "abc123") is not None  # cached: no request, no error
+
+    clock.now += DOWN_PAUSE_S
+    fake.answers = {"aircraft/def456?callsign=KLM1": (404, {})}
+    assert svc.lookup(other, "def456") is None  # asked again and answered (unknown)
+    fake.answers = {"aircraft/ghi789?callsign=KLM2": (404, {})}
+    assert svc.lookup(flight_at(50.0, -30.0, callsign="KLM2"), "ghi789") is None  # no pause left
+
+
+def test_a_full_cache_drops_the_entry_closest_to_expiring_instead_of_refusing() -> None:
+    clock = Clock()
+    fake = FakeAdsbdb()  # every plane is unknown: each answer is cached for MISS_TTL_S
+    svc = RouteService(
+        http=httpx.Client(transport=httpx.MockTransport(fake)), clock=clock, max_entries=2
+    )
+    for i, step in enumerate((0, 10, 20)):  # three planes, 10 s apart, room for two
+        clock.now = 1_000_000.0 + step
+        svc.lookup(flight_at(50.0, -30.0, callsign=f"AAA{i}"), f"icao{i}")
+    calls = len(fake.calls)
+
+    svc.lookup(flight_at(50.0, -30.0, callsign="AAA2"), "icao2")
+    svc.lookup(flight_at(50.0, -30.0, callsign="AAA1"), "icao1")
+    assert len(fake.calls) == calls  # the two newest are cached, the new plane included
+    svc.lookup(flight_at(50.0, -30.0, callsign="AAA0"), "icao0")
+    assert len(fake.calls) > calls  # the oldest was the one dropped
 
 
 def test_garbage_from_adsbdb_counts_as_an_outage() -> None:

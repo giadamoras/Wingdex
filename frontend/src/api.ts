@@ -43,8 +43,11 @@ export function fetchFlights(signal?: AbortSignal): Promise<Flight[]> {
 
 // The route (and type) of one live flight. null means "nothing known" (404);
 // anything else that goes wrong throws, so the caller can tell unknown from down.
-export function fetchRoute(flightId: string): Promise<FlightRoute | null> {
-  return withTimeout(undefined, async (s) => {
+export function fetchRoute(
+  flightId: string,
+  signal?: AbortSignal,
+): Promise<FlightRoute | null> {
+  return withTimeout(signal, async (s) => {
     const res = await fetch(
       `${API_URL}/flights/${encodeURIComponent(flightId)}/route`,
       { signal: s },

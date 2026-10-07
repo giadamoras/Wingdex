@@ -9,6 +9,7 @@ import { JournalProvider } from './JournalContext'
 import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
 import type { WeatherArea } from './types'
+import { ROUTE_LOOKUP_DELAY_MS } from './useFlightRoute'
 import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './useFlights'
 import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './useWeather'
 
@@ -181,7 +182,7 @@ test('the card hides the route when the source does not know it', async () => {
   const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
+  await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   expect(screen.queryByText(/→/)).toBeNull()
   expect(screen.getByText('Route unknown')).toBeTruthy()
   // No route: no journey button, no route line, and no type or duration chip.
@@ -200,7 +201,7 @@ test('a live flight is looked up when tapped, and the card fills in', async () =
   expect(screen.getByText('Looking up route…')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
 
-  await act(() => vi.advanceTimersByTimeAsync(0))
+  await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   expect(screen.queryByText('Looking up route…')).toBeNull()
   expect(screen.getByText('LHR → CDG')).toBeTruthy()
   expect(screen.getByText('B77W')).toBeTruthy() // the type, learned by the lookup
@@ -220,7 +221,7 @@ test('the route is kept: reselecting a flight does not look it up again', async 
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
+  await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   fireEvent.click(screen.getByTitle('TST1')) // deselect
   fireEvent.click(screen.getByTitle('TST1'))
   await act(() => vi.advanceTimersByTimeAsync(0))
@@ -236,7 +237,7 @@ test('when the lookup service is down the card says the route is unknown', async
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
+  await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   expect(screen.getByText('Route unknown')).toBeTruthy()
   // The rest of the card still works, including catching.
   expect(screen.getByRole('button', { name: 'Catch' })).toBeTruthy()
@@ -247,7 +248,7 @@ test('a catch keeps the looked-up route in the Journal', async () => {
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
-  await act(() => vi.advanceTimersByTimeAsync(0))
+  await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
   // The Journal stamp is about the destination, which only the lookup knew.
