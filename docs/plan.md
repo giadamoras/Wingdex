@@ -3,7 +3,7 @@
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
 - **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data). They are summarised in `docs/history.md`.
-- **In progress.** Milestone 7, the last step of the MVP: deployment (step 7). After the MVP, a backlog in priority order is under "Implementation roadmap".
+- **In progress.** Milestone 7, the last step of the MVP: deployment (step 7), postponed (see "Now"). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
 
@@ -105,9 +105,9 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`
 
 ### Now: finish Milestone 7 (the MVP)
 
-Done one step at a time: work only on the step the user names. Only deployment is left.
+Done one step at a time: work only on the step the user names. Only deployment is left, and it is postponed.
 
-**Step 7 — Deployment.** Deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL. Set `CORS_ORIGINS` on the backend to the deployed frontend URL and `VITE_API_URL` on the frontend to the backend URL (see `backend/.env.example`).
+**Step 7 — Deployment (postponed 2026-10-07).** Two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward when it is picked up again: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode) wait with it. The plan for when it resumes: deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL. Set `CORS_ORIGINS` on the backend to the deployed frontend URL and `VITE_API_URL` on the frontend to the backend URL (see `backend/.env.example`).
 
 ### After the MVP: backlog in priority order
 

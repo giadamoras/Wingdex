@@ -1,8 +1,22 @@
 # Airspace Explorer
 
-A kawaii "spot & collect" experience built on live flight traffic. See `docs/plan.md`.
+A kawaii "spot & collect" game built on flight traffic. Watch planes cross a world map, tap one
+to open its flight passport, and catch it for your collection. It runs on mock data out of the box;
+live flights are optional (see the data terms below).
 
-- `backend/` — Python + FastAPI (flight data API)
+![Airspace Explorer: a world map with a flight passport open](docs/images/screenshot.png)
+
+- **Spot.** Planes move across the world map. Tap one for its route, type, altitude, speed and a
+  "Did you know?" fact. Weather hazards (storms, turbulence, icing, volcanic ash) are drawn on the map.
+- **Catch.** Catch one plane a day into your Journal, and replay its journey from the card.
+- **Quests.** A daily quest ("catch a flight in a tropical cyclone area") with a short lesson when you complete it.
+- **Badges.** Collect badges as your Journal grows.
+
+Status: the app runs locally with mock or live data. Deployment is postponed: live OpenSky data
+needs a written agreement for public use (see the data terms below), and hosting costs money.
+`docs/plan.md` has the scope and roadmap, and `docs/history.md` how it was built.
+
+- `backend/` — Python + FastAPI (flight and weather data API)
 - `frontend/` — React + TypeScript + Vite
 
 ## Setup
@@ -25,11 +39,18 @@ cd backend;  .venv\Scripts\uvicorn app.main:app --reload   # http://localhost:80
 cd frontend; npm run dev                                   # http://localhost:5173
 ```
 
+The backend serves mock flights and weather by default, spread over the whole world, so the app
+works without any account.
+
+When the frontend and backend are hosted apart, set `VITE_API_URL` for the frontend (the backend's
+URL) and `CORS_ORIGINS` for the backend (the frontend's URL). See `backend/.env.example`.
+
 ### Live flights (optional)
 
-The backend serves mock flights by default. To use real OpenSky traffic, create an API client on
-your OpenSky account, copy `backend/.env.example` to `backend/.env`, set `FLIGHT_SOURCE=opensky`
-and your credentials, then start the backend with the env file:
+OpenSky's terms limit how its API may be used (see "Data sources and terms" below). To use real
+OpenSky traffic, create an API client on your own OpenSky account, copy
+`backend/.env.example` to `backend/.env`, set `FLIGHT_SOURCE=opensky` and your credentials, then
+start the backend with the env file:
 
 ```powershell
 cd backend; .venv\Scripts\uvicorn app.main:app --env-file .env
@@ -65,3 +86,29 @@ know.
 # frontend (from frontend/)
 npm run typecheck; npm run lint; npm test; npm run format:check; npm run build
 ```
+
+The frontend lints with [oxlint](https://oxc.rs) (not ESLint). `frontend/scripts/build-land.mjs`
+and `build-countries.mjs` are one-off generators for the map data in `src/`; they are not part of
+the build.
+
+## Data sources and terms
+
+The licence below covers this project's code only. Each data source stays under its own terms,
+and the app is meant as a free, non-commercial personal project.
+
+| Source                                                 | Used for                                          | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| ------------------------------------------------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| [OpenSky Network](https://opensky-network.org)         | Live flights, and the aircraft type of each plane | Needs your own account. The terms license the data only for non-profit research and education, and say the REST API "is provided for non-profit research and educational use only": operational use in a live product, service or automated system needs a written licence from OpenSky. The app ships no credentials and defaults to mock data. The bundled aircraft-type file comes from OpenSky's aircraft database, which it calls "unlicensed" and offered "as is". If you use OpenSky data in a publication, it asks you to cite Schäfer et al., "Bringing Up OpenSky", IPSN 2014 (`docs/opensky-aircraft-database.md`). |
+| [adsbdb](https://github.com/mrjackwills/adsbdb)        | The route of a plane you tap                      | Its route data may not be copied or put into other databases, so the backend keeps it in memory only and never writes it to disk.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| [Aviation Weather Center](https://aviationweather.gov) | Live weather advisories                           | A US government service. The backend sends its own User-Agent and stays well under the 100 requests a minute limit.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| [Natural Earth](https://www.naturalearthdata.com)      | The land outline and country shapes               | Public domain.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Fredoka and Nunito                                     | Fonts, through `@fontsource`                      | SIL Open Font License 1.1.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+
+Live OpenSky mode is optional and entirely your responsibility: read
+[OpenSky's terms](https://opensky-network.org/about/terms-of-use) first, and do not run a public
+deployment on live data without their written licence. Check each source's terms before anything beyond
+personal use.
+
+## Licence
+
+[MIT](LICENSE). That covers the code, not the data above.
