@@ -375,6 +375,36 @@ test('zooming in adds icons for a large area without moving the first', () => {
   expect(after[0]).toBe(before[0])
 })
 
+test('there is no weather control without weather, and it returns with it', () => {
+  const props = {
+    flights: [flight('1', 50, 0)],
+    selectedId: null,
+    onSelect: () => {},
+  }
+  const { rerender } = render(<FlightMap {...props} weather={[]} />)
+  expect(screen.queryByRole('button', { name: 'Weather' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Zoom in' })).toBeTruthy() // the others stay
+
+  rerender(<FlightMap {...props} weather={[storm]} />)
+  expect(screen.getByRole('button', { name: 'Weather' })).toBeTruthy()
+})
+
+test('a weather control switched off stays off when the weather drops out and returns', () => {
+  const props = {
+    flights: [flight('1', 50, 0)],
+    selectedId: null,
+    onSelect: () => {},
+  }
+  const { rerender } = render(<FlightMap {...props} weather={[storm]} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Weather' }))
+
+  rerender(<FlightMap {...props} weather={[]} />)
+  rerender(<FlightMap {...props} weather={[storm]} />)
+  const toggle = screen.getByRole('button', { name: 'Weather' })
+  expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  expect(screen.queryByTitle('Thunderstorm, North Atlantic')).toBeNull()
+})
+
 test('the weather control hides and shows the icons, planes stay', () => {
   render(
     <FlightMap
@@ -424,7 +454,14 @@ test('hiding the weather drops the selected area, and showing it again starts cl
 
 test('the weather control does not deselect the flight', () => {
   const onSelect = vi.fn()
-  render(<FlightMap flights={[]} selectedId="1" onSelect={onSelect} />)
+  render(
+    <FlightMap
+      flights={[]}
+      selectedId="1"
+      weather={[storm]}
+      onSelect={onSelect}
+    />,
+  )
   fireEvent.click(screen.getByRole('button', { name: 'Weather' }))
   expect(onSelect).not.toHaveBeenCalled()
 })

@@ -51,8 +51,8 @@ export function fetchRoute(flightId: string): Promise<FlightRoute | null> {
   })
 }
 
-export function fetchWeather(): Promise<WeatherArea[]> {
-  return withTimeout(undefined, async (s) => {
+export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
+  return withTimeout(signal, async (s) => {
     const res = await fetch(`${API_URL}/weather`, { signal: s })
     if (!res.ok) throw new Error(`GET /weather failed: ${res.status}`)
     return res.json()

@@ -10,7 +10,7 @@ import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
 import type { WeatherArea } from './types'
 import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './useFlights'
-import { WEATHER_POLL_MS } from './useWeather'
+import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './useWeather'
 
 // Only the weather request is replaced. The tests below stub the global fetch
 // in the order flights are requested, and a second request on mount would
@@ -957,6 +957,21 @@ test('weather is polled far less often than flights', async () => {
   expect(fetchWeather).toHaveBeenCalledTimes(1)
   await act(() => vi.advanceTimersByTimeAsync(WEATHER_POLL_MS))
   expect(fetchWeather).toHaveBeenCalledTimes(2)
+})
+
+test('the weather switch is hidden until weather loads, and a failed request is retried', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  vi.mocked(fetchWeather)
+    .mockRejectedValueOnce(new Error('network'))
+    .mockResolvedValue([storm])
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByTitle('TST1')).toBeTruthy() // the flights are fine
+  expect(screen.queryByRole('button', { name: 'Weather' })).toBeNull()
+
+  await act(() => vi.advanceTimersByTimeAsync(WEATHER_RETRY_MS))
+  expect(fetchWeather).toHaveBeenCalledTimes(2)
+  expect(screen.getByRole('button', { name: 'Weather' })).toBeTruthy()
 })
 
 // A storm over TST1 (50N, 0E, 36,000 ft), as opposed to the Atlantic one above.

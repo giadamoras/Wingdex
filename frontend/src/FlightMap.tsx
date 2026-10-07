@@ -192,17 +192,20 @@ export function FlightMap({
         })}
       </div>
       <div className="map-controls">
-        <button
-          aria-label="Weather"
-          title="Show or hide weather"
-          aria-pressed={showWeather}
-          onClick={control(() => {
-            setShowWeather((on) => !on)
-            setWeatherId(null) // hiding the weather drops any selected area
-          })}
-        >
-          ☁
-        </button>
+        {/* No switch without weather (not loaded, failed or none): nothing to hide. */}
+        {weather.length > 0 && (
+          <button
+            aria-label="Weather"
+            title="Show or hide weather"
+            aria-pressed={showWeather}
+            onClick={control(() => {
+              setShowWeather((on) => !on)
+              setWeatherId(null) // hiding the weather drops any selected area
+            })}
+          >
+            ☁
+          </button>
+        )}
         <button aria-label="Zoom in" onClick={control(zoomIn)}>
           +
         </button>
