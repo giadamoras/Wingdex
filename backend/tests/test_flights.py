@@ -9,6 +9,7 @@ from app.mock_flights import (
     EPOCH,
     GROUND_MIN,
     MOCK_FLIGHTS,
+    build_mock_flights,
     get_mock_flights,
     route_minutes,
 )
@@ -60,8 +61,35 @@ def test_mock_routes_use_known_airports() -> None:
 
 def test_mock_flights_count_and_unique_ids() -> None:
     flights = get_mock_flights(EPOCH)
-    assert 25 <= len(flights) <= 30
+    assert len(flights) == 100
     assert len({f.id for f in flights}) == len(flights)
+    assert len({f.callsign for f in flights}) == len(flights)
+
+
+def test_mock_flights_are_the_same_for_the_same_seed() -> None:
+    assert build_mock_flights(seed=1, count=20) == build_mock_flights(seed=1, count=20)
+    assert build_mock_flights(seed=1, count=20) != build_mock_flights(seed=2, count=20)
+
+
+def test_mock_flights_cover_the_whole_world() -> None:
+    # (south, west, north, east) boxes; the flights must start in every one, Europe the most.
+    boxes = {
+        "europe": (35, -25, 71, 40),
+        "north america": (15, -170, 72, -50),
+        "south america": (-56, -82, 13, -34),
+        "africa": (-35, -20, 37, 52),
+        "asia": (-11, 60, 55, 150),
+        "oceania": (-48, 110, -10, 180),
+    }
+    counts = dict.fromkeys(boxes, 0)
+    for f in get_mock_flights(EPOCH):
+        assert f.origin is not None
+        for name, (south, west, north, east) in boxes.items():
+            if south <= f.origin.latitude <= north and west <= f.origin.longitude <= east:
+                counts[name] += 1
+                break
+    assert all(n > 0 for n in counts.values()), counts
+    assert counts["europe"] == max(counts.values())
 
 
 def test_mock_flights_have_altitudes_either_side_of_30000ft() -> None:

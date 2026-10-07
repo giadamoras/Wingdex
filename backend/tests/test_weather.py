@@ -59,6 +59,7 @@ def test_mock_weather_has_unique_ids_and_every_hazard() -> None:
         "icing",
         "volcanic_ash",
         "tropical_cyclone",
+        "mountain_wave",
     }
 
 

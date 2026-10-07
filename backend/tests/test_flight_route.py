@@ -82,14 +82,17 @@ def test_a_flight_that_already_has_a_route_is_not_looked_up(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     # Mock mode: the feed carries the route, so the endpoint answers from it.
+    from app.mock_flights import MOCK_FLIGHTS
     from app.providers import MockFlightProvider
 
     service = StubService(AssertionError("must not be called"))
     monkeypatch.setattr(main, "provider", MockFlightProvider())
     monkeypatch.setattr(main, "route_service", service)
-    response = TestClient(main.app).get("/flights/f01/route")
+    first = MOCK_FLIGHTS[0]
+    response = TestClient(main.app).get(f"/flights/{first.id}/route")
     assert response.status_code == 200
     body = response.json()
-    assert body["origin"]["iata"] == "LHR" and body["destination"]["iata"] == "JFK"
+    assert body["origin"]["iata"] == first.origin
+    assert body["destination"]["iata"] == first.destination
     assert body["duration_estimated"] is False
     assert service.calls == []

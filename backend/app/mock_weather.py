@@ -25,8 +25,8 @@ class MockArea(NamedTuple):
     movement_speed_kt: int | None = None
 
 
-# Placed over the mock flights' routes (North Atlantic, Europe) and a few far-off
-# spots (Bay of Bengal, Singapore) so the world map has weather in several places.
+# Spread over every continent, with the densest cluster over Europe and the North Atlantic
+# where the mock flights are busiest.
 # Altitude bounds differ on purpose: storms and cyclones reach cruise level, icing sits
 # lower, and turbulence mostly lives up where the jets fly.
 MOCK_AREAS: list[MockArea] = [
@@ -39,6 +39,16 @@ MOCK_AREAS: list[MockArea] = [
     MockArea("w07", "turbulence", "Iceland", 60, -32, 66, -22, 25000, 40000),
     MockArea("w08", "thunderstorm", "Gulf of Lion", 41, 3, 44, 8, 0, 40000, 90, 20),
     MockArea("w09", "icing", "Greenland", 56, -48, 62, -38, 10000, 30000),
+    # The rest of the world, so the weather spreads out like the flights do.
+    MockArea("w10", "thunderstorm", "Gulf of Mexico", 22, -93, 28, -85, 0, 45000, 45, 10),
+    MockArea("w11", "mountain_wave", "Rockies", 37, -112, 45, -105, 15000, 35000),
+    MockArea("w12", "thunderstorm", "Amazon Basin", -8, -68, 0, -56, 0, 50000),
+    MockArea("w13", "turbulence", "Andes", -36, -72, -28, -66, 20000, 38000),
+    MockArea("w14", "thunderstorm", "Congo Basin", -5, 15, 3, 26, 0, 50000),
+    MockArea("w15", "turbulence", "Himalaya", 26, 80, 32, 92, 20000, 40000),
+    MockArea("w16", "tropical_cyclone", "Western Pacific", 12, 130, 22, 142, 0, 50000, 300, 10),
+    MockArea("w17", "volcanic_ash", "Java", -9, 106, -5, 114, 0, 35000, 270, 8),
+    MockArea("w18", "icing", "Tasman Sea", -45, 150, -38, 165, 5000, 25000, 90, 12),
 ]
 
 

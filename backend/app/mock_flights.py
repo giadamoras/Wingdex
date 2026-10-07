@@ -1,3 +1,4 @@
+import random
 import time
 from typing import NamedTuple
 
@@ -48,6 +49,67 @@ AIRPORTS: dict[str, Airport] = {
     ]
 }
 
+# More real airports so the mock covers every continent: (IATA, ICAO, name, lat, lon).
+_WORLD_AIRPORTS = [
+    # North America
+    ("ATL", "KATL", "Atlanta", 33.637, -84.428),
+    ("ORD", "KORD", "Chicago O'Hare", 41.978, -87.905),
+    ("LAX", "KLAX", "Los Angeles", 33.942, -118.408),
+    ("SFO", "KSFO", "San Francisco", 37.619, -122.375),
+    ("DFW", "KDFW", "Dallas Fort Worth", 32.897, -97.038),
+    ("DEN", "KDEN", "Denver", 39.862, -104.673),
+    ("MIA", "KMIA", "Miami", 25.793, -80.291),
+    ("SEA", "KSEA", "Seattle Tacoma", 47.450, -122.309),
+    ("YYZ", "CYYZ", "Toronto Pearson", 43.678, -79.625),
+    ("YVR", "CYVR", "Vancouver", 49.195, -123.184),
+    ("MEX", "MMMX", "Mexico City", 19.436, -99.072),
+    ("HNL", "PHNL", "Honolulu", 21.319, -157.922),
+    # South America
+    ("GRU", "SBGR", "Sao Paulo Guarulhos", -23.435, -46.473),
+    ("EZE", "SAEZ", "Buenos Aires Ezeiza", -34.822, -58.536),
+    ("BOG", "SKBO", "Bogota", 4.702, -74.147),
+    ("SCL", "SCEL", "Santiago", -33.393, -70.786),
+    ("LIM", "SPJC", "Lima", -12.022, -77.114),
+    # Africa
+    ("JNB", "FAOR", "Johannesburg", -26.139, 28.246),
+    ("CPT", "FACT", "Cape Town", -33.965, 18.602),
+    ("CAI", "HECA", "Cairo", 30.122, 31.406),
+    ("ADD", "HAAB", "Addis Ababa", 8.978, 38.799),
+    ("CMN", "GMMN", "Casablanca", 33.367, -7.590),
+    ("NBO", "HKJK", "Nairobi", -1.319, 36.927),
+    ("LOS", "DNMM", "Lagos", 6.577, 3.321),
+    # Middle East
+    ("DOH", "OTHH", "Doha", 25.273, 51.608),
+    ("AUH", "OMAA", "Abu Dhabi", 24.433, 54.651),
+    ("TLV", "LLBG", "Tel Aviv", 32.011, 34.887),
+    ("RUH", "OERK", "Riyadh", 24.958, 46.699),
+    # Asia
+    ("DEL", "VIDP", "Delhi", 28.556, 77.100),
+    ("BOM", "VABB", "Mumbai", 19.089, 72.868),
+    ("BKK", "VTBS", "Bangkok", 13.690, 100.750),
+    ("KUL", "WMKK", "Kuala Lumpur", 2.746, 101.710),
+    ("CGK", "WIII", "Jakarta", -6.126, 106.656),
+    ("MNL", "RPLL", "Manila", 14.509, 121.020),
+    ("HKG", "VHHH", "Hong Kong", 22.308, 113.915),
+    ("PEK", "ZBAA", "Beijing Capital", 40.080, 116.585),
+    ("PVG", "ZSPD", "Shanghai Pudong", 31.143, 121.805),
+    ("ICN", "RKSI", "Seoul Incheon", 37.469, 126.451),
+    ("NRT", "RJAA", "Tokyo Narita", 35.765, 140.386),
+    ("HND", "RJTT", "Tokyo Haneda", 35.549, 139.780),
+    # Oceania
+    ("SYD", "YSSY", "Sydney", -33.946, 151.177),
+    ("MEL", "YMML", "Melbourne", -37.673, 144.843),
+    ("BNE", "YBBN", "Brisbane", -27.384, 153.118),
+    ("PER", "YPPH", "Perth", -31.940, 115.967),
+    ("AKL", "NZAA", "Auckland", -37.008, 174.792),
+]
+AIRPORTS.update(
+    {
+        iata: Airport(icao=icao, iata=iata, name=name, latitude=lat, longitude=lon)
+        for iata, icao, name, lat, lon in _WORLD_AIRPORTS
+    }
+)
+
 
 class MockFlight(NamedTuple):
     """Static description of one mock flight; its position is derived from the clock."""
@@ -62,42 +124,119 @@ class MockFlight(NamedTuple):
     start_progress: float  # fraction of the route already flown when the server starts
 
 
-# Mostly European routes (always on the map) plus a few long-hauls (over 6 hours)
-# that are only on the map for part of their trip. Big jets cruise at 33,000-39,000 ft;
-# short hops and the turboprop fly lower, so altitudes mix above/below 30,000 ft.
-MOCK_FLIGHTS: list[MockFlight] = [
-    # Long-haul, westbound into headwinds
-    MockFlight("f01", "BAW117", "B77W", "LHR", "JFK", 37000, 440, 0.10),
-    MockFlight("f03", "DLH400", "B748", "FRA", "JFK", 36000, 440, 0.12),
-    MockFlight("f06", "IBE6165", "A359", "MAD", "BOS", 38000, 440, 0.08),
-    MockFlight("f08", "VIR11", "A333", "LHR", "BOS", 37000, 440, 0.15),
-    MockFlight("f10", "THY1", "B77W", "IST", "JFK", 35000, 440, 0.10),
-    MockFlight("f12", "EIN105", "A333", "DUB", "JFK", 36000, 440, 0.05),
-    # Long-haul, east/southbound
-    MockFlight("f04", "KLM835", "B77W", "AMS", "SIN", 35000, 480, 0.03),
-    MockFlight("f11", "UAE5", "A388", "DXB", "LHR", 39000, 460, 0.72),
-    # Medium-haul (2-4 hours)
-    MockFlight("f05", "RYR8821", "B738", "MXP", "LIS", 37000, 430, 0.40),
-    MockFlight("f13", "ICE204", "B738", "KEF", "CPH", 35000, 450, 0.40),
-    MockFlight("f17", "ITY304", "A320", "FCO", "LIS", 35000, 440, 0.45),
-    MockFlight("f20", "NAX1234", "B738", "OSL", "MAD", 37000, 450, 0.25),
-    MockFlight("f21", "TAP1350", "A321", "LIS", "LHR", 35000, 440, 0.65),
-    MockFlight("f22", "EZY8765", "A320", "EDI", "ATH", 36000, 450, 0.20),
-    MockFlight("f24", "RYR44", "B738", "DUB", "FCO", 37000, 440, 0.35),
-    MockFlight("f25", "THY1633", "A359", "IST", "FRA", 39000, 450, 0.50),
-    # Short-haul (1-2 hours)
-    MockFlight("f02", "AFR1234", "A321", "CDG", "FCO", 34000, 420, 0.30),
-    MockFlight("f15", "DLH1810", "A321", "MUC", "BCN", 36000, 430, 0.35),
-    MockFlight("f16", "KLM1101", "E190", "AMS", "OSL", 33000, 400, 0.60),
-    MockFlight("f18", "AEE603", "A320", "ATH", "VIE", 34000, 430, 0.30),
-    MockFlight("f19", "AUA371", "A320", "VIE", "AMS", 36000, 420, 0.55),
-    MockFlight("f23", "VLG8302", "A320", "BCN", "AMS", 34000, 430, 0.70),
-    MockFlight("f26", "EWG9AB", "A319", "CPH", "MUC", 33000, 400, 0.30),
-    # Short hops: they spend most of the trip climbing or descending, so they stay lower
-    MockFlight("f09", "SAS1590", "E190", "ARN", "CPH", 25000, 360, 0.50),
-    MockFlight("f14", "BAW302", "A320", "LHR", "CDG", 22000, 330, 0.50),
-    MockFlight("f07", "SAS4403", "AT76", "CPH", "OSL", 17000, 260, 0.20),  # turboprop
+# Airlines the generator picks from: callsign prefix, home airports and a weight (Europe is
+# the busiest, as in the real feed). The airline quests match on these callsign prefixes.
+AIRLINES: list[tuple[str, list[str], int]] = [
+    ("BAW", ["LHR"], 4),
+    ("DLH", ["FRA", "MUC"], 4),
+    ("AFR", ["CDG"], 3),
+    ("KLM", ["AMS"], 3),
+    ("RYR", ["DUB", "MAD", "BCN", "FCO", "MXP", "LIS", "EDI"], 4),
+    ("EZY", ["EDI", "LHR", "CDG", "MXP"], 2),
+    ("IBE", ["MAD"], 2),
+    ("TAP", ["LIS"], 2),
+    ("THY", ["IST"], 3),
+    ("SAS", ["CPH", "ARN", "OSL"], 2),
+    ("AUA", ["VIE"], 1),
+    ("ITY", ["FCO"], 1),
+    ("VLG", ["BCN"], 1),
+    ("AEE", ["ATH"], 1),
+    ("UAE", ["DXB"], 3),
+    ("QTR", ["DOH"], 2),
+    ("ETD", ["AUH"], 1),
+    ("ELY", ["TLV"], 1),
+    ("AAL", ["DFW", "MIA", "ORD"], 2),
+    ("UAL", ["ORD", "SFO", "DEN"], 2),
+    ("DAL", ["ATL", "SEA", "LAX"], 2),
+    ("ACA", ["YYZ", "YVR"], 1),
+    ("AMX", ["MEX"], 1),
+    ("LAN", ["SCL", "LIM", "GRU"], 1),
+    ("AVA", ["BOG"], 1),
+    ("SAA", ["JNB", "CPT"], 1),
+    ("ETH", ["ADD"], 1),
+    ("MSR", ["CAI"], 1),
+    ("RAM", ["CMN"], 1),
+    ("KQA", ["NBO"], 1),
+    ("SIA", ["SIN"], 2),
+    ("CPA", ["HKG"], 1),
+    ("CCA", ["PEK", "PVG"], 2),
+    ("AIC", ["DEL", "BOM"], 2),
+    ("JAL", ["HND", "NRT"], 1),
+    ("KAL", ["ICN"], 1),
+    ("THA", ["BKK"], 1),
+    ("MAS", ["KUL"], 1),
+    ("GIA", ["CGK"], 1),
+    ("QFA", ["SYD", "MEL", "BNE", "PER"], 2),
+    ("ANZ", ["AKL"], 1),
 ]
+
+# Route length classes in nautical miles. Long-haul is over ~6 hours gate to gate.
+ROUTE_CLASSES = {"short": (150, 800), "medium": (800, 2400), "long": (3000, 9000)}
+MOCK_FLIGHT_COUNT = 100
+MOCK_SEED = 7
+
+WIDE_TYPES = ["B77W", "B748", "A359", "A333", "A388"]
+NARROW_TYPES = ["A321", "A320", "A319", "B738"]
+
+
+def _distance(a: str, b: str) -> float:
+    pa, pb = AIRPORTS[a], AIRPORTS[b]
+    return distance_nm((pa.latitude, pa.longitude), (pb.latitude, pb.longitude))
+
+
+def _plane_for(rng: random.Random, origin: str, dest: str, distance: float) -> tuple[str, int, int]:
+    """Aircraft type, cruise altitude (ft) and average speed (kt) that suit a route's length."""
+    if distance >= 2400:
+        kind = rng.choice(WIDE_TYPES)
+        altitude, speed = rng.randrange(35, 40) * 1000, rng.randrange(450, 491)
+        # Westbound legs fight the jet stream, so they are slower over the ground.
+        if AIRPORTS[dest].longitude < AIRPORTS[origin].longitude:
+            speed -= 40
+        return kind, altitude, speed
+    if distance < 500 and rng.random() < 0.3:
+        return "AT76", 17000, 260  # the only turboprop: short, low and slow
+    if distance < 800:
+        # Short hops spend most of the trip climbing or descending, so they stay lower.
+        kind = rng.choice(["E190", *NARROW_TYPES])
+        return kind, rng.randrange(22, 31) * 1000, rng.randrange(330, 411)
+    return rng.choice(NARROW_TYPES), rng.randrange(33, 38) * 1000, rng.randrange(420, 461)
+
+
+def build_mock_flights(seed: int = MOCK_SEED, count: int = MOCK_FLIGHT_COUNT) -> list[MockFlight]:
+    """Generate `count` flights over the whole world. The same seed gives the same list."""
+    rng = random.Random(seed)
+    # 25% long-haul, 30% medium, the rest short, in random order.
+    classes = ["long"] * (count // 4) + ["medium"] * (count * 3 // 10)
+    classes += ["short"] * (count - len(classes))
+    rng.shuffle(classes)
+    weights = [w for _, _, w in AIRLINES]
+    flights: list[MockFlight] = []
+    callsigns: set[str] = set()
+    for i, wanted in enumerate(classes, start=1):
+        prefix, hubs, _ = rng.choices(AIRLINES, weights)[0]
+        origin = rng.choice(hubs)
+        # Some hubs have nothing in range for a class (Nairobi has no short hop), so fall
+        # back to the other classes in turn.
+        for route_class in [wanted, *(c for c in ROUTE_CLASSES if c != wanted)]:
+            low, high = ROUTE_CLASSES[route_class]
+            options = [a for a in AIRPORTS if low <= _distance(origin, a) <= high]
+            if options:
+                break
+        dest = rng.choice(options)
+        kind, altitude, speed = _plane_for(rng, origin, dest, _distance(origin, dest))
+        callsign = f"{prefix}{rng.randrange(1, 9999)}"
+        while callsign in callsigns:
+            callsign = f"{prefix}{rng.randrange(1, 9999)}"
+        callsigns.add(callsign)
+        # Stop short of 1 so no flight is about to land and jump back to its origin at start.
+        progress = rng.uniform(0, 0.9)
+        flights.append(
+            MockFlight(f"f{i:03d}", callsign, kind, origin, dest, altitude, speed, progress)
+        )
+    return flights
+
+
+MOCK_FLIGHTS: list[MockFlight] = build_mock_flights()
 
 # Taxi, take-off and landing time on top of the time in the air: schedules count
 # gate to gate, so LHR->CDG is about an hour even though the flying takes ~35 min.

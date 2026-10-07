@@ -99,7 +99,8 @@ test('shows only what is known, and nothing without a lookup', () => {
   expect(screen.queryByRole('link')).toBeNull()
   expect(document.querySelector('.details')).toBeNull()
   expect(document.querySelector('.cities')).toBeNull()
-  expect(screen.queryByText(/ft\/min|level/)).toBeNull()
+  // "level" is anchored: the daily "Did you know?" fact can contain the word "level".
+  expect(screen.queryByText(/ft\/min|^level$/)).toBeNull()
 })
 
 test('a model that already names the maker is not repeated', () => {

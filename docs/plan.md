@@ -2,8 +2,8 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestones 1-6 and Milestone 7 steps 1-5 (OpenSky provider, live aircraft type and route, density, real weather, quests). They are summarised in `docs/history.md`.
-- **In progress.** Milestone 7, the last steps of the MVP: world-wide mock data (step 6), deployment (step 7). After the MVP, a backlog in priority order is under "Implementation roadmap".
+- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data). They are summarised in `docs/history.md`.
+- **In progress.** Milestone 7, the last step of the MVP: deployment (step 7). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
 
@@ -88,7 +88,7 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Implementation roadmap
 
-Finished work (Milestones 1-6 and Milestone 7 steps 1-5) is in `docs/history.md`, with the measurements and lessons behind it. The rules from it that still shape the code are under "Standing rules" below.
+Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`, with the measurements and lessons behind it. The rules from it that still shape the code are under "Standing rules" below.
 
 ### Standing rules
 
@@ -105,9 +105,7 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-5) is in `docs/history.md`
 
 ### Now: finish Milestone 7 (the MVP)
 
-Done one step at a time: work only on the step the user names. Order: world-wide mock data, deployment. The mock spread only matters for demos without credentials.
-
-**Step 6 — World-wide mock data.** Spread the mock feed over the whole world to match a world-wide live feed, so a demo without OpenSky credentials looks like the real thing. The mock's weather areas may need the same.
+Done one step at a time: work only on the step the user names. Only deployment is left.
 
 **Step 7 — Deployment.** Deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL.
 
