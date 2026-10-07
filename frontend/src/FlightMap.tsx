@@ -14,6 +14,11 @@ import { visibleFlights } from './visiblePlanes'
 import { WeatherLayer } from './WeatherLayer'
 import { WorldLand } from './WorldLand'
 
+// The world layer is drawn this many times larger than the map box and scaled
+// down by the same factor, so a phone browser, which draws the layer once and
+// then only stretches that picture, has more detail to stretch when you zoom in.
+const WORLD_SCALE = 3
+
 const NO_JUMPS = new Set<string>()
 const NO_FEATURED = new Set<string>()
 const NO_WEATHER: WeatherArea[] = []
@@ -107,11 +112,16 @@ export function FlightMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replayStart])
 
-  // Translate is in % of the layer (= the map box), so the view is resize-proof.
-  // --zoom lets planes scale themselves back to a constant size.
+  // The layer is WORLD_SCALE times the box, so translate (in % of the layer) and
+  // scale are divided by it: the view is the same, just drawn at more detail and
+  // resize-proof. --zoom is the scale actually applied, which planes, labels and
+  // strokes undo to keep a constant size; --real-zoom is the view's zoom.
   const worldStyle = {
-    transform: `translate(${view.x * 100}%, ${view.y * 100}%) scale(${view.zoom})`,
-    '--zoom': view.zoom,
+    width: `${WORLD_SCALE * 100}%`,
+    height: `${WORLD_SCALE * 100}%`,
+    transform: `translate(${(view.x * 100) / WORLD_SCALE}%, ${(view.y * 100) / WORLD_SCALE}%) scale(${view.zoom / WORLD_SCALE})`,
+    '--zoom': view.zoom / WORLD_SCALE,
+    '--real-zoom': view.zoom,
   } as CSSProperties
 
   // The map's sea/land palette follows the solar time at the centre of the

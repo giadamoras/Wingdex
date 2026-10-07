@@ -196,6 +196,7 @@ h1 {
 .map {
   position: relative;
   width: 100%;
+  margin-inline: auto;
   aspect-ratio: 18 / 7; /* 360 x 140 degrees, see MAP_BOUNDS */
   box-sizing: border-box;
   overflow: hidden;
@@ -227,6 +228,17 @@ h1 {
     --land 0.9s ease;
 }
 
+/* A phone held sideways: a full-width map would be so tall that the flight card
+   below it is off screen, and picking a plane would seem to do nothing. Cap
+   the map by the screen height instead, keeping its shape. svh, not dvh: dvh
+   changes as the browser hides its toolbars while scrolling, and the map would
+   grow and shrink with it. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .map {
+    width: min(100%, calc(90svh * 18 / 7));
+  }
+}
+
 /* The map's sea/land palette, keyed by the solar time at the centre of the
    current view (FlightMap.tsx sets this from panzoom's centreOf). Panning to
    another part of the world can shift it. Only the map surface changes here -
@@ -252,7 +264,8 @@ h1 {
    corner; usePanZoom sets the transform and --zoom. */
 .map-world {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0; /* size and transform are set by FlightMap (WORLD_SCALE) */
   transform-origin: 0 0;
 }
 
@@ -344,7 +357,7 @@ h1 {
      Zoomed far out they shrink (down to 0.6, at zoom 2.4 and below), because
      28 px planes pile up into a wall when the whole world is in view. */
   transform: translate(-50%, -50%)
-    scale(calc(clamp(0.6, var(--zoom, 1) / 4, 1) / var(--zoom, 1)));
+    scale(calc(clamp(0.6, var(--real-zoom, 1) / 4, 1) / var(--zoom, 1)));
   /* Above the land and weather; the selected route is above this (2) and the
      selected plane above that (3), so the route reads over the traffic. */
   z-index: 1;

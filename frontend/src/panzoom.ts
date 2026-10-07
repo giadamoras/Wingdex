@@ -11,19 +11,29 @@ export interface View {
 
 export const MIN_ZOOM = 1 // whole world
 export const MAX_ZOOM = 16
+// Touch screens stop sooner: a phone browser keeps the sharpness the map had when
+// it was drawn, so the closer you zoom the blurrier it gets (see WORLD_SCALE in
+// FlightMap.tsx).
+export const TOUCH_MAX_ZOOM = 9
+
+export function maxZoom(): number {
+  const touch =
+    typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+  return touch ? TOUCH_MAX_ZOOM : MAX_ZOOM
+}
 
 const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n))
 
 // Keeps the zoom in range and the world covering the whole box (no gaps).
 export function clampView({ zoom, x, y }: View): View {
-  const z = clamp(zoom, MIN_ZOOM, MAX_ZOOM)
+  const z = clamp(zoom, MIN_ZOOM, maxZoom())
   return { zoom: z, x: clamp(x, 1 - z, 0), y: clamp(y, 1 - z, 0) }
 }
 
 // Zooms by `factor` while keeping the point under (fx, fy) in place.
 export function zoomAt(view: View, factor: number, fx: number, fy: number) {
-  const zoom = clamp(view.zoom * factor, MIN_ZOOM, MAX_ZOOM)
+  const zoom = clamp(view.zoom * factor, MIN_ZOOM, maxZoom())
   // World point currently under the cursor.
   const px = (fx - view.x) / view.zoom
   const py = (fy - view.y) / view.zoom
@@ -56,7 +66,7 @@ export function fitBounds(
       room / Math.max(maxY - minY, 1e-6),
     ),
     MIN_ZOOM,
-    MAX_ZOOM,
+    maxZoom(),
   )
   return centredOn((minX + maxX) / 2, (minY + maxY) / 2, zoom)
 }

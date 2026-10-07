@@ -1,10 +1,11 @@
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import {
   centredOn,
   centreOf,
   clampView,
   fitBounds,
   MAX_ZOOM,
+  TOUCH_MAX_ZOOM,
   MIN_ZOOM,
   panBy,
   viewBetween,
@@ -85,4 +86,15 @@ test('viewBetween starts at a, ends at b, and zooms geometrically', () => {
   expect(viewBetween(a, b, 0)).toEqual(a)
   expect(viewBetween(a, b, 1).zoom).toBeCloseTo(8)
   expect(viewBetween(a, b, 0.5).zoom).toBeCloseTo(4) // halfway in log scale
+})
+
+test('a touch screen cannot zoom in as far', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }))
+  try {
+    const view = { zoom: 1, x: 0, y: 0 }
+    expect(zoomAt(view, 100, 0.5, 0.5).zoom).toBe(TOUCH_MAX_ZOOM)
+    expect(fitBounds(0.5, 0.5, 0.501, 0.501).zoom).toBe(TOUCH_MAX_ZOOM)
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })

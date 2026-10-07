@@ -491,3 +491,17 @@ test('the weather control does not deselect the flight', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Weather' }))
   expect(onSelect).not.toHaveBeenCalled()
 })
+
+test('the world layer is drawn larger and scaled down, so the view is unchanged', () => {
+  const { container } = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  const world = container.querySelector<HTMLElement>('.map-world')!
+  const zoom = Number(world.style.getPropertyValue('--real-zoom'))
+  const scale = Number(world.style.getPropertyValue('--zoom'))
+  // Larger than the box by the factor it is scaled down by: same size on screen.
+  const larger = parseFloat(world.style.width) / 100
+  expect(larger).toBeGreaterThan(1)
+  expect(scale * larger).toBeCloseTo(zoom)
+  expect(world.style.transform).toContain(`scale(${scale})`)
+})
