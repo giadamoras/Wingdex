@@ -1,6 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import type { PointerEvent, MouseEvent, RefObject } from 'react'
-import { panBy, viewBetween, zoomAt, type View } from './panzoom'
+import {
+  centreOf,
+  centredOn,
+  panBy,
+  viewBetween,
+  zoomAt,
+  type Shape,
+  type View,
+} from './panzoom'
 
 // Pixels a pointer must move before a press counts as a drag, not a click.
 const DRAG_THRESHOLD_PX = 4
@@ -12,9 +20,23 @@ const easeInOut = (t: number) =>
 
 // Pan/zoom gestures for the map box in `ref`: drag to pan, wheel to zoom at
 // the cursor, two-finger pinch, plus helpers for +/- and reset buttons and
-// animated camera moves.
-export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
-  const [view, setView] = useState(initial)
+// animated camera moves. `startView` is the view the map opens with and the
+// reset button returns to, for the box's `shape`. When the shape changes (it is
+// only known after the first layout, and changes when the phone is rotated), a
+// map nobody has moved yet reopens on the new start view, and one that has been
+// moved keeps the world point at its centre and the same span of longitudes in
+// view (the zoom changes by the shapes' ratio), so rotating the phone does not
+// lose your place.
+export function usePanZoom(
+  ref: RefObject<HTMLElement | null>,
+  shape: Shape,
+  startView: (shape: Shape) => View,
+) {
+  const [view, setView] = useState(() => startView(shape))
+  // Latest shape, for the event handlers and animations that outlive a render.
+  const shapeRef = useRef(shape)
+  // True once the user (or a replay) has moved the camera.
+  const moved = useRef(false)
   // Active pointers (mouse or fingers) and where each one last was.
   const pointers = useRef(new Map<number, { x: number; y: number }>())
   // True once the current gesture moved far enough to be a drag.
@@ -27,6 +49,19 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
   useEffect(() => {
     latest.current = view
   }, [view])
+  useEffect(() => {
+    const before = shapeRef.current
+    if (before === shape) return
+    shapeRef.current = shape
+    setView((v) => {
+      if (!moved.current) return startView(shape)
+      const { px, py } = centreOf(v, before)
+      const grow = Math.max(before.lx, before.ly) / Math.max(shape.lx, shape.ly)
+      return centredOn(px, py, v.zoom * grow, shape)
+    })
+    // startView is a module-level function; only a new shape matters.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shape])
   useEffect(() => () => cancelAnimationFrame(anim.current), [])
 
   // Any user gesture takes over from a running camera animation.
@@ -35,12 +70,13 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
   // Moves the camera to `target` over `ms` (instantly if 0).
   const animateTo = (target: View, ms: number) => {
     stopAnimation()
+    moved.current = true
     if (ms <= 0) return setView(target)
     const from = latest.current
     const start = Date.now()
     const step = () => {
       const t = Math.min(1, (Date.now() - start) / ms)
-      setView(viewBetween(from, target, easeInOut(t)))
+      setView(viewBetween(from, target, easeInOut(t), shapeRef.current))
       if (t < 1) anim.current = requestAnimationFrame(step)
     }
     anim.current = requestAnimationFrame(step)
@@ -66,7 +102,10 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
       const r = el.getBoundingClientRect()
       const fx = (e.clientX - r.left) / r.width
       const fy = (e.clientY - r.top) / r.height
-      setView((v) => zoomAt(v, Math.exp(-e.deltaY * 0.002), fx, fy))
+      moved.current = true
+      setView((v) =>
+        zoomAt(v, Math.exp(-e.deltaY * 0.002), fx, fy, shapeRef.current),
+      )
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
@@ -96,7 +135,8 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
       if (dragged.current) {
         const dx = (e.clientX - prev.x) / r.width
         const dy = (e.clientY - prev.y) / r.height
-        setView((v) => panBy(v, dx, dy))
+        moved.current = true
+        setView((v) => panBy(v, dx, dy, shapeRef.current))
       }
     } else if (pointers.current.size === 2) {
       // Pinch: zoom by how much the finger distance changed, at their midpoint.
@@ -106,7 +146,8 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
       const after = Math.hypot(e.clientX - o.x, e.clientY - o.y)
       if (before > 0) {
         const { fx, fy } = toBox((e.clientX + o.x) / 2, (e.clientY + o.y) / 2)
-        setView((v) => zoomAt(v, after / before, fx, fy))
+        moved.current = true
+        setView((v) => zoomAt(v, after / before, fx, fy, shapeRef.current))
       }
       dragged.current = true
     }
@@ -136,13 +177,18 @@ export function usePanZoom(ref: RefObject<HTMLElement | null>, initial: View) {
     },
     zoomIn: () => {
       stopAnimation()
-      setView((v) => zoomAt(v, BUTTON_ZOOM, 0.5, 0.5))
+      moved.current = true
+      setView((v) => zoomAt(v, BUTTON_ZOOM, 0.5, 0.5, shapeRef.current))
     },
     zoomOut: () => {
       stopAnimation()
-      setView((v) => zoomAt(v, 1 / BUTTON_ZOOM, 0.5, 0.5))
+      moved.current = true
+      setView((v) => zoomAt(v, 1 / BUTTON_ZOOM, 0.5, 0.5, shapeRef.current))
     },
-    reset: () => animateTo(initial, 0),
+    reset: () => {
+      animateTo(startView(shapeRef.current), 0)
+      moved.current = false
+    },
     animateTo,
   }
 }

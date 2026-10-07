@@ -93,3 +93,11 @@ test('always-shown ids are drawn even off screen and over the cap', () => {
   const ids = visibleFlights(flights, view, [hidden.id, null]).map((f) => f.id)
   expect(ids).toContain(hidden.id)
 })
+
+test('in a tall box only the part of the world that shows is drawn', () => {
+  const shape = { lx: 2, ly: 1 } // the world is two box widths wide
+  const view: View = { zoom: 1, x: 0, y: 0 } // the left half of the world
+  const flights = [plane('west', 40, -120), plane('east', 40, 120)]
+  const ids = visibleFlights(flights, view, [], shape).map((f) => f.id)
+  expect(ids).toEqual(['west'])
+})

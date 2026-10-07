@@ -2,14 +2,43 @@
 // (0..1), so the view survives the box being resized.
 //
 // The world layer is scaled by `zoom` from its top-left corner, then shifted
-// by (x, y). A point p of the world (0..1) appears on screen at x + p * zoom.
+// by (x, y). A point p of the world (0..1) appears on screen at
+// x + p * zoom * lx (and y + p * zoom * ly), where lx and ly come from the
+// box's Shape.
 export interface View {
   zoom: number
   x: number
   y: number
 }
 
-export const MIN_ZOOM = 1 // whole world
+// The world has a fixed shape: 360 x 140 degrees (see MAP_BOUNDS), so a degree
+// is as wide as it is tall. The map box can have another shape, and the world
+// then covers it like CSS `object-fit: cover`. Shape is how much bigger than
+// the box the world is at zoom 1, per axis: both 1 when the box is shaped like
+// the world (the whole world shows); lx > 1 in a taller box (a phone held
+// upright), where only part of the longitudes shows at once; ly > 1 in a wider
+// one.
+export interface Shape {
+  lx: number
+  ly: number
+}
+
+export const WORLD_ASPECT = 18 / 7 // width / height
+// A box this close to the world's shape counts as shaped like it, so the
+// border's few pixels do not make the world slightly bigger than the box.
+const SAME_SHAPE = 0.1
+
+export const WHOLE: Shape = { lx: 1, ly: 1 }
+
+export function shapeFor(width: number, height: number): Shape {
+  if (width <= 0 || height <= 0) return WHOLE
+  const ratio = width / height / WORLD_ASPECT // box shape vs world shape
+  if (Math.abs(ratio - 1) <= SAME_SHAPE) return WHOLE
+  const round = (n: number) => Math.round(n * 100) / 100
+  return { lx: round(Math.max(1, 1 / ratio)), ly: round(Math.max(1, ratio)) }
+}
+
+export const MIN_ZOOM = 1 // the world just covers the box
 export const MAX_ZOOM = 16
 // Touch screens stop sooner: a phone browser keeps the sharpness the map had when
 // it was drawn, so the closer you zoom the blurrier it gets (see WORLD_SCALE in
@@ -26,28 +55,49 @@ const clamp = (n: number, min: number, max: number) =>
   Math.min(max, Math.max(min, n))
 
 // Keeps the zoom in range and the world covering the whole box (no gaps).
-export function clampView({ zoom, x, y }: View): View {
+export function clampView({ zoom, x, y }: View, shape = WHOLE): View {
   const z = clamp(zoom, MIN_ZOOM, maxZoom())
-  return { zoom: z, x: clamp(x, 1 - z, 0), y: clamp(y, 1 - z, 0) }
+  return {
+    zoom: z,
+    x: clamp(x, 1 - z * shape.lx, 0),
+    y: clamp(y, 1 - z * shape.ly, 0),
+  }
 }
 
 // Zooms by `factor` while keeping the point under (fx, fy) in place.
-export function zoomAt(view: View, factor: number, fx: number, fy: number) {
+export function zoomAt(
+  view: View,
+  factor: number,
+  fx: number,
+  fy: number,
+  shape = WHOLE,
+) {
   const zoom = clamp(view.zoom * factor, MIN_ZOOM, maxZoom())
-  // World point currently under the cursor.
-  const px = (fx - view.x) / view.zoom
-  const py = (fy - view.y) / view.zoom
-  return clampView({ zoom, x: fx - px * zoom, y: fy - py * zoom })
+  // The point under the cursor stays there: its distance from the cursor
+  // scales with the zoom, whatever the shape.
+  const k = zoom / view.zoom
+  return clampView(
+    { zoom, x: fx - (fx - view.x) * k, y: fy - (fy - view.y) * k },
+    shape,
+  )
 }
 
 // Shifts the view by a drag of (dx, dy), in fractions of the box.
-export function panBy(view: View, dx: number, dy: number): View {
-  return clampView({ ...view, x: view.x + dx, y: view.y + dy })
+export function panBy(view: View, dx: number, dy: number, shape = WHOLE): View {
+  return clampView({ ...view, x: view.x + dx, y: view.y + dy }, shape)
 }
 
 // A view at `zoom` centred on world point (px, py), as close as the edges allow.
-export function centredOn(px: number, py: number, zoom: number): View {
-  return clampView({ zoom, x: 0.5 - px * zoom, y: 0.5 - py * zoom })
+export function centredOn(
+  px: number,
+  py: number,
+  zoom: number,
+  shape = WHOLE,
+): View {
+  return clampView(
+    { zoom, x: 0.5 - px * zoom * shape.lx, y: 0.5 - py * zoom * shape.ly },
+    shape,
+  )
 }
 
 // The closest view showing the whole world box (min..max), with `margin` of
@@ -58,35 +108,37 @@ export function fitBounds(
   maxX: number,
   maxY: number,
   margin = 0.12,
+  shape = WHOLE,
 ): View {
   const room = 1 - 2 * margin
   const zoom = clamp(
     Math.min(
-      room / Math.max(maxX - minX, 1e-6),
-      room / Math.max(maxY - minY, 1e-6),
+      room / (Math.max(maxX - minX, 1e-6) * shape.lx),
+      room / (Math.max(maxY - minY, 1e-6) * shape.ly),
     ),
     MIN_ZOOM,
     maxZoom(),
   )
-  return centredOn((minX + maxX) / 2, (minY + maxY) / 2, zoom)
+  return centredOn((minX + maxX) / 2, (minY + maxY) / 2, zoom, shape)
 }
 
 // World point at the centre of the box for a view. Exported so the map's
 // time-of-day palette can be based on what part of the world is in view.
-export const centreOf = (v: View) => ({
-  px: (0.5 - v.x) / v.zoom,
-  py: (0.5 - v.y) / v.zoom,
+export const centreOf = (v: View, shape = WHOLE) => ({
+  px: (0.5 - v.x) / (v.zoom * shape.lx),
+  py: (0.5 - v.y) / (v.zoom * shape.ly),
 })
 
 // The view `t` (0..1) of the way from `a` to `b`, for camera animations. Zoom
 // changes geometrically and the centre glides, so it feels like one move.
-export function viewBetween(a: View, b: View, t: number): View {
-  const ca = centreOf(a)
-  const cb = centreOf(b)
+export function viewBetween(a: View, b: View, t: number, shape = WHOLE): View {
+  const ca = centreOf(a, shape)
+  const cb = centreOf(b, shape)
   const zoom = a.zoom * (b.zoom / a.zoom) ** t
   return centredOn(
     ca.px + (cb.px - ca.px) * t,
     ca.py + (cb.py - ca.py) * t,
     zoom,
+    shape,
   )
 }

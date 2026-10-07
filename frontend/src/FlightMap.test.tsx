@@ -505,3 +505,54 @@ test('the world layer is drawn larger and scaled down, so the view is unchanged'
   expect(scale * larger).toBeCloseTo(zoom)
   expect(world.style.transform).toContain(`scale(${scale})`)
 })
+
+// A ResizeObserver that reports one fixed size as soon as it observes.
+function stubBoxSize(width: number, height: number) {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      cb: (e: unknown[]) => void
+      constructor(cb: (e: unknown[]) => void) {
+        this.cb = cb
+      }
+      observe() {
+        this.cb([{ contentRect: { width, height } }])
+      }
+      disconnect() {}
+    },
+  )
+}
+
+test('a tall box draws the world wider than the box, and a wide one does not', () => {
+  stubBoxSize(300, 225) // 4:3, like a phone held upright
+  const tall = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  const widthOf = (c: HTMLElement) =>
+    parseFloat(c.querySelector<HTMLElement>('.map-world')!.style.width)
+  const tallWidth = widthOf(tall.container)
+  cleanup()
+
+  stubBoxSize(700, 272) // shaped like the world
+  const wide = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  expect(widthOf(wide.container)).toBe(300) // WORLD_SCALE x 100%
+  expect(tallWidth).toBeGreaterThan(300 * 1.5)
+  vi.unstubAllGlobals()
+})
+
+test('in a tall box only the planes in the visible part of the world are drawn', () => {
+  stubBoxSize(300, 225)
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 10), flight('2', -30, 150)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  // The map opens on Europe: Europe is drawn, Australia is out of the box.
+  expect(screen.queryByTitle('CS1')).toBeTruthy()
+  expect(screen.queryByTitle('CS2')).toBeNull()
+  vi.unstubAllGlobals()
+})

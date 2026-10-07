@@ -1,5 +1,5 @@
 import { hashString } from './hash'
-import type { View } from './panzoom'
+import { WHOLE, type Shape, type View } from './panzoom'
 import { project } from './projection'
 import type { Flight } from './types'
 
@@ -20,13 +20,16 @@ export function visibleFlights(
   flights: Flight[],
   view: View,
   alwaysIds: Iterable<string | null>,
+  shape: Shape = WHOLE,
 ): Flight[] {
   const always = new Set(alwaysIds)
   // The view's edges in world fractions (0..1), widened by the margin.
-  const left = -view.x / view.zoom - MARGIN / view.zoom
-  const right = (1 - view.x) / view.zoom + MARGIN / view.zoom
-  const top = -view.y / view.zoom - MARGIN / view.zoom
-  const bottom = (1 - view.y) / view.zoom + MARGIN / view.zoom
+  const sx = view.zoom * shape.lx // the world's size in box widths and heights
+  const sy = view.zoom * shape.ly
+  const left = -view.x / sx - MARGIN / sx
+  const right = (1 - view.x) / sx + MARGIN / sx
+  const top = -view.y / sy - MARGIN / sy
+  const bottom = (1 - view.y) / sy + MARGIN / sy
 
   const inView = flights.filter((f) => {
     const { x, y } = project(f.latitude, f.longitude)

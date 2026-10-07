@@ -8,7 +8,9 @@ import {
   TOUCH_MAX_ZOOM,
   MIN_ZOOM,
   panBy,
+  shapeFor,
   viewBetween,
+  WHOLE,
   zoomAt,
 } from './panzoom'
 
@@ -97,4 +99,62 @@ test('a touch screen cannot zoom in as far', () => {
   } finally {
     vi.unstubAllGlobals()
   }
+})
+
+// A box about 4:3, like a phone held upright: the world is 1.93 box widths wide.
+const portrait = shapeFor(300, 225)
+
+test('a box shaped like the world, or of unknown size, shows the whole world', () => {
+  expect(shapeFor(700, 272)).toEqual(WHOLE)
+  expect(shapeFor(327, 122)).toEqual(WHOLE) // the border's pixels do not count
+  expect(shapeFor(0, 0)).toEqual(WHOLE)
+})
+
+test('a taller box shows only part of the width, a wider one part of the height', () => {
+  expect(portrait.lx).toBeCloseTo(1.93, 1)
+  expect(portrait.ly).toBe(1)
+  const wide = shapeFor(1000, 200)
+  expect(wide.lx).toBe(1)
+  expect(wide.ly).toBeGreaterThan(1)
+})
+
+test('in a tall box the world still covers it, and can be panned sideways at zoom 1', () => {
+  const left = clampView({ zoom: 1, x: 0.4, y: -3 }, portrait)
+  expect(left).toEqual({ zoom: 1, x: 0, y: 0 })
+  const right = clampView({ zoom: 1, x: -5, y: 0 }, portrait)
+  expect(right.x).toBeCloseTo(1 - portrait.lx)
+  expect(panBy({ zoom: 1, x: 0, y: 0 }, -0.3, 0.3, portrait).x).toBeCloseTo(
+    -0.3,
+  )
+  expect(panBy({ zoom: 1, x: 0, y: 0 }, -0.3, 0.3, portrait).y).toBe(0)
+})
+
+test('centredOn and centreOf agree in a tall box', () => {
+  const view = centredOn(0.6, 0.4, 3, portrait)
+  expect(centreOf(view, portrait).px).toBeCloseTo(0.6)
+  expect(centreOf(view, portrait).py).toBeCloseTo(0.4)
+  expect(view.x + 0.6 * view.zoom * portrait.lx).toBeCloseTo(0.5)
+})
+
+test('zooming in a tall box keeps the point under the cursor in place', () => {
+  const view = centredOn(0.6, 0.4, 3, portrait)
+  const p = { x: (0.3 - view.x) / (view.zoom * portrait.lx) } // world point at fx 0.3
+  const zoomed = zoomAt(view, 1.5, 0.3, 0.4, portrait)
+  expect(zoomed.x + p.x * zoomed.zoom * portrait.lx).toBeCloseTo(0.3)
+})
+
+test('fitBounds in a tall box fits the width it really has', () => {
+  const view = fitBounds(0.4, 0.4, 0.5, 0.45, 0.1, portrait)
+  const left = view.x + 0.4 * view.zoom * portrait.lx
+  const right = view.x + 0.5 * view.zoom * portrait.lx
+  expect(left).toBeGreaterThanOrEqual(0.1 - 1e-9)
+  expect(right).toBeLessThanOrEqual(0.9 + 1e-9)
+})
+
+test('viewBetween in a tall box still ends at the target', () => {
+  const a = centredOn(0.5, 0.5, 2, portrait)
+  const b = centredOn(0.7, 0.4, 6, portrait)
+  const end = viewBetween(a, b, 1, portrait)
+  expect(end.zoom).toBeCloseTo(6)
+  expect(centreOf(end, portrait).px).toBeCloseTo(centreOf(b, portrait).px)
 })

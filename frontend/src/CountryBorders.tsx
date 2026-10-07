@@ -1,9 +1,7 @@
 import { useMemo } from 'react'
-import type { View } from './panzoom'
+import type { Shape, View } from './panzoom'
 import { COUNTRIES } from './countryData'
 import { project } from './projection'
-
-const MAP_ASPECT = 7 / 18 // height / width, matches index.css's .map aspect-ratio
 
 // Font size in real screen pixels (constant, like the plane icons - see
 // .country-label's scale(1/--zoom) - not scaled with the map like the land).
@@ -49,18 +47,21 @@ const labelPoints = COUNTRIES.map((c) => {
 // the map - which matters for decluttering: since a label's pixel size stays
 // fixed while zooming in grows the pixel gap between two countries' anchors,
 // crowded labels that collide at a low zoom can find room once you zoom in.
-// `mapWidthPx` (the map box's actual rendered width) is what turns the
+// `mapWidthPx` and `mapHeightPx` (the map box's actual rendered size) turn the
 // fractional view into real pixel positions for that collision check.
 export function CountryBorders({
   view,
+  shape,
   mapWidthPx,
+  mapHeightPx,
 }: {
   view: View
+  shape: Shape
   mapWidthPx: number
+  mapHeightPx: number
 }) {
   const visible = useMemo(() => {
-    if (mapWidthPx === 0) return []
-    const heightPx = mapWidthPx * MAP_ASPECT
+    if (mapWidthPx === 0 || mapHeightPx === 0) return []
     const placed: {
       left: number
       right: number
@@ -70,9 +71,10 @@ export function CountryBorders({
     const shown: typeof labelPoints = []
     for (const p of labelPoints) {
       // Mirrors FlightMap.tsx's worldStyle transform: translate(view.x,
-      // view.y) then scale(view.zoom), from the box's top-left corner.
-      const sx = (view.x + (p.x / 100) * view.zoom) * mapWidthPx
-      const sy = (view.y + (p.y / 100) * view.zoom) * heightPx
+      // view.y) then scale the world to zoom * lx by zoom * ly box sizes, from
+      // the box's top-left corner.
+      const sx = (view.x + (p.x / 100) * view.zoom * shape.lx) * mapWidthPx
+      const sy = (view.y + (p.y / 100) * view.zoom * shape.ly) * mapHeightPx
       const halfW = (p.name.length * p.fontPx * CHAR_WIDTH_FACTOR) / 2 + 3
       const halfH = p.fontPx / 2 + 2
       const box = {
@@ -94,7 +96,7 @@ export function CountryBorders({
       }
     }
     return shown
-  }, [view, mapWidthPx])
+  }, [view, shape, mapWidthPx, mapHeightPx])
 
   return (
     <>

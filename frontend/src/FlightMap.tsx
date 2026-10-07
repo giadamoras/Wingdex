@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
 import { timeOfDay } from './attributes'
 import { CountryBorders } from './CountryBorders'
 import { curveThrough } from './geo'
-import { centredOn, centreOf, fitBounds } from './panzoom'
+import { centredOn, centreOf, fitBounds, shapeFor, type Shape } from './panzoom'
 import { PlaneIcon } from './PlaneIcon'
 import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
 import { FIT_MS, prefersReducedMotion, type ReplayState } from './replay'
@@ -23,12 +23,21 @@ const NO_JUMPS = new Set<string>()
 const NO_FEATURED = new Set<string>()
 const NO_WEATHER: WeatherArea[] = []
 
-// Opening view: zoomed in on Europe, roughly the old Europe-only map.
+// Opening view: zoomed in on Europe, roughly the old Europe-only map. In a box
+// that shows only part of the world (a phone held upright) the zoom is lower by
+// the same factor, so about as much of Europe is in view as on a wide map.
 const europe = project(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
-const START_VIEW = centredOn(europe.x / 100, europe.y / 100, 5)
+const START_ZOOM = 5
+const startView = (shape: Shape) =>
+  centredOn(
+    europe.x / 100,
+    europe.y / 100,
+    Math.max(1, START_ZOOM / Math.max(shape.lx, shape.ly)),
+    shape,
+  )
 
 // The view that shows a flight's whole route (the curve through the plane).
-function routeView(flight: Flight) {
+function routeView(flight: Flight, shape: Shape) {
   const points = curveThrough(flight.origin!, flight.destination!, flight).map(
     (p) => project(p.latitude, p.longitude),
   )
@@ -39,6 +48,8 @@ function routeView(flight: Flight) {
     Math.min(...ys),
     Math.max(...xs),
     Math.max(...ys),
+    undefined,
+    shape,
   )
 }
 
@@ -73,62 +84,78 @@ export function FlightMap({
   const [weatherId, setWeatherId] = useState<string | null>(null)
   // The map controls' weather switch, for anyone who finds the map too busy.
   const [showWeather, setShowWeather] = useState(true)
-  const { view, handlers, zoomIn, zoomOut, reset, animateTo } = usePanZoom(
-    mapRef,
-    START_VIEW,
-  )
-  const selected = flights.find((f) => f.id === selectedId) ?? null
-  // Only the planes in view, thinned when crowded; the selected, featured and
-  // target planes are always drawn.
-  const drawn = visibleFlights(flights, view, [
-    selectedId,
-    targetId,
-    ...featuredIds,
-  ])
-
-  // The map box's rendered width in real pixels, so CountryBorders can turn
-  // the fractional pan/zoom view into real pixel gaps for its label
-  // collision check. 0 until the first layout, which CountryBorders treats
-  // as "nothing fits yet" rather than guessing.
-  const [mapWidthPx, setMapWidthPx] = useState(0)
+  // The map box's rendered size in real pixels. CountryBorders turns the
+  // fractional pan/zoom view into real pixel gaps for its label collision check
+  // with it, and its shape decides how the world covers the box (see Shape).
+  // 0 until the first layout, which CountryBorders treats as "nothing fits yet"
+  // rather than guessing, and which counts as a box shaped like the world.
+  const [size, setSize] = useState({ width: 0, height: 0 })
   useEffect(() => {
     const el = mapRef.current
-    // jsdom (tests) has no ResizeObserver; mapWidthPx just stays 0, and
-    // CountryBorders treats that as "nothing fits yet" - no crash either way.
+    // jsdom (tests) has no ResizeObserver; the size just stays 0, and both
+    // CountryBorders and the shape treat that as "unknown" - no crash either way.
     if (!el || typeof ResizeObserver === 'undefined') return
     const observer = new ResizeObserver(([entry]) => {
-      if (entry) setMapWidthPx(entry.contentRect.width)
+      if (entry)
+        setSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        })
     })
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
+  const { lx, ly } = shapeFor(size.width, size.height)
+  // The same object while the shape is the same, so nothing reacts to a resize
+  // that does not change it.
+  const shape = useMemo(() => ({ lx, ly }), [lx, ly])
+
+  const { view, handlers, zoomIn, zoomOut, reset, animateTo } = usePanZoom(
+    mapRef,
+    shape,
+    startView,
+  )
+  const selected = flights.find((f) => f.id === selectedId) ?? null
+  // Only the planes in view, thinned when crowded; the selected, featured and
+  // target planes are always drawn.
+  const drawn = visibleFlights(
+    flights,
+    view,
+    [selectedId, targetId, ...featuredIds],
+    shape,
+  )
 
   // When a replay starts, move the camera so the whole route fits.
   const replayStart = replay?.startedAt
   useEffect(() => {
     if (replay)
-      animateTo(routeView(replay.flight), prefersReducedMotion() ? 0 : FIT_MS)
+      animateTo(
+        routeView(replay.flight, shape),
+        prefersReducedMotion() ? 0 : FIT_MS,
+      )
     // Only on a new replay, not on every animation frame.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replayStart])
 
-  // The layer is WORLD_SCALE times the box, so translate (in % of the layer) and
-  // scale are divided by it: the view is the same, just drawn at more detail and
-  // resize-proof. --zoom is the scale actually applied, which planes, labels and
-  // strokes undo to keep a constant size; --real-zoom is the view's zoom.
+  // The layer is WORLD_SCALE times the size the world has at zoom 1 (the box
+  // times the shape), so translate (in % of the layer) and scale are divided by
+  // it: the view is the same, just drawn at more detail and resize-proof. --zoom
+  // is the scale actually applied, which planes, labels and strokes undo to keep
+  // a constant size; --real-zoom is how many world widths the layer spans.
+  const worldZoom = view.zoom * Math.max(shape.lx, shape.ly)
   const worldStyle = {
-    width: `${WORLD_SCALE * 100}%`,
-    height: `${WORLD_SCALE * 100}%`,
-    transform: `translate(${(view.x * 100) / WORLD_SCALE}%, ${(view.y * 100) / WORLD_SCALE}%) scale(${view.zoom / WORLD_SCALE})`,
+    width: `${WORLD_SCALE * shape.lx * 100}%`,
+    height: `${WORLD_SCALE * shape.ly * 100}%`,
+    transform: `translate(${(view.x * 100) / (WORLD_SCALE * shape.lx)}%, ${(view.y * 100) / (WORLD_SCALE * shape.ly)}%) scale(${view.zoom / WORLD_SCALE})`,
     '--zoom': view.zoom / WORLD_SCALE,
-    '--real-zoom': view.zoom,
+    '--real-zoom': worldZoom,
   } as CSSProperties
 
   // The map's sea/land palette follows the solar time at the centre of the
   // current view, so panning to another part of the world can shift it (see
   // index.css's [data-map-time] rules). Recomputed on every render, which
   // already happens on pan/zoom and every 5 s poll, so no timer is needed.
-  const { px } = centreOf(view)
+  const { px } = centreOf(view, shape)
   const mapTime = timeOfDay(unprojectLongitude(px))
 
   // Control buttons must not reach the map's deselect.
@@ -155,11 +182,16 @@ export function FlightMap({
     >
       <div className="map-world" style={worldStyle}>
         <WorldLand />
-        <CountryBorders view={view} mapWidthPx={mapWidthPx} />
+        <CountryBorders
+          view={view}
+          shape={shape}
+          mapWidthPx={size.width}
+          mapHeightPx={size.height}
+        />
         {showWeather && (
           <WeatherLayer
             areas={weather}
-            zoom={view.zoom}
+            zoom={worldZoom}
             selectedId={weatherId}
             onSelect={(id) => {
               setWeatherId(id)

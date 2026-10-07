@@ -239,6 +239,15 @@ h1 {
   }
 }
 
+/* A phone held upright: the wide strip would only be about 130 px tall, so the
+   box is taller. The world covers it (see Shape in panzoom.ts), so only part of
+   its width shows at once, as in any phone map app. */
+@media (orientation: portrait) and (max-width: 600px) {
+  .map {
+    aspect-ratio: 4 / 3;
+  }
+}
+
 /* The map's sea/land palette, keyed by the solar time at the centre of the
    current view (FlightMap.tsx sets this from panzoom's centreOf). Panning to
    another part of the world can shift it. Only the map surface changes here -
