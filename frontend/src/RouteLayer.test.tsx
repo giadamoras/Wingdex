@@ -102,3 +102,68 @@ test('the replay ghost and trail follow the curve through the plane', () => {
   expect(container.querySelector('.route-flown')).toBeNull()
   expect(container.querySelectorAll('.route-casing')).toHaveLength(1)
 })
+
+// Auckland to Bogota crosses the date line.
+const akl: Airport = {
+  icao: 'NZAA',
+  iata: 'AKL',
+  name: 'Auckland',
+  latitude: -37.008,
+  longitude: 174.792,
+}
+const bog: Airport = {
+  icao: 'SKBO',
+  iata: 'BOG',
+  name: 'Bogota',
+  latitude: 4.702,
+  longitude: -74.147,
+}
+const overPeru = interpolate(akl, bog, 0.9)
+const acrossTheDateLine: Flight = {
+  ...flight,
+  id: 'ANZ1',
+  latitude: overPeru.latitude,
+  longitude: overPeru.longitude,
+  origin: akl,
+  destination: bog,
+}
+
+// The biggest sideways step (in map percent) between neighbouring points.
+const widestStep = (el: Element) => {
+  const xs = el
+    .getAttribute('points')!
+    .split(' ')
+    .map((p) => Number(p.split(',')[0]))
+  return Math.max(...xs.slice(1).map((x, i) => Math.abs(x - xs[i])))
+}
+
+test('a route across the date line is drawn in pieces, not as a line across the world', () => {
+  const { container } = render(
+    <RouteLayer flight={acrossTheDateLine} replay={null} />,
+  )
+  const flown = [...container.querySelectorAll('.route-flown')]
+  expect(flown.length).toBeGreaterThan(1) // split at the date line
+  for (const line of container.querySelectorAll('.route-flown, .route-ahead')) {
+    expect(widestStep(line)).toBeLessThan(10) // a whole-world line steps ~100
+  }
+  // The pieces still start at Auckland and end at the plane.
+  expect(endsOf(flown[0]).first).toBe(where(akl.latitude, akl.longitude))
+  expect(endsOf(flown[flown.length - 1]).last).toBe(
+    where(acrossTheDateLine.latitude, acrossTheDateLine.longitude),
+  )
+})
+
+test('the replay trail is split at the date line too', () => {
+  const replay: ReplayState = {
+    flight: acrossTheDateLine,
+    startedAt: 0,
+    phase: 'flying',
+    progress: 0.8, // past the date line
+  }
+  const { container } = render(
+    <RouteLayer flight={acrossTheDateLine} replay={replay} />,
+  )
+  const trail = [...container.querySelectorAll('.route-trail')]
+  expect(trail.length).toBeGreaterThan(1)
+  for (const line of trail) expect(widestStep(line)).toBeLessThan(10)
+})

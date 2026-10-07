@@ -102,6 +102,38 @@ export function curveThrough(
   )
 }
 
+// Splits a path where it crosses the date line (longitude 180 / -180). The map
+// ends there, so drawing the jump from one side to the other would put a line
+// straight across the whole world. Each part ends exactly on its edge, and the
+// next one starts on the other edge at the same latitude. A path that does not
+// cross comes back as one part. Longitudes are wrapped into -180..180 first (a
+// bent curve can run a little past it, which is the other side of the line).
+export function splitAtDateLine(points: Point[]): Point[][] {
+  // Only a longitude outside -180..180 is changed, so the others stay exactly as given.
+  const wrap = (lon: number) =>
+    lon >= -180 && lon <= 180 ? lon : ((((lon + 180) % 360) + 360) % 360) - 180
+  const parts: Point[][] = []
+  let current: Point[] = []
+  let prev: Point | null = null
+  for (const raw of points) {
+    const p = { latitude: raw.latitude, longitude: wrap(raw.longitude) }
+    if (prev && Math.abs(p.longitude - prev.longitude) > 180) {
+      // Eastbound crosses from +180 to -180, westbound the other way.
+      const edge = prev.longitude > 0 ? 180 : -180
+      const beyond = p.longitude + (edge > 0 ? 360 : -360) // p, past the edge
+      const f = (edge - prev.longitude) / (beyond - prev.longitude)
+      const latitude = prev.latitude + f * (p.latitude - prev.latitude)
+      current.push({ latitude, longitude: edge })
+      parts.push(current)
+      current = [{ latitude, longitude: -edge }]
+    }
+    current.push(p)
+    prev = p
+  }
+  parts.push(current)
+  return parts
+}
+
 // Points along the great circle from fraction `from` to `to` (0..1), so the
 // curve looks smooth on the flat map. Always includes both ends.
 export function routePoints(

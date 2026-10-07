@@ -1,18 +1,29 @@
-import { bearing, curvePoint, curveThrough, progressAlong } from './geo'
+import { Fragment } from 'react'
+import {
+  bearing,
+  curvePoint,
+  curveThrough,
+  progressAlong,
+  splitAtDateLine,
+} from './geo'
 import type { Point } from './geo'
 import { PlaneIcon } from './PlaneIcon'
 import { project } from './projection'
 import type { ReplayState } from './replay'
 import type { Airport, Flight } from './types'
 
-// SVG "x,y x,y ..." for points, in the same 0-100 box as the land.
+// SVG "x,y x,y ..." for points, in the same 0-100 box as the land: one string
+// for each part of the path, since a path that crosses the date line has to be
+// drawn as separate lines (see splitAtDateLine).
 const toSvg = (points: Point[]) =>
-  points
-    .map((p) => {
-      const { x, y } = project(p.latitude, p.longitude)
-      return `${x.toFixed(3)},${y.toFixed(3)}`
-    })
-    .join(' ')
+  splitAtDateLine(points).map((part) =>
+    part
+      .map((p) => {
+        const { x, y } = project(p.latitude, p.longitude)
+        return `${x.toFixed(3)},${y.toFixed(3)}`
+      })
+      .join(' '),
+  )
 
 // Percent position for an HTML element on the world layer.
 const placeAt = (p: Point) => {
@@ -43,12 +54,16 @@ function RouteLine({
   points,
 }: {
   className: string
-  points: string
+  points: string[]
 }) {
   return (
     <>
-      <polyline className="route-casing" points={points} />
-      <polyline className={className} points={points} />
+      {points.map((part, i) => (
+        <Fragment key={i}>
+          <polyline className="route-casing" points={part} />
+          <polyline className={className} points={part} />
+        </Fragment>
+      ))}
     </>
   )
 }
@@ -106,12 +121,14 @@ export function RouteLayer({
             <RouteLine className="route-ahead" points={toSvg(curve(done, 1))} />
           </>
         )}
-        {replay && (
-          <polyline
-            className={landing ? 'route-trail fading' : 'route-trail'}
-            points={toSvg(curve(0, replay.progress))}
-          />
-        )}
+        {replay &&
+          toSvg(curve(0, replay.progress)).map((part, i) => (
+            <polyline
+              key={i}
+              className={landing ? 'route-trail fading' : 'route-trail'}
+              points={part}
+            />
+          ))}
       </svg>
       <Endpoint airport={origin} />
       <Endpoint airport={destination} />
