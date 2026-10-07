@@ -1,4 +1,5 @@
 import type { Flight, FlightRoute, WeatherArea } from './types'
+import { isFlight, isFlightRoute, isWeatherArea, keepValid } from './validate'
 
 // Backend base URL; override with VITE_API_URL in a .env file.
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
@@ -32,7 +33,11 @@ export function fetchFlights(signal?: AbortSignal): Promise<Flight[]> {
   return withTimeout(signal, async (s) => {
     const res = await fetch(`${API_URL}/flights`, { signal: s })
     if (!res.ok) throw new Error(`GET /flights failed: ${res.status}`)
-    return res.json()
+    const data: unknown = await res.json()
+    // Not a list: the poll fails and the last good flights stay. A bad row is
+    // dropped, so one bad plane cannot take the whole feed down.
+    if (!Array.isArray(data)) throw new Error('GET /flights: expected a list')
+    return keepValid(data, isFlight, 'flights')
   })
 }
 
@@ -47,7 +52,9 @@ export function fetchRoute(flightId: string): Promise<FlightRoute | null> {
     if (res.status === 404) return null
     if (!res.ok)
       throw new Error(`GET /flights/${flightId}/route failed: ${res.status}`)
-    return res.json()
+    const data: unknown = await res.json()
+    if (!isFlightRoute(data)) throw new Error('GET route: expected an object')
+    return data
   })
 }
 
@@ -55,6 +62,8 @@ export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
   return withTimeout(signal, async (s) => {
     const res = await fetch(`${API_URL}/weather`, { signal: s })
     if (!res.ok) throw new Error(`GET /weather failed: ${res.status}`)
-    return res.json()
+    const data: unknown = await res.json()
+    if (!Array.isArray(data)) throw new Error('GET /weather: expected a list')
+    return keepValid(data, isWeatherArea, 'weather areas')
   })
 }

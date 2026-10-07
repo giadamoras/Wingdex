@@ -68,13 +68,16 @@ export interface LatLon {
   longitude: number // degrees
 }
 
-export type Hazard =
-  | 'thunderstorm'
-  | 'turbulence'
-  | 'mountain_wave'
-  | 'icing'
-  | 'volcanic_ash'
-  | 'tropical_cyclone'
+// A list as well as a type, so incoming weather can be checked at runtime.
+export const HAZARDS = [
+  'thunderstorm',
+  'turbulence',
+  'mountain_wave',
+  'icing',
+  'volcanic_ash',
+  'tropical_cyclone',
+] as const
+export type Hazard = (typeof HAZARDS)[number]
 
 // Mirrors the backend WeatherArea model (GET /weather): a hazard area with an
 // altitude band and a closed polygon.

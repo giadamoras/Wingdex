@@ -1,3 +1,5 @@
+import { isString, keepValid } from './validate'
+
 // Which badges have already shown their unlock popup. Badge *unlocked*
 // state itself is never stored (see badges.ts) — only this "seen" set is,
 // so a badge that's already unlocked on first load doesn't pop up again.
@@ -13,13 +15,13 @@ export function saveSeenBadges(ids: string[]) {
 }
 
 // Loads the saved seen set. Returns [] if nothing is saved, the JSON is
-// corrupt, or it isn't a list.
+// corrupt, or it isn't a list; anything in the list that isn't an id is dropped.
 export function loadSeenBadges(): string[] {
   try {
     const json = localStorage.getItem(BADGES_SEEN_KEY)
     if (json === null) return []
-    const ids = JSON.parse(json)
-    return Array.isArray(ids) ? (ids as string[]) : []
+    const ids: unknown = JSON.parse(json)
+    return Array.isArray(ids) ? keepValid(ids, isString, 'seen badge ids') : []
   } catch {
     return []
   }

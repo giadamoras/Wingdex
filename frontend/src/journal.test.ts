@@ -1,4 +1,4 @@
-import { afterEach, expect, test } from 'vitest'
+import { afterEach, expect, test, vi } from 'vitest'
 import { loadJournal, saveJournal, STORAGE_KEY } from './journal'
 import type { JournalEntry } from './types'
 
@@ -41,4 +41,30 @@ test('returns an empty list for corrupt JSON', () => {
 test('returns an empty list when the saved value is not a list', () => {
   localStorage.setItem(STORAGE_KEY, '{"a":1}')
   expect(loadJournal()).toEqual([])
+})
+
+test('keeps an old entry that lacks later details', () => {
+  // As saved before speed, route and quests existed: only the basics.
+  const old = {
+    flight: { id: 'f9', callsign: 'OLD9', latitude: 48, longitude: 2 },
+    fact: 'An old fact.',
+    caughtAt: '2026-09-20T09:00:00.000Z',
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify([old, entry]))
+  expect(loadJournal()).toEqual([old, entry])
+})
+
+test('drops entries that are missing what every entry has, and says how many', () => {
+  const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+  const noFlightId = { ...entry, flight: { ...entry.flight, id: undefined } }
+  const badTime = { ...entry, caughtAt: 'not a date' }
+  localStorage.setItem(
+    STORAGE_KEY,
+    JSON.stringify([entry, null, {}, noFlightId, badTime, 'text']),
+  )
+  expect(loadJournal()).toEqual([entry])
+  expect(warn).toHaveBeenCalledWith(
+    'Dropped 5 of 6 Journal entries with an unexpected shape',
+  )
+  warn.mockRestore()
 })
