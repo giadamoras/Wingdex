@@ -9,7 +9,7 @@ import { JournalProvider } from './JournalContext'
 import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
 import type { WeatherArea } from './types'
-import { POLL_INTERVAL_MS } from './useFlights'
+import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './useFlights'
 import { WEATHER_POLL_MS } from './useWeather'
 
 // Only the weather request is replaced. The tests below stub the global fetch
@@ -387,6 +387,58 @@ test('keeps the last flights when a later poll fails', async () => {
   expect(screen.getByText('Connection lost, retrying...')).toBeTruthy()
 })
 
+test('after three failed polls in a row it asks for a manual retry', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementationOnce(ok)
+    .mockRejectedValue(new Error('network'))
+  vi.stubGlobal('fetch', fetchMock)
+  renderApp()
+  // First poll works; the next three attempts (at 5, 15 and 35 s) fail.
+  await act(() => vi.advanceTimersByTimeAsync(35_000))
+  expect(screen.getByTitle('TST1')).toBeTruthy() // the last planes stay
+  expect(screen.getByText(/reach the flight feed/)).toBeTruthy()
+  expect(screen.queryByText(/Connection lost/)).toBeNull()
+
+  fetchMock.mockImplementation(ok)
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+  // The tap shows at once that a request is out, and the button goes away.
+  expect(screen.getByText('Trying again...')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/reach the flight feed/)).toBeNull()
+  expect(screen.getByTitle('TST1')).toBeTruthy()
+})
+
+test('the first load can be retried by hand', async () => {
+  const fetchMock = vi.fn().mockRejectedValueOnce(new Error('network'))
+  fetchMock.mockImplementation(ok)
+  vi.stubGlobal('fetch', fetchMock)
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText('Could not load flights.')).toBeTruthy()
+
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+  // The tap shows at once that a request is out, and the button goes away.
+  expect(screen.getByText('Loading flights...')).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByTitle('TST1')).toBeTruthy()
+})
+
+test('a retry that fails at once still shows that it tried', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+  await act(() => vi.advanceTimersByTimeAsync(0)) // it has failed again by now
+  expect(screen.getByText('Loading flights...')).toBeTruthy()
+
+  await act(() => vi.advanceTimersByTimeAsync(RETRY_FEEDBACK_MS))
+  expect(screen.getByText('Could not load flights.')).toBeTruthy()
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+})
+
 const longHaul = {
   ...flights[0],
   id: 'f3',
@@ -511,6 +563,51 @@ test('the quest is picked once per day and kept after a reload', async () => {
   const again = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(questTitle(again.container)).toBe(title)
+})
+
+test('a quest picked earlier today shows even when the backend is down', async () => {
+  pinQuest('long-haul')
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  const pinned = QUEST_TEMPLATES.find((q) => q.id === 'long-haul')!
+  expect(questTitle(container)).toBe(pinned.title)
+})
+
+test('the quest stays when the signal is lost after the first load', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockImplementationOnce(withLongHaul)
+      .mockRejectedValue(new Error('network')),
+  )
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  const title = questTitle(container)
+  expect(QUEST_TEMPLATES.map((q) => q.title)).toContain(title)
+
+  // Long enough for three polls in a row to fail: the feed is stalled.
+  await act(() => vi.advanceTimersByTimeAsync(35_000))
+  expect(screen.getByText(/reach the flight feed/)).toBeTruthy()
+  expect(questTitle(container)).toBe(title)
+})
+
+test('with no quest yet and the first load failing, it says the quest will appear', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network')))
+  const { container } = renderApp()
+  expect(questTitle(container)).toBe("Finding today's quest...")
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(questTitle(container)).toBe(
+    "Today's quest will appear once flights load.",
+  )
+
+  // A retry goes back to "finding", and a working feed gives the quest.
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+  expect(questTitle(container)).toBe("Finding today's quest...")
+  await act(() => vi.advanceTimersByTimeAsync(RETRY_FEEDBACK_MS))
+  expect(QUEST_TEMPLATES.map((q) => q.title)).toContain(questTitle(container))
 })
 
 test("yesterday's quest is replaced by a new pick", async () => {

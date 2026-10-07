@@ -92,6 +92,25 @@ h1 {
   box-shadow: 1px 1px 0 var(--ink);
 }
 
+/* "Try again" next to the feed-down messages: a smaller paper button. */
+.retry-btn {
+  margin-left: 10px;
+  padding: 4px 14px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.retry-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
 /* Quest strip: a slim ticket above the map, same paper/border/shadow as the card. */
 .quest {
   margin-bottom: 16px;

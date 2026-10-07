@@ -24,8 +24,17 @@ import { useWeather } from './useWeather'
 // see a new array on every render.
 const NO_WEATHER: WeatherArea[] = []
 
+// Button next to the "feed is down" messages: asks the server again at once.
+function TryAgain({ onClick }: { onClick: () => void }) {
+  return (
+    <button className="retry-btn" onClick={onClick}>
+      Try again
+    </button>
+  )
+}
+
 function App() {
-  const { flights, jumped, error } = useFlights()
+  const { flights, jumped, error, stalled, retrying, retry } = useFlights()
   // Null until the first response; quests and featured flights wait for it.
   const weather = useWeather()
   const weatherAreas = weather ?? NO_WEATHER
@@ -136,12 +145,33 @@ function App() {
             quest={quest}
             done={questDone}
             searching={flights === null || weather === null}
+            feedDown={flights === null && error && !retrying}
           />
           {flights === null ? (
-            <p>{error ? 'Could not load flights.' : 'Loading flights...'}</p>
+            // While a retry is out the message goes back to "Loading" and the
+            // button is hidden, so the tap visibly did something.
+            <p>
+              {error && !retrying
+                ? 'Could not load flights.'
+                : 'Loading flights...'}
+              {error && !retrying && <TryAgain onClick={retry} />}
+            </p>
           ) : (
             <>
-              {error && <p>Connection lost, retrying...</p>}
+              {error && !stalled && <p>Connection lost, retrying...</p>}
+              {stalled && (
+                <p>
+                  {retrying ? (
+                    'Trying again...'
+                  ) : (
+                    <>
+                      Can&apos;t reach the flight feed. The planes may be out of
+                      date.
+                      <TryAgain onClick={retry} />
+                    </>
+                  )}
+                </p>
+              )}
               <FlightMap
                 flights={mapFlights}
                 selectedId={selected?.id ?? null}
