@@ -1,5 +1,11 @@
 import { expect, test } from 'vitest'
-import { isQuestDone, pickQuest, QUEST_TEMPLATES, type Quest } from './quest'
+import {
+  isQuestDone,
+  pickQuest,
+  QUEST_TEMPLATES,
+  questIdForCatch,
+  type Quest,
+} from './quest'
 import type { Hazard, WeatherArea } from './types'
 
 const flight = {
@@ -235,4 +241,13 @@ test('isQuestDone uses the saved quest id or a matching catch', () => {
   expect(isQuestDone(q, [entry()], [])).toBe(false)
   expect(isQuestDone(q, [entry('weather-icing')], [])).toBe(true)
   expect(isQuestDone(q, [entry()], [hazardArea('icing')])).toBe(true)
+})
+
+test('questIdForCatch gives the id only when the catch finishes the quest', () => {
+  const at = (q: Quest | null, done: boolean) =>
+    questIdForCatch(q, done, flight, NOW, [])
+  expect(at(always('q1'), false)).toBe('q1')
+  expect(at(never('q1'), false)).toBeUndefined() // the flight does not match
+  expect(at(always('q1'), true)).toBeUndefined() // already done today
+  expect(at(null, false)).toBeUndefined() // no quest yet
 })

@@ -3,12 +3,12 @@ import { useState } from 'react'
 import { BadgePopup } from './BadgePopup'
 import { Collection } from './Collection'
 import { creditLine } from './credits'
-import { dayKey, isToday } from './dates'
-import { pickFeatured } from './featured'
+import { isToday } from './dates'
 import { FlightCard } from './FlightCard'
 import { FlightMap } from './FlightMap'
 import { Onboarding } from './Onboarding'
-import { isQuestDone } from './quest'
+import { flightsForMap } from './mapFlights'
+import { isQuestDone, questIdForCatch } from './quest'
 import { QuestBanner } from './QuestBanner'
 import { prefersReducedMotion, useReplay } from './replay'
 import { mergeRoute } from './route'
@@ -16,6 +16,7 @@ import type { Flight, WeatherArea } from './types'
 import { useBadgeUnlocks } from './useBadgeUnlocks'
 import { useDailyQuest } from './useDailyQuest'
 import { useDataSources } from './useDataSources'
+import { useFeatured } from './useFeatured'
 import { useFlightRoute } from './useFlightRoute'
 import { useFlights } from './useFlights'
 import { useJournalContext } from './useJournalContext'
@@ -84,58 +85,33 @@ function App() {
     start(flight)
   }
 
-  // Catch button: records the flight in the Journal, then closes the card.
-  // The quest completes by itself once a matching catch is in today's entries.
-  // A catch that finishes the quest also scrolls to the top, where the quest
-  // strip and its "Done!" stamp are, so it's noticed while reading the card.
-  const catchFlight = () => {
-    if (!current) return
-    const questId =
-      quest !== null &&
-      !questDone &&
-      quest.matches(current, new Date(), weatherAreas)
-        ? quest.id
-        : undefined
-    addCatch(current, questId, weatherAreas)
-    if (questId !== undefined) scrollToTop()
-    stop()
-    setSelected(null)
-  }
-
   const lost = selected !== null && !live
   // Derived from the Journal on every render, never stored separately.
   const todaysCatches = journal.filter((e) => isToday(e.caughtAt))
   const questDone =
     quest !== null && isQuestDone(quest, todaysCatches, weatherAreas)
   const caughtToday = todaysCatches.some((e) => e.flight.id === selected?.id)
+  const featuredIds = useFeatured(flights, weather, quest, todaysCatches)
+  const mapFlights = flightsForMap(flights, current, lost)
 
-  // Featured flights: picked once per session, when the feed, weather and
-  // quest are ready (a weather quest needs the weather to find its flight).
-  // The ring goes away once the flight is caught today.
-  const [featured, setFeatured] = useState<string[] | null>(null)
-  if (featured === null && flights && weather && quest)
-    setFeatured(
-      pickFeatured(
-        flights,
-        quest,
-        new Set(todaysCatches.map((e) => e.flight.id)),
-        dayKey(),
-        new Date(),
-        weather,
-      ),
+  // Catch button: records the flight in the Journal, then closes the card.
+  // The quest completes by itself once a matching catch is in today's entries.
+  // A catch that finishes the quest also scrolls to the top, where the quest
+  // strip and its "Done!" stamp are, so it's noticed while reading the card.
+  const catchFlight = () => {
+    if (!current) return
+    const questId = questIdForCatch(
+      quest,
+      questDone,
+      current,
+      new Date(),
+      weatherAreas,
     )
-  const featuredIds = new Set(
-    (featured ?? []).filter(
-      (id) => !todaysCatches.some((e) => e.flight.id === id),
-    ),
-  )
-  // A lost flight stays on the map at its last position until dismissed. The
-  // selected flight is drawn with its looked-up route, so its route line shows.
-  const mapFlights = current
-    ? lost
-      ? [...(flights ?? []), current]
-      : (flights ?? []).map((f) => (f.id === current.id ? current : f))
-    : (flights ?? [])
+    addCatch(current, questId, weatherAreas)
+    if (questId !== undefined) scrollToTop()
+    stop()
+    setSelected(null)
+  }
 
   return (
     // has-onboarding leaves room under the page for the docked mascot.

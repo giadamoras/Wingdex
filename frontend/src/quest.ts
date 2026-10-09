@@ -253,6 +253,20 @@ export function pickQuest(
   return null
 }
 
+// The quest id to record on a catch: set only when this catch finishes
+// today's quest (badges derive from it, see badges.ts).
+export function questIdForCatch(
+  quest: Quest | null,
+  questDone: boolean,
+  flight: Flight,
+  now: Date,
+  weather: WeatherArea[],
+): string | undefined {
+  return quest !== null && !questDone && quest.matches(flight, now, weather)
+    ? quest.id
+    : undefined
+}
+
 // Is the quest done? Each of today's catches is judged at its own catch time
 // (matters for night quests). The entry that completed the quest also carries
 // its id, which keeps a weather quest done after its weather has moved on.
