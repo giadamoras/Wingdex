@@ -377,9 +377,30 @@ h1 {
   animation: fade-in 0.6s ease-out; /* only when a plane first appears */
 }
 
-/* Moved further than it could fly (route restart, coverage gap): snap, don't slide. */
+/* Moved further than it could fly (route restart, coverage gap): snap, don't
+   slide. The icon fades in at its new spot (on the icon, not the plane, which
+   has its own appearance animation), and a copy fades out at the old one. */
 .plane.jump {
   transition: none;
+}
+
+.plane.jump .plane-icon {
+  animation: fade-in 0.6s ease-out;
+}
+
+.plane-departing {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%)
+    scale(calc(clamp(0.6, var(--real-zoom, 1) / 4, 1) / var(--zoom, 1)));
+  z-index: 1;
+  pointer-events: none;
+  animation: fade-out 0.5s ease-in forwards;
+}
+
+.map[data-focus='replay'] .plane-departing {
+  display: none; /* like the other planes during a replay */
 }
 
 .plane.selected {
@@ -1335,8 +1356,13 @@ main.has-onboarding {
   .plane.featured::after,
   .plane.target::after,
   .collection-btn.nudge,
-  .journal-entry {
+  .journal-entry,
+  .plane.jump .plane-icon {
     animation: none;
+  }
+
+  .plane-departing {
+    display: none; /* the plane just snaps */
   }
 
   .map {

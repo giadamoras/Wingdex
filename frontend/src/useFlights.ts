@@ -15,7 +15,8 @@ export const RETRY_FEEDBACK_MS = 800
 
 // Polls /flights. `flights` is null until the first response; after that a
 // failed poll keeps the last good data and only sets `error`. `jumped` holds
-// the ids of flights that moved implausibly far since the previous response.
+// the ids of flights that moved implausibly far since the previous response,
+// and `departed` their previous positions, so the map can fade them out.
 // While polls keep failing, retries back off (every 10 s, 20 s, then 30 s) so a
 // struggling backend is not hammered; `stalled` is set after STALLED_AFTER
 // failures in a row. `retry` asks again at once, and `retrying` is on while
@@ -23,6 +24,7 @@ export const RETRY_FEEDBACK_MS = 800
 export function useFlights() {
   const [flights, setFlights] = useState<Flight[] | null>(null)
   const [jumped, setJumped] = useState<Set<string>>(new Set())
+  const [departed, setDeparted] = useState<Flight[]>([])
   const [failures, setFailures] = useState(0) // consecutive failed polls
   const [retrying, setRetrying] = useState(false)
   // Previous good response and when it arrived, to measure each move.
@@ -46,11 +48,11 @@ export function useFlights() {
           if (controller.signal.aborted) return
           const now = Date.now()
           const prev = last.current
-          setJumped(
-            prev
-              ? jumpedFlightIds(prev.flights, data, (now - prev.at) / 1000)
-              : new Set(),
-          )
+          const jumps = prev
+            ? jumpedFlightIds(prev.flights, data, (now - prev.at) / 1000)
+            : new Set<string>()
+          setJumped(jumps)
+          setDeparted(prev ? prev.flights.filter((f) => jumps.has(f.id)) : [])
           last.current = { flights: data, at: now }
           setFlights(data)
           failureCount = 0
@@ -109,6 +111,7 @@ export function useFlights() {
   return {
     flights,
     jumped,
+    departed,
     error: failures > 0,
     stalled: failures >= STALLED_AFTER,
     retrying,

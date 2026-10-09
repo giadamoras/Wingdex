@@ -343,9 +343,11 @@ test('a flight that jumps between polls snaps instead of sliding', async () => {
   expect(screen.getByTitle('TST1').classList.contains('jump')).toBe(false)
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
   expect(screen.getByTitle('TST1').classList.contains('jump')).toBe(true)
+  // The old position keeps a fading copy until the next poll.
+  expect(document.querySelectorAll('.plane-departing')).toHaveLength(1)
 })
 
-test('selecting another dot replaces the card; Catch closes it', async () => {
+test('selecting another dot replaces the card; Catch keeps it open as a stamp', async () => {
   vi.stubGlobal('fetch', vi.fn(two))
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
@@ -355,7 +357,9 @@ test('selecting another dot replaces the card; Catch closes it', async () => {
   expect(screen.getByRole('heading', { name: 'TST2' })).toBeTruthy()
 
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
-  expect(screen.queryByRole('heading', { name: 'TST2' })).toBeNull()
+  expect(screen.getByRole('heading', { name: 'TST2' })).toBeTruthy()
+  expect(screen.queryByRole('button', { name: 'Catch' })).toBeNull()
+  expect(screen.getByText('Caught today ✓')).toBeTruthy()
 })
 
 test('a flight that leaves the feed stays on the map until dismissed', async () => {
@@ -370,7 +374,11 @@ test('a flight that leaves the feed stays on the map until dismissed', async () 
   expect(screen.getByTitle('TST2')).toBeTruthy()
   expect(screen.getByText(/Signal lost/)).toBeTruthy()
 
+  // A catch keeps the card open, and the lost plane stays until it is dismissed.
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(screen.getByText('Caught today ✓')).toBeTruthy()
+  expect(screen.getByTitle('TST2')).toBeTruthy()
+  fireEvent.click(screen.getByTitle('TST2'))
   expect(screen.queryByTitle('TST2')).toBeNull()
 })
 
@@ -485,8 +493,10 @@ test('a flight caught today cannot be caught again', async () => {
   fireEvent.click(screen.getByTitle('TST1'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
 
-  // Reopening the card shows the caught marker instead of the button.
-  fireEvent.click(screen.getByTitle('TST1'))
+  // The caught marker replaces the button, and is still there on reopening.
+  expect(screen.queryByRole('button', { name: 'Catch' })).toBeNull()
+  fireEvent.click(screen.getByTitle('TST1')) // close
+  fireEvent.click(screen.getByTitle('TST1')) // reopen
   expect(screen.queryByRole('button', { name: 'Catch' })).toBeNull()
   expect(screen.getByText('Caught today ✓')).toBeTruthy()
 })

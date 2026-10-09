@@ -20,6 +20,7 @@ import { WorldLand } from './WorldLand'
 const WORLD_SCALE = 3
 
 const NO_JUMPS = new Set<string>()
+const NO_DEPARTED: Flight[] = []
 const NO_FEATURED = new Set<string>()
 const NO_WEATHER: WeatherArea[] = []
 
@@ -55,7 +56,8 @@ function routeView(flight: Flight, shape: Shape) {
 
 // World map with one clickable plane per flight, positioned in percent of the
 // world layer, which pans and zooms as a whole. Planes glide between polls;
-// ids in `jumped` snap to their new position instead, ids in `featuredIds`
+// ids in `jumped` snap to their new position and fade in there instead, while
+// their old position in `departed` fades out, ids in `featuredIds`
 // get a ring, and `targetId` a bolder one. Clicking a plane selects
 // it (or deselects it if already selected); clicking the map background
 // deselects. A drag never counts as a click. Weather areas (under the planes)
@@ -65,6 +67,7 @@ export function FlightMap({
   flights,
   selectedId,
   jumped = NO_JUMPS,
+  departed = NO_DEPARTED,
   featuredIds = NO_FEATURED,
   targetId = null,
   replay = null,
@@ -74,6 +77,7 @@ export function FlightMap({
   flights: Flight[]
   selectedId: string | null
   jumped?: Set<string>
+  departed?: Flight[]
   featuredIds?: Set<string>
   targetId?: string | null
   replay?: ReplayState | null
@@ -205,6 +209,19 @@ export function FlightMap({
             replay={replay?.flight.id === selected.id ? replay : null}
           />
         )}
+        {departed.map((f) => {
+          const { x, y } = project(f.latitude, f.longitude)
+          return (
+            <div
+              key={`${f.id}-departed`}
+              className="plane-departing"
+              style={{ left: `${x}%`, top: `${y}%` }}
+              aria-hidden="true"
+            >
+              <PlaneIcon heading={f.heading} aircraftType={f.aircraft_type} />
+            </div>
+          )
+        })}
         {drawn.map((f) => {
           const { x, y } = project(f.latitude, f.longitude)
           const className = [

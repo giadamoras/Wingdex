@@ -37,7 +37,8 @@ function TryAgain({ onClick }: { onClick: () => void }) {
 }
 
 function App() {
-  const { flights, jumped, error, stalled, retrying, retry } = useFlights()
+  const { flights, jumped, departed, error, stalled, retrying, retry } =
+    useFlights()
   // Null until the first response; quests and featured flights wait for it.
   const weather = useWeather()
   const weatherAreas = weather ?? NO_WEATHER
@@ -94,8 +95,9 @@ function App() {
   const featuredIds = useFeatured(flights, weather, quest, todaysCatches)
   const mapFlights = flightsForMap(flights, current, lost)
 
-  // Catch button: records the flight in the Journal, then closes the card.
-  // The quest completes by itself once a matching catch is in today's entries.
+  // Catch button: records the flight in the Journal. The card stays open, so
+  // the Catch button turns into the "Caught today" stamp right under the
+  // player's thumb. The quest completes by itself once a matching catch is in today's entries.
   // A catch that finishes the quest also scrolls to the top, where the quest
   // strip and its "Done!" stamp are, so it's noticed while reading the card.
   const catchFlight = () => {
@@ -109,8 +111,6 @@ function App() {
     )
     addCatch(current, questId, weatherAreas)
     if (questId !== undefined) scrollToTop()
-    stop()
-    setSelected(null)
   }
 
   return (
@@ -164,6 +164,7 @@ function App() {
                 flights={mapFlights}
                 selectedId={selected?.id ?? null}
                 jumped={jumped}
+                departed={departed}
                 featuredIds={featuredIds}
                 targetId={onboarding.targetId}
                 replay={replay}

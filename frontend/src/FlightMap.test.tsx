@@ -75,6 +75,23 @@ test('only jumped planes get the snap class', () => {
   expect(screen.getByTitle('CS2').classList.contains('jump')).toBe(true)
 })
 
+test('a jumped plane leaves a fading copy at its old position', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      jumped={new Set(['1'])}
+      departed={[flight('1', 10, 10)]}
+      onSelect={() => {}}
+    />,
+  )
+  const ghosts = container.querySelectorAll('.plane-departing')
+  expect(ghosts).toHaveLength(1)
+  expect(ghosts[0].getAttribute('aria-hidden')).toBe('true') // decoration only
+  expect(ghosts[0].tagName).not.toBe('BUTTON') // and not clickable
+  expect(screen.getAllByTitle('CS1')).toHaveLength(1) // only the real plane
+})
+
 test('clicking a dot selects it, clicking the selected dot deselects', () => {
   const onSelect = vi.fn()
   const { rerender } = render(
