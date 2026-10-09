@@ -6,6 +6,8 @@ live flights are optional (see the data terms below).
 
 ![Airspace Explorer: a world map with a flight passport open](docs/images/screenshot.png)
 
+<img src="docs/images/demo-mobile.gif" alt="Airspace Explorer on a phone: the mascot guides a first catch" width="280">
+
 - **Spot.** Planes move across the world map. Tap one for its route, type, altitude, speed and a
   "Did you know?" fact. Weather hazards (storms, turbulence, icing, volcanic ash) are drawn on the map.
 - **Catch.** Catch one plane a day into your Journal, and replay its journey from the card.
@@ -44,6 +46,19 @@ works without any account.
 
 When the frontend and backend are hosted apart, set `VITE_API_URL` for the frontend (the backend's
 URL) and `CORS_ORIGINS` for the backend (the frontend's URL). See `backend/.env.example`.
+
+### Testing on a phone
+
+To open the app from a phone on the same Wi-Fi, bind both servers to the network and replace
+`<pc-ip>` with your computer's address. Allow Python and Node through Windows Firewall (private
+networks) the first time.
+
+```powershell
+cd backend;  $env:CORS_ORIGINS="http://<pc-ip>:5173"; .venv\Scripts\uvicorn app.main:app --host 0.0.0.0
+cd frontend; $env:VITE_API_URL="http://<pc-ip>:8000"; npm run dev -- --host   # open http://<pc-ip>:5173
+```
+
+For live data, add `--env-file .env` to the backend command as described below.
 
 ### Live flights (optional)
 

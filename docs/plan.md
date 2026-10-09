@@ -3,7 +3,7 @@
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
 - **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data). They are summarised in `docs/history.md`.
-- **In progress.** Milestone 7, the last step of the MVP: deployment (step 7), postponed (see "Now"). After the MVP, a backlog in priority order is under "Implementation roadmap".
+- **Postponed.** Deployment (see "Deployment" below). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
 
@@ -66,9 +66,9 @@ Aviation-curious people without deep aviation background — including the creat
 
 ## Open items for future planning passes
 
-- **Hosting** (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend) is not decided. It is settled in Milestone 7, step 7.
+- **Hosting** (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend) is not decided. It is settled when deployment resumes.
 - **Fact pools** are still small (49 facts, 12 of them weather) and can grow at any time (backlog item 2).
-- **Ideas, not scheduled:** see "Smaller ideas" in the roadmap. Flight photos are decided in step 7 (see "Photos" in `docs/history.md`, Milestone 7 step 2).
+- **Ideas, not scheduled:** see "Smaller ideas" in the roadmap. Flight photos wait for a public project URL (see "Photos" in `docs/history.md`, Milestone 7 step 2).
 
 ## Technical direction
 
@@ -103,17 +103,15 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`
 - **Testing gotchas.** Under Vitest fake timers a `motion` exit can fail to complete; mock `matchMedia` to report reduced motion (the `reducedMotion()` helper in `App.test.tsx`). The journey-replay tests need `prefersReducedMotion()` to read `false`.
 - **Backend boundary.** The backend owns world data only; the frontend owns everything user-specific (Journal, badges, quest state).
 
-### Now: finish Milestone 7 (the MVP)
+### Deployment (postponed 2026-10-07)
 
-Done one step at a time: work only on the step the user names. Only deployment is left, and it is postponed.
-
-**Step 7 — Deployment (postponed 2026-10-07).** Two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward when it is picked up again: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode) wait with it. The plan for when it resumes: deploy the frontend (static host) and the backend, which settles the hosting open item. Before it: re-verify the full flow against the live OpenSky feed in a browser, **check the app on a real phone** (the biggest unchecked risk: touch pan/zoom, the docked mascot overlapping the card on a short viewport, JSON parse and React work with thousands of planes), and decide whether Planespotters photos are worth adding once there is a project URL. Set `CORS_ORIGINS` on the backend to the deployed frontend URL and `VITE_API_URL` on the frontend to the backend URL (see `backend/.env.example`).
+Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode, Planespotters photos) wait with it. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend when it resumes (see `backend/.env.example`).
 
 ### After the MVP: backlog in priority order
 
 Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked up on its own, after the user names it.
 
-1. **CI, smoke test and PWA (M).** GitHub Actions running the backend and frontend checks, one Playwright smoke test, an installable PWA. First because it protects every later change and de-risks the public site.
+1. **Smoke test and PWA (M).** One Playwright smoke test and an installable PWA. (The GitHub Actions workflow running the backend and frontend checks, `.github/workflows/ci.yml`, is done.)
 2. **Larger facts and quests (M).** Start by moving the facts out of `facts.ts` into a data file (stage 1 of the content-database idea below) and building one **type catalog keyed by ICAO type code** (name, family, short description) that the dex, the encyclopedia and the 3D models all share. Then grow the pools, add airline-based facts and quests (needs its own decision) and learn missing aircraft types in the background. Content quality is the weakest point seen live.
 3. **Collection dex, streak and more badges (S/M).** Types and families seen out of those that exist, countries and airlines; a streak counter; badges derived from the Journal (night owl, storm chaser, polar, many countries). Cheap, frontend only, a strong collect-them-all feel; needs the catalog from item 2.
 4. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
