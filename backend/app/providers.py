@@ -11,6 +11,14 @@ class ProviderError(Exception):
     """The data source could not supply flights (and has nothing cached to fall back on)."""
 
 
+class RateLimited(ProviderError):
+    """A feed answered 429; `retry_after` is how long it asked us to wait (seconds)."""
+
+    def __init__(self, source: str, retry_after: float) -> None:
+        super().__init__(f"{source} rate limit reached, retry in {retry_after:.0f}s")
+        self.retry_after = retry_after
+
+
 class FlightProvider(Protocol):
     name: str  # shown by /health, e.g. "mock" or "opensky"
 

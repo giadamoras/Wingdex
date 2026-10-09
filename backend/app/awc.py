@@ -7,7 +7,6 @@ TAF: docs/aviation-weather-products.md.
 """
 
 import logging
-import threading
 import time
 from collections.abc import Callable, Mapping
 from typing import Any
@@ -16,7 +15,8 @@ import httpx
 from pydantic import ValidationError
 
 from app.models import Hazard, LatLon, WeatherArea
-from app.providers import ProviderError
+from app.providers import ProviderError, RateLimited
+from app.snapshot import SnapshotCache
 
 log = logging.getLogger(__name__)
 
@@ -202,14 +202,6 @@ def map_entries(entries: list[Any]) -> list[WeatherArea]:
     return kept
 
 
-class RateLimited(ProviderError):
-    """AWC answered 429; `retry_after` is how long to wait (seconds)."""
-
-    def __init__(self, retry_after: float) -> None:
-        super().__init__(f"AWC rate limit reached, retry in {retry_after:.0f}s")
-        self.retry_after = retry_after
-
-
 class AwcWeatherProvider:
     name = "awc"
 
@@ -226,10 +218,13 @@ class AwcWeatherProvider:
         self._owns_http = http is None  # close only a client made here, not one handed in
         self._http = http if http is not None else httpx.Client(timeout=20)
         self._clock = clock
-        self._lock = threading.Lock()  # one refresh at a time, however many requests wait
-        self._snapshot: list[WeatherArea] | None = None
-        self._fetched_at = 0.0
-        self._next_attempt = 0.0  # no request before this time (backoff after a failure)
+        self._cache: SnapshotCache[list[WeatherArea]] = SnapshotCache(
+            "AWC",
+            self._fetch,
+            ttl_s=self._ttl,
+            failure_backoff_s=FAILURE_BACKOFF_S,
+            clock=clock,
+        )
 
     @classmethod
     def from_env(cls, env: Mapping[str, str]) -> "AwcWeatherProvider":
@@ -245,34 +240,15 @@ class AwcWeatherProvider:
 
     def status(self) -> dict[str, str | int | None]:
         """What /health shows: how many areas are held and how old they are."""
-        snapshot = self._snapshot
+        snapshot = self._cache.snapshot
         return {
             "areas": None if snapshot is None else len(snapshot),
-            "age_s": None if snapshot is None else round(self._clock() - self._fetched_at),
+            "age_s": None if snapshot is None else round(self._clock() - self._cache.fetched_at),
         }
 
     def get_weather(self) -> list[WeatherArea]:
-        with self._lock:
-            now = self._clock()
-            if self._snapshot is None or now - self._fetched_at >= self._ttl:
-                self._refresh(now)
-            if self._snapshot is None:
-                raise ProviderError("No AWC data yet")
-            return list(self._snapshot)
-
-    def _refresh(self, now: float) -> None:
-        """Fetch a new snapshot; on failure keep serving the old one (if there is one)."""
-        if now < self._next_attempt:
-            return
-        try:
-            self._snapshot = self._fetch()
-            self._fetched_at = now
-        except (httpx.HTTPError, ProviderError, ValueError) as error:
-            backoff = error.retry_after if isinstance(error, RateLimited) else FAILURE_BACKOFF_S
-            self._next_attempt = now + backoff
-            log.warning("AWC request failed (%s); retrying in %.0fs", error, backoff)
-            if self._snapshot is None:
-                raise ProviderError(f"AWC unavailable: {error}") from error
+        snapshot, _ = self._cache.get()
+        return list(snapshot)
 
     def _fetch(self) -> list[WeatherArea]:
         # format=json is the only query parameter: undocumented ones are an error for AWC.
@@ -283,7 +259,7 @@ class AwcWeatherProvider:
             return []
         if response.status_code == 429:
             header = response.headers.get("Retry-After", "")
-            raise RateLimited(float(header) if header.isdigit() else FAILURE_BACKOFF_S)
+            raise RateLimited("AWC", float(header) if header.isdigit() else FAILURE_BACKOFF_S)
         response.raise_for_status()
         body = response.json()
         if not isinstance(body, list):

@@ -7,7 +7,6 @@ gliding instead of jumping once per refresh.
 """
 
 import logging
-import threading
 import time
 import zlib
 from collections import deque
@@ -20,7 +19,8 @@ import httpx
 from app.aircraft_types import load_aircraft_types
 from app.geo import destination_point
 from app.models import Flight
-from app.providers import ProviderError
+from app.providers import ProviderError, RateLimited
+from app.snapshot import SnapshotCache
 
 log = logging.getLogger(__name__)
 
@@ -186,14 +186,6 @@ def request_cost(bbox: tuple[float, float, float, float] | None) -> int:
     return 4
 
 
-class RateLimited(ProviderError):
-    """OpenSky answered 429; `retry_after` is how long it asked us to wait (seconds)."""
-
-    def __init__(self, retry_after: float) -> None:
-        super().__init__(f"OpenSky rate limit reached, retry in {retry_after:.0f}s")
-        self.retry_after = retry_after
-
-
 class OpenSkyProvider:
     name = "opensky"
 
@@ -230,10 +222,16 @@ class OpenSkyProvider:
         self._owns_http = http is None  # close only a client made here, not one handed in
         self._http = http if http is not None else httpx.Client(timeout=20)
         self._clock = clock
-        self._lock = threading.Lock()  # one refresh at a time, however many requests wait
-        self._snapshot: list[Tracked] | None = None
-        self._fetched_at = 0.0
-        self._next_attempt = 0.0  # no request before this time (backoff after a failure)
+        # The snapshot, its age and the back-off after a failure; the credit guard decides
+        # whether a refresh may go ahead (see _may_refresh).
+        self._cache: SnapshotCache[list[Tracked]] = SnapshotCache(
+            "OpenSky",
+            self._fetch,
+            ttl_s=self._ttl,
+            failure_backoff_s=FAILURE_BACKOFF_S,
+            clock=clock,
+            may_refresh=self._may_refresh,
+        )
         self._token: str | None = None
         self._token_expires = 0.0
 
@@ -297,41 +295,23 @@ class OpenSkyProvider:
 
     def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
         """The flight with this id as it is now, plus its icao24; None if it isn't in the feed."""
-        snapshot = self._snapshot  # read without the lock, so a tap never waits for a refresh
+        snapshot = self._cache.snapshot  # read without the lock: a tap never waits for a refresh
         for tracked in snapshot or []:
             if tracked.flight.id == flight_id:
                 return advance(tracked, self._clock()), tracked.icao24
         return None
 
     def get_flights(self) -> list[Flight]:
-        with self._lock:
-            now = self._clock()
-            if self._snapshot is None or now - self._fetched_at >= self._ttl:
-                self._refresh(now)
-            snapshot = self._snapshot
-            if snapshot is None:
-                raise ProviderError("No OpenSky data yet")
-            return [advance(t, now) for t in snapshot]
+        snapshot, now = self._cache.get()
+        return [advance(t, now) for t in snapshot]
 
-    def _refresh(self, now: float) -> None:
-        """Fetch a new snapshot; on failure keep serving the old one (if there is one)."""
-        if now < self._next_attempt:
-            return
+    def _may_refresh(self, now: float) -> bool:
+        """The credit guard: false while a refresh must wait (the last snapshot is served)."""
         reason = self._pause_reason(now)
         if reason != self._last_pause:  # log only when the guard switches on or off
             log.warning("OpenSky credit guard: %s", f"paused ({reason})" if reason else "resumed")
             self._last_pause = reason
-        if reason is not None:
-            return  # keep serving the last snapshot until the guard lets go
-        try:
-            self._snapshot = self._fetch()
-            self._fetched_at = now
-        except (httpx.HTTPError, ProviderError, ValueError) as error:
-            backoff = error.retry_after if isinstance(error, RateLimited) else FAILURE_BACKOFF_S
-            self._next_attempt = now + backoff
-            log.warning("OpenSky request failed (%s); retrying in %.0fs", error, backoff)
-            if self._snapshot is None:
-                raise ProviderError(f"OpenSky unavailable: {error}") from error
+        return reason is None
 
     def _fetch(self) -> list[Tracked]:
         response = self._get_states()
@@ -343,7 +323,7 @@ class OpenSkyProvider:
             header = response.headers.get("X-Rate-Limit-Retry-After-Seconds", "")
             # Header values are text; anything unreadable falls back to the default wait.
             retry = float(header) if header.isdigit() else FAILURE_BACKOFF_S
-            raise RateLimited(retry)
+            raise RateLimited("OpenSky", retry)
         response.raise_for_status()
         body = response.json()
         rows = body.get("states") if isinstance(body, dict) else None
