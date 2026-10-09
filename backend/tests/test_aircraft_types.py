@@ -21,6 +21,24 @@ def test_missing_file_gives_an_empty_table(tmp_path: Path) -> None:
     assert load_aircraft_types(tmp_path / "nope.csv.gz") == {}
 
 
+def test_damaged_files_give_an_empty_table(tmp_path: Path) -> None:
+    not_gzip = tmp_path / "a.csv.gz"
+    not_gzip.write_bytes(b"this is not gzip")
+    cut_short = tmp_path / "b.csv.gz"
+    cut_short.write_bytes(gzip.compress(b"4ca7b5,B738\n" * 1000)[:-20])
+    bad_text = tmp_path / "c.csv.gz"
+    bad_text.write_bytes(gzip.compress(b"\xff\xfe,B738\n"))
+    for path in (not_gzip, cut_short, bad_text):
+        assert load_aircraft_types(path) == {}
+
+
+def test_a_failed_load_is_not_remembered(tmp_path: Path) -> None:
+    path = tmp_path / "types.csv.gz"
+    assert load_aircraft_types(path) == {}  # missing now
+    path.write_bytes(gzip.compress(b"4ca7b5,B738\n"))
+    assert load_aircraft_types(path) == {"4ca7b5": "B738"}  # found on the next call
+
+
 def test_loads_icao24_to_type(tmp_path: Path) -> None:
     path = tmp_path / "types.csv.gz"
     path.write_bytes(gzip.compress(b"4ca7b5,B738\n000001,AN2\nbroken line\n"))
