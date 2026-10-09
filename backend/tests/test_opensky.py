@@ -13,6 +13,7 @@ from app.opensky import (
     advance,
     map_state,
     map_states,
+    parse_bbox,
     request_cost,
 )
 from app.providers import ProviderError
@@ -240,6 +241,35 @@ def test_find_flight_before_the_first_snapshot_is_an_error_not_unknown() -> None
     provider = make_provider(FakeOpenSky(), Clock())
     with pytest.raises(ProviderError):
         provider.find_flight("BAW117")  # nothing fetched yet
+
+
+def test_a_valid_bbox_is_parsed() -> None:
+    assert parse_bbox("45, 5,48,11") == (45.0, 5.0, 48.0, 11.0)
+
+
+@pytest.mark.parametrize(
+    "raw",
+    [
+        "",  # empty
+        "1,2,3",  # too few numbers
+        "a,b,c,d",  # not numbers
+        "48,5,45,11",  # lamin above lamax
+        "45,5,48,200",  # longitude out of range
+        "45,170,48,-170",  # across the date line
+    ],
+)
+def test_a_bad_bbox_is_refused_with_a_clear_message(raw: str) -> None:
+    with pytest.raises(ValueError, match="OPENSKY_BBOX"):
+        parse_bbox(raw)
+
+
+def test_health_shows_how_old_the_snapshot_is() -> None:
+    fake, clock = FakeOpenSky(), Clock()
+    provider = make_provider(fake, clock)
+    assert provider.status()["age_s"] is None  # nothing fetched yet
+    provider.get_flights()
+    clock.now += 42
+    assert provider.status()["age_s"] == 42
 
 
 def test_provider_returns_valid_flights_and_sends_the_token() -> None:

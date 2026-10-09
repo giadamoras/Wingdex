@@ -19,7 +19,8 @@ Code: `backend/app/opensky.py`. Variables: `backend/.env.example`.
 
 While paused, the backend keeps serving its last snapshot (planes keep moving for up to 10
 minutes, then freeze). `/health` shows `guard` (`ok` or `paused (hourly cap)` /
-`paused (reserve)`), `credits_remaining` and `credits_spent_last_hour`.
+`paused (reserve)`), `credits_remaining`, `credits_spent_last_hour` and `age_s` (seconds
+since the served snapshot was fetched; null before the first one).
 
 ## Presets
 

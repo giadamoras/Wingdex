@@ -171,6 +171,27 @@ def advance(tracked: Tracked, now: float) -> Flight:
     return flight.model_copy(update={"latitude": latitude, "longitude": longitude})
 
 
+def parse_bbox(raw: str) -> tuple[float, float, float, float]:
+    """OPENSKY_BBOX ("lamin,lomin,lamax,lomax", degrees) checked, or a ValueError saying how.
+
+    A box across the date line (lomin > lomax) is refused: OpenSky cannot take one, and the
+    cost estimate below would go negative.
+    """
+    usage = "OPENSKY_BBOX must be lamin,lomin,lamax,lomax in degrees, e.g. 45,5,48,11"
+    try:
+        lamin, lomin, lamax, lomax = (float(x) for x in raw.split(","))
+    except ValueError:
+        raise ValueError(usage) from None
+    if not (-90 <= lamin < lamax <= 90):
+        raise ValueError(f"{usage} (latitudes -90..90, lamin below lamax)")
+    if not (-180 <= lomin < lomax <= 180):
+        raise ValueError(
+            f"{usage} (longitudes -180..180, lomin below lomax; a box across the date line "
+            "is not supported)"
+        )
+    return lamin, lomin, lamax, lomax
+
+
 def request_cost(bbox: tuple[float, float, float, float] | None) -> int:
     """Credits one /states/all request costs, by the area asked for (OpenSky's table)."""
     if bbox is None:
@@ -246,8 +267,7 @@ class OpenSkyProvider:
             )
         bbox = None
         if raw := env.get("OPENSKY_BBOX"):
-            lamin, lomin, lamax, lomax = (float(x) for x in raw.split(","))
-            bbox = (lamin, lomin, lamax, lomax)
+            bbox = parse_bbox(raw)
         return cls(
             client_id,
             client_secret,
@@ -267,13 +287,20 @@ class OpenSkyProvider:
             self._http.close()
 
     def status(self) -> dict[str, str | int | None]:
-        """What /health shows: whether the credit guard is holding refreshes back."""
+        """What /health shows: the credit guard's state and how old the served data is.
+
+        Read without the refresh lock on purpose: a refresh holds it for the whole request
+        (up to 20 s) and /health must not wait. At worst a number is one request (a few
+        credits) out of date.
+        """
         now = self._clock()
         reason = self._pause_reason(now)
+        snapshot = self._cache.snapshot  # None until the first fetch worked
         return {
             "guard": "ok" if reason is None else f"paused ({reason})",
             "credits_remaining": self._remaining,
             "credits_spent_last_hour": self._spent_last_hour(now),
+            "age_s": None if snapshot is None else round(now - self._cache.fetched_at),
         }
 
     def _spent_last_hour(self, now: float) -> int:
