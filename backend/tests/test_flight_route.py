@@ -5,6 +5,7 @@ from fastapi.testclient import TestClient
 
 from app.main import app, get_provider, get_route_service
 from app.models import Airport, Flight, FlightRoute
+from app.providers import ProviderError
 from app.routes import LookupUnavailable, RouteService
 
 LIVE = Flight(
@@ -29,6 +30,15 @@ class StubProvider:
 
     def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
         return (LIVE, "abc123") if flight_id == "BAW117" else None
+
+
+class LoadingProvider:
+    """A live feed that has not delivered its first snapshot."""
+
+    name = "loading"
+
+    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
+        raise ProviderError("No flight data loaded yet")
 
 
 class StubService:
@@ -63,6 +73,13 @@ def test_returns_the_looked_up_route() -> None:
 def test_unknown_flight_is_404() -> None:
     client, service = client_with(ROUTE)
     assert client.get("/flights/NOPE/route").status_code == 404
+    assert service.calls == []
+
+
+def test_feed_not_loaded_yet_is_503_not_404() -> None:
+    client, service = client_with(ROUTE)
+    app.dependency_overrides[get_provider] = lambda: LoadingProvider()
+    assert client.get("/flights/BAW117/route").status_code == 503
     assert service.calls == []
 
 

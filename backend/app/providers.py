@@ -25,7 +25,11 @@ class FlightProvider(Protocol):
     def get_flights(self) -> list[Flight]: ...
 
     def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
-        """The flight with this id as it is now, plus its icao24 if known (None: not in feed)."""
+        """The flight with this id as it is now, plus its icao24 if known (None: not in feed).
+
+        Raises ProviderError while the feed has not delivered its first snapshot, so that
+        "nothing loaded yet" is not mistaken for "no such flight".
+        """
         ...
 
     def status(self) -> dict[str, str | int | None]:

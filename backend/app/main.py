@@ -142,8 +142,13 @@ def flights(provider: Flights) -> list[Flight]:
 
 @app.get("/flights/{flight_id}/route")
 def flight_route(flight_id: str, provider: Flights, route_service: Routes) -> FlightRoute:
-    """The route (and type) of one flight; 404 when unknown, 503 when the lookup is down."""
-    found = provider.find_flight(flight_id)
+    """The route (and type) of one flight; 404 when unknown, 503 when the lookup or feed is down."""
+    try:
+        found = provider.find_flight(flight_id)
+    except ProviderError as error:  # no snapshot yet: not "unknown flight"
+        raise HTTPException(
+            status_code=503, detail="Flight data temporarily unavailable"
+        ) from error
     if found is None:
         raise HTTPException(status_code=404, detail="Unknown flight")
     flight, icao24 = found

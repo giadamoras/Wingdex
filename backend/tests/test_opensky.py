@@ -226,7 +226,6 @@ def make_provider(fake: FakeOpenSky, clock: Clock, **kwargs: Any) -> OpenSkyProv
 def test_find_flight_returns_the_flight_and_its_icao24() -> None:
     fake, clock = FakeOpenSky(), Clock()
     provider = make_provider(fake, clock)
-    assert provider.find_flight("BAW117") is None  # nothing fetched yet
     provider.get_flights()
     clock.now += 60
     found = provider.find_flight("BAW117")
@@ -235,6 +234,12 @@ def test_find_flight_returns_the_flight_and_its_icao24() -> None:
     assert icao24 == "abc123"
     assert flight.longitude > -0.5  # flown on, like the flights list
     assert provider.find_flight("NOPE") is None
+
+
+def test_find_flight_before_the_first_snapshot_is_an_error_not_unknown() -> None:
+    provider = make_provider(FakeOpenSky(), Clock())
+    with pytest.raises(ProviderError):
+        provider.find_flight("BAW117")  # nothing fetched yet
 
 
 def test_provider_returns_valid_flights_and_sends_the_token() -> None:

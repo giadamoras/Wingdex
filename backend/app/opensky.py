@@ -294,9 +294,13 @@ class OpenSkyProvider:
         return None
 
     def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
-        """The flight with this id as it is now, plus its icao24; None if it isn't in the feed."""
+        """The flight with this id as it is now, plus its icao24; None if it isn't in the feed.
+
+        Raises ProviderError before the first snapshot has loaded."""
         snapshot = self._cache.snapshot  # read without the lock: a tap never waits for a refresh
-        for tracked in snapshot or []:
+        if snapshot is None:
+            raise ProviderError("No flight data loaded yet")
+        for tracked in snapshot:
             if tracked.flight.id == flight_id:
                 return advance(tracked, self._clock()), tracked.icao24
         return None
