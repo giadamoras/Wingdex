@@ -6,8 +6,6 @@ live flights are optional (see the data terms below).
 
 ![Airspace Explorer: a world map with a flight passport open](docs/images/screenshot.png)
 
-<img src="docs/images/demo-mobile.gif" alt="Airspace Explorer on a phone: the mascot guides a first catch" width="280">
-
 - **Spot.** Planes move across the world map. Tap one for its route, type, altitude, speed and a
   "Did you know?" fact. Weather hazards (storms, turbulence, icing, volcanic ash) are drawn on the map.
 - **Catch.** Catch one plane a day into your Journal, and replay its journey from the card.
@@ -48,6 +46,10 @@ When the frontend and backend are hosted apart, set `VITE_API_URL` for the front
 URL) and `CORS_ORIGINS` for the backend (the frontend's URL). See `backend/.env.example`.
 
 ### Testing on a phone
+
+<p align="center">
+  <img src="docs/images/demo-mobile.gif" alt="Airspace Explorer on a phone: the mascot guides a first catch" width="280">
+</p>
 
 To open the app from a phone on the same Wi-Fi, bind both servers to the network and replace
 `<pc-ip>` with your computer's address. Allow Python and Node through Windows Firewall (private
