@@ -71,6 +71,19 @@ function App() {
     setSelected(flights?.find((f) => f.id === id) ?? null)
   }
 
+  const scrollToTop = () =>
+    window.scrollTo({
+      top: 0,
+      behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+    })
+
+  // Journey button: the map is at the top, and the card (tall in landscape)
+  // can have been scrolled far below it, so bring the map back into view.
+  const replayJourney = (flight: Flight) => {
+    scrollToTop()
+    start(flight)
+  }
+
   // Catch button: records the flight in the Journal, then closes the card.
   // The quest completes by itself once a matching catch is in today's entries.
   // A catch that finishes the quest also scrolls to the top, where the quest
@@ -84,11 +97,7 @@ function App() {
         ? quest.id
         : undefined
     addCatch(current, questId, weatherAreas)
-    if (questId !== undefined)
-      window.scrollTo({
-        top: 0,
-        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      })
+    if (questId !== undefined) scrollToTop()
     stop()
     setSelected(null)
   }
@@ -196,7 +205,7 @@ function App() {
                   replaying={replay?.flight.id === current.id}
                   replayed={playedId === current.id}
                   onCatch={catchFlight}
-                  onReplay={() => start(current)}
+                  onReplay={() => replayJourney(current)}
                   onStopReplay={stop}
                 />
               )}
