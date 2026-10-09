@@ -12,6 +12,7 @@ import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 
@@ -36,6 +37,11 @@ CRUISE_KT = 440  # typical average speed: the mock's long-hauls use 450-490 (40 
 # longer than going straight. The slack keeps short routes and small diversions valid.
 MAX_DETOUR = 1.25
 DETOUR_SLACK_NM = 40.0
+
+
+def _escape(value: str) -> str:
+    """A feed value made safe for a URL: `/`, `?`, `#` and `..` cannot change the request."""
+    return quote(value, safe="").replace(".", "%2E")
 
 
 class LookupUnavailable(ProviderError):
@@ -82,16 +88,19 @@ def to_route(found: Found, flight: Flight) -> FlightRoute:
         or found.destination is None
         or not is_plausible(flight, found.origin, found.destination)
     ):
-        return FlightRoute(aircraft_type=found.aircraft_type).model_copy(update=found.details)
+        # model_validate, not model_copy(update=...): the details are checked against the model
+        return FlightRoute.model_validate({"aircraft_type": found.aircraft_type, **found.details})
     minutes = estimate_duration_min(found.origin, found.destination)
-    route = FlightRoute(
-        aircraft_type=found.aircraft_type,
-        origin=found.origin,
-        destination=found.destination,
-        duration_min=minutes,
-        duration_estimated=True,
+    return FlightRoute.model_validate(
+        {
+            "aircraft_type": found.aircraft_type,
+            "origin": found.origin,
+            "destination": found.destination,
+            "duration_min": minutes,
+            "duration_estimated": True,
+            **found.details,
+        }
     )
-    return route.model_copy(update=found.details)
 
 
 def route_from_feed(flight: Flight) -> FlightRoute:
@@ -237,6 +246,9 @@ class RouteService:
     def _fetch(self, icao24: str | None, callsign: str | None) -> Found | None:
         aircraft: Any = None
         flightroute: Any = None
+        # Both come from the feed, so escape them before they go into a URL.
+        icao24 = _escape(icao24) if icao24 else None
+        callsign = _escape(callsign) if callsign else None
         if icao24 and callsign:
             # One request for both. adsbdb answers 404 if either half is unknown, so on a
             # 404 ask for each half separately.

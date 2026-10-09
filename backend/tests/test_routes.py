@@ -3,6 +3,7 @@ from typing import Any
 
 import httpx
 import pytest
+from pydantic import ValidationError
 
 from app.constants import GROUND_MIN
 from app.geo import distance_nm, interpolate
@@ -11,10 +12,12 @@ from app.routes import (
     DOWN_PAUSE_S,
     HIT_TTL_S,
     MISS_TTL_S,
+    Found,
     LookupUnavailable,
     RouteService,
     estimate_duration_min,
     is_plausible,
+    to_route,
 )
 
 LHR = Airport(icao="EGLL", iata="LHR", name="London Heathrow", latitude=51.47, longitude=-0.46)
@@ -148,6 +151,23 @@ def test_a_cached_route_is_checked_against_where_the_plane_is_now() -> None:
     assert elsewhere is not None and elsewhere.aircraft_type == "B77W"
     assert elsewhere.origin is None and elsewhere.duration_min is None
     assert svc.lookup(mid_atlantic(), "abc123") == on_route  # and back on the route
+
+
+def test_odd_feed_values_are_escaped_in_the_adsbdb_urls() -> None:
+    fake = FakeAdsbdb()
+    service(fake).lookup(flight_at(50.0, -30.0, callsign="A/B?c#d"), "../x")
+    # Nothing from the feed can add a path segment, a query or a fragment.
+    assert fake.calls == [
+        "aircraft/%2E%2E%2Fx?callsign=A%2FB%3Fc%23d",
+        "aircraft/%2E%2E%2Fx",
+        "callsign/A%2FB%3Fc%23d",
+    ]
+
+
+def test_details_are_validated_not_copied_in_blindly() -> None:
+    bad = Found(aircraft_type="B77W", origin=None, destination=None, details={"duration_min": "x"})
+    with pytest.raises(ValidationError):
+        to_route(bad, mid_atlantic())
 
 
 def test_nothing_known_gives_none() -> None:
