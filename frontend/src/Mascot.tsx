@@ -1,7 +1,9 @@
 // The onboarding/quest-completion mascot: a chibi cat pilot, cropped like a
 // passport photo bust to tie into the card's own "Flight Passport" theme.
 // No idle animation, only the entrance transition its callers apply. `mood`
-// swaps the face: 'talk' opens the mouth, 'cheer' adds happy ^ ^ eyes.
+// swaps the face: 'talk' opens the mouth, 'cheer' adds happy ^ ^ eyes. It is
+// decorative (hidden from screen readers): both callers show their message as
+// text beside it.
 export type MascotMood = 'idle' | 'talk' | 'cheer'
 
 export function Mascot({
@@ -12,12 +14,7 @@ export function Mascot({
   mood?: MascotMood
 }) {
   return (
-    <svg
-      className={className}
-      viewBox="0 0 100 100"
-      role="img"
-      aria-label="The Airspace Explorer mascot: a cat pilot"
-    >
+    <svg className={className} viewBox="0 0 100 100" aria-hidden="true">
       {/* Shoulders/body, cropped at the frame's bottom edge like a photo bust. */}
       <path
         d="M20 100 C20 78 33 68 50 68 C67 68 80 78 80 100 Z"

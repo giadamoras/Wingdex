@@ -113,6 +113,24 @@ function App() {
     if (questId !== undefined) scrollToTop()
   }
 
+  // What the feed status says. While a retry is out the message goes back to
+  // "Loading"/"Trying again" and the button is hidden, so the tap visibly did
+  // something. A failure that has stopped retrying is the alert.
+  const loadFailed = flights === null && error && !retrying
+  const feedDown = flights !== null && stalled && !retrying
+  const feedNotice =
+    flights === null
+      ? loadFailed
+        ? null
+        : 'Loading flights...'
+      : stalled
+        ? retrying
+          ? 'Trying again...'
+          : null
+        : error
+          ? 'Connection lost, retrying...'
+          : null
+
   return (
     // has-onboarding leaves room under the page for the docked mascot.
     <main className={onboarding.step ? 'has-onboarding' : undefined}>
@@ -133,33 +151,27 @@ function App() {
             quest={quest}
             done={questDone}
             searching={flights === null || weather === null}
-            feedDown={flights === null && error && !retrying}
+            feedDown={loadFailed}
           />
-          {flights === null ? (
-            // While a retry is out the message goes back to "Loading" and the
-            // button is hidden, so the tap visibly did something.
-            <p>
-              {error && !retrying
-                ? 'Could not load flights.'
-                : 'Loading flights...'}
-              {error && !retrying && <TryAgain onClick={retry} />}
-            </p>
-          ) : (
+          {/* Live regions stay mounted and only their text changes: a message
+              is announced when it appears inside a region that already exists. */}
+          <div role="status">{feedNotice && <p>{feedNotice}</p>}</div>
+          <div role="alert">
+            {loadFailed && (
+              <p>
+                Could not load flights.
+                <TryAgain onClick={retry} />
+              </p>
+            )}
+            {feedDown && (
+              <p>
+                Can&apos;t reach the flight feed. The planes may be out of date.
+                <TryAgain onClick={retry} />
+              </p>
+            )}
+          </div>
+          {flights !== null && (
             <>
-              {error && !stalled && <p>Connection lost, retrying...</p>}
-              {stalled && (
-                <p>
-                  {retrying ? (
-                    'Trying again...'
-                  ) : (
-                    <>
-                      Can&apos;t reach the flight feed. The planes may be out of
-                      date.
-                      <TryAgain onClick={retry} />
-                    </>
-                  )}
-                </p>
-              )}
               <FlightMap
                 flights={mapFlights}
                 selectedId={selected?.id ?? null}

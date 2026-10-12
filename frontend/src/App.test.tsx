@@ -387,6 +387,8 @@ test('shows an error if the first load fails', async () => {
   renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByText('Could not load flights.')).toBeTruthy()
+  // A failure that stopped retrying is announced as an alert.
+  expect(screen.getByRole('alert').textContent).toContain('Could not load')
 })
 
 test('keeps the last flights when a later poll fails', async () => {
@@ -399,6 +401,9 @@ test('keeps the last flights when a later poll fails', async () => {
   await act(() => vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS))
   expect(screen.getByTitle('TST1')).toBeTruthy()
   expect(screen.getByText('Connection lost, retrying...')).toBeTruthy()
+  // Still retrying: a polite status, not an alert.
+  expect(screen.getByRole('status').textContent).toContain('Connection lost')
+  expect(screen.getByRole('alert').textContent).toBe('')
 })
 
 test('after three failed polls in a row it asks for a manual retry', async () => {
@@ -412,6 +417,9 @@ test('after three failed polls in a row it asks for a manual retry', async () =>
   await act(() => vi.advanceTimersByTimeAsync(35_000))
   expect(screen.getByTitle('TST1')).toBeTruthy() // the last planes stay
   expect(screen.getByText(/reach the flight feed/)).toBeTruthy()
+  expect(screen.getByRole('alert').textContent).toContain(
+    'reach the flight feed',
+  )
   expect(screen.queryByText(/Connection lost/)).toBeNull()
 
   fetchMock.mockImplementation(ok)
@@ -435,6 +443,7 @@ test('the first load can be retried by hand', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
   // The tap shows at once that a request is out, and the button goes away.
   expect(screen.getByText('Loading flights...')).toBeTruthy()
+  expect(screen.getByRole('status').textContent).toContain('Loading flights')
   expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(screen.getByTitle('TST1')).toBeTruthy()

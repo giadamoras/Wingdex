@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, MouseEvent } from 'react'
+import type { CSSProperties, FocusEvent, MouseEvent } from 'react'
 import { timeOfDay } from './attributes'
 import { CountryBorders } from './CountryBorders'
 import { curveThrough } from './geo'
-import { centredOn, centreOf, fitBounds, shapeFor, type Shape } from './panzoom'
+import {
+  centredOn,
+  centreOf,
+  fitBounds,
+  panBy,
+  shapeFor,
+  type Shape,
+} from './panzoom'
 import { PlaneIcon } from './PlaneIcon'
 import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
 import { FIT_MS, prefersReducedMotion, type ReplayState } from './replay'
@@ -168,6 +175,27 @@ export function FlightMap({
     action()
   }
 
+  // Tabbing to a plane or weather icon outside the visible box pans the map to
+  // it (the box is overflow: clip, so the browser can't scroll it into view).
+  // Mouse and touch focus are left alone: those targets are already on screen.
+  const panToFocus = (e: FocusEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement
+    if (!target.matches(':focus-visible')) return
+    const box = e.currentTarget.getBoundingClientRect()
+    const r = target.getBoundingClientRect()
+    if (
+      r.left >= box.left &&
+      r.right <= box.right &&
+      r.top >= box.top &&
+      r.bottom <= box.bottom
+    )
+      return
+    // Move the target's centre to the box's centre (fractions of the box).
+    const dx = (box.left + box.width / 2 - (r.left + r.width / 2)) / box.width
+    const dy = (box.top + box.height / 2 - (r.top + r.height / 2)) / box.height
+    animateTo(panBy(view, dx, dy, shape), prefersReducedMotion() ? 0 : 300)
+  }
+
   // Focus mode (index.css): the other planes dim while a flight is selected and
   // all but vanish during its journey replay, so its route stays readable.
   const focus = replay ? 'replay' : selected ? 'selected' : undefined
@@ -178,6 +206,7 @@ export function FlightMap({
       data-map-time={mapTime}
       data-focus={focus}
       ref={mapRef}
+      onFocus={panToFocus}
       onClick={() => {
         setWeatherId(null)
         onSelect(null)

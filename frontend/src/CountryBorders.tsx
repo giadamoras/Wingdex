@@ -114,6 +114,7 @@ export function CountryBorders({
         <span
           key={p.name}
           className="country-label"
+          aria-hidden="true" // map decoration; includes labels outside the view
           style={{ left: `${p.x}%`, top: `${p.y}%`, fontSize: `${p.fontPx}px` }}
         >
           {p.name}

@@ -31,6 +31,12 @@
   initial-value: #ebd8a8;
 }
 
+/* Keyboard focus ring (not shown for mouse or touch). */
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
 body {
   margin: 0;
   background: var(--paper);
@@ -200,6 +206,9 @@ h1 {
   aspect-ratio: 18 / 7; /* 360 x 140 degrees, see MAP_BOUNDS */
   box-sizing: border-box;
   overflow: hidden;
+  /* Unlike hidden, clip can't be scrolled, not even by tabbing to an off-screen
+     plane, which would shift the map controls out of view. */
+  overflow: clip;
   background:
     repeating-linear-gradient(
       115deg,
@@ -991,18 +1000,16 @@ h1 {
 
 .tab {
   padding: 8px 20px;
-  background: #fffaf0;
+  background: var(--paper);
   color: var(--ink);
   border: 2px solid var(--ink);
   border-radius: 999px 999px 0 0;
   font-family: var(--font-display);
   font-size: 1rem;
   cursor: pointer;
-  opacity: 0.6;
 }
 
 .tab.active {
-  opacity: 1;
   background: var(--highlight);
   box-shadow: 2px 2px 0 var(--ink);
 }

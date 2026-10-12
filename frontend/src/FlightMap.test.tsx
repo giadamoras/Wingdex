@@ -573,3 +573,51 @@ test('in a tall box only the planes in the visible part of the world are drawn',
   expect(screen.queryByTitle('CS2')).toBeNull()
   vi.unstubAllGlobals()
 })
+
+// The map box is overflow: clip, so the browser can't scroll a focused plane
+// into view: the map pans to it instead.
+test('tabbing to a plane outside the box pans the map to it', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true })) // pan at once
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 10)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const world = container.querySelector('.map-world') as HTMLElement
+  const plane = screen.getByTitle('CS1')
+  const rect = (left: number) =>
+    ({
+      left,
+      right: left + 28,
+      top: 100,
+      bottom: 128,
+      width: 28,
+      height: 28,
+    }) as DOMRect
+  vi.spyOn(
+    container.querySelector('.map')!,
+    'getBoundingClientRect',
+  ).mockReturnValue({
+    left: 0,
+    right: 1000,
+    top: 0,
+    bottom: 400,
+    width: 1000,
+    height: 400,
+  } as DOMRect)
+  vi.spyOn(plane, 'matches').mockReturnValue(true) // as if focused by keyboard
+
+  // Inside the box: nothing moves.
+  vi.spyOn(plane, 'getBoundingClientRect').mockReturnValue(rect(500))
+  const before = world.style.transform
+  fireEvent.focus(plane)
+  expect(world.style.transform).toBe(before)
+
+  // Outside it (to the right): the view shifts.
+  vi.spyOn(plane, 'getBoundingClientRect').mockReturnValue(rect(1500))
+  fireEvent.focus(plane)
+  expect(world.style.transform).not.toBe(before)
+  vi.unstubAllGlobals()
+})
