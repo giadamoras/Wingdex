@@ -1,12 +1,12 @@
-// One-off generator for src/countryData.ts: downloads Natural Earth's 1:110m
+// One-off generator for src/map/countryData.ts: downloads Natural Earth's 1:110m
 // country boundaries (public domain) and writes them as compact border rings
 // plus a label point and importance rank per country.
-// Run from frontend/: node scripts/build-countries.mjs && npx prettier --write src/countryData.ts
+// Run from frontend/: node scripts/build-countries.mjs && npx prettier --write src/map/countryData.ts
 import { writeFileSync } from 'node:fs'
 
 const SOURCE =
   'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_admin_0_countries.geojson'
-const OUT = new URL('../src/countryData.ts', import.meta.url)
+const OUT = new URL('../src/map/countryData.ts', import.meta.url)
 const SOUTH_LIMIT = -60 // matches MAP_BOUNDS.south, same as build-land.mjs
 
 const round = (n) => Math.round(n * 10) / 10 // 0.1 degree, same as WORLD_LAND

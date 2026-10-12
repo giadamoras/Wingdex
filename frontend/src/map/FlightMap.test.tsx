@@ -1,0 +1,656 @@
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { afterEach, expect, test, vi } from 'vitest'
+import { FlightMap } from './FlightMap'
+import { MAP_BOUNDS } from './projection'
+import type { Flight, WeatherArea } from '../data/types'
+import { makeFlight } from '../testFlight'
+
+afterEach(cleanup) // unmount between tests so titles don't collide
+
+const flight = (id: string, latitude: number, longitude: number): Flight =>
+  makeFlight({
+    id,
+    callsign: `CS${id}`,
+    latitude,
+    longitude,
+    duration_min: 60,
+  })
+
+test('renders one dot per flight in view at its projected position', () => {
+  const { west, north } = MAP_BOUNDS
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 10), flight('2', 49, 5)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+
+  // The map opens zoomed in on Europe; 50N 10E is at x = 190/360, y = 30/140.
+  const first = screen.getByTitle('CS1')
+  expect(parseFloat(first.style.left)).toBeCloseTo(((10 - west) / 360) * 100)
+  expect(parseFloat(first.style.top)).toBeCloseTo(((north - 50) / 140) * 100)
+  expect(screen.getByTitle('CS2')).toBeTruthy()
+})
+
+test('planes outside the view are not drawn, unless selected', () => {
+  const { west, north } = MAP_BOUNDS
+  const flights = [flight('1', north, west), flight('2', 49, 5)]
+  const { rerender } = render(
+    <FlightMap flights={flights} selectedId={null} onSelect={() => {}} />,
+  )
+  expect(screen.queryByTitle('CS1')).toBeNull()
+  expect(screen.getByTitle('CS2')).toBeTruthy()
+
+  rerender(<FlightMap flights={flights} selectedId="1" onSelect={() => {}} />)
+  expect(screen.getByTitle('CS1')).toBeTruthy()
+})
+
+test('rotates each plane to its heading', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const icon = screen.getByTitle('CS1').querySelector('svg')!
+  expect(icon.style.transform).toBe('rotate(90deg)')
+})
+
+test('only jumped planes get the snap class', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 49, 5)]}
+      selectedId={null}
+      jumped={new Set(['2'])}
+      onSelect={() => {}}
+    />,
+  )
+  expect(screen.getByTitle('CS1').classList.contains('jump')).toBe(false)
+  expect(screen.getByTitle('CS2').classList.contains('jump')).toBe(true)
+})
+
+test('a jumped plane leaves a fading copy at its old position', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      jumped={new Set(['1'])}
+      departed={[flight('1', 10, 10)]}
+      onSelect={() => {}}
+    />,
+  )
+  const ghosts = container.querySelectorAll('.plane-departing')
+  expect(ghosts).toHaveLength(1)
+  expect(ghosts[0].getAttribute('aria-hidden')).toBe('true') // decoration only
+  expect(ghosts[0].tagName).not.toBe('BUTTON') // and not clickable
+  expect(screen.getAllByTitle('CS1')).toHaveLength(1) // only the real plane
+})
+
+test('clicking a dot selects it, clicking the selected dot deselects', () => {
+  const onSelect = vi.fn()
+  const { rerender } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(screen.getByTitle('CS1'))
+  expect(onSelect).toHaveBeenLastCalledWith('1')
+
+  rerender(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId="1"
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(screen.getByTitle('CS1'))
+  expect(onSelect).toHaveBeenLastCalledWith(null)
+})
+
+test('each plane is a button named by its callsign, pressed while selected', () => {
+  const { rerender } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 51, 1)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const named = (pressed: boolean) =>
+    screen.getByRole('button', { name: 'CS1', pressed })
+  expect(named(false)).toBeTruthy()
+
+  rerender(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 51, 1)]}
+      selectedId="1"
+      onSelect={() => {}}
+    />,
+  )
+  expect(named(true)).toBeTruthy()
+  // Only the selected plane is pressed.
+  expect(
+    screen.getByRole('button', { name: 'CS2', pressed: false }),
+  ).toBeTruthy()
+})
+
+// jsdom has no layout, so give the map a size and stub pointer capture.
+const withMapBox = (map: HTMLElement) => {
+  map.getBoundingClientRect = () =>
+    ({ left: 0, top: 0, width: 1000, height: 400 }) as DOMRect
+  map.setPointerCapture = vi.fn()
+}
+
+const worldTransform = (container: HTMLElement) =>
+  (container.querySelector('.map-world') as HTMLElement).style.transform
+
+test('a drag pans the map and does not count as a click', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={onSelect}
+    />,
+  )
+  const map = container.querySelector('.map') as HTMLElement
+  withMapBox(map)
+  const before = worldTransform(container)
+
+  const plane = screen.getByTitle('CS1')
+  fireEvent.pointerDown(plane, { pointerId: 1, clientX: 500, clientY: 200 })
+  fireEvent.pointerMove(plane, { pointerId: 1, clientX: 540, clientY: 220 })
+  fireEvent.pointerUp(plane, { pointerId: 1, clientX: 540, clientY: 220 })
+  fireEvent.click(plane)
+
+  expect(worldTransform(container)).not.toBe(before)
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+// A pointerup can get lost (the page froze): the next touch must still drag.
+test('a touch after a lost pointerup drags instead of pinching', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const map = container.querySelector('.map') as HTMLElement
+  withMapBox(map)
+  const zoomOf = () => worldTransform(container).match(/scale\(.*\)/)?.[0]
+  const zoom = zoomOf()
+
+  fireEvent.pointerDown(map, {
+    pointerId: 1,
+    isPrimary: true,
+    clientX: 100,
+    clientY: 100,
+  })
+  // ...no pointerup for finger 1. A new first finger lands and drags:
+  fireEvent.pointerDown(map, {
+    pointerId: 2,
+    isPrimary: true,
+    clientX: 500,
+    clientY: 200,
+  })
+  fireEvent.pointerMove(map, {
+    pointerId: 2,
+    isPrimary: true,
+    clientX: 540,
+    clientY: 220,
+  })
+
+  expect(zoomOf()).toBe(zoom) // panned, not zoomed
+})
+
+test('zoom buttons change the view without deselecting; reset restores it', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId="1"
+      onSelect={onSelect}
+    />,
+  )
+  const start = worldTransform(container)
+  fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+  expect(worldTransform(container)).not.toBe(start)
+  fireEvent.click(screen.getByRole('button', { name: 'Reset view' }))
+  expect(worldTransform(container)).toBe(start)
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test('clicking the map background deselects', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId="1"
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(container.querySelector('.map')!)
+  expect(onSelect).toHaveBeenCalledWith(null)
+})
+
+test('the map carries a time-of-day attribute for the palette CSS to key off', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const mapTime = container.querySelector('.map')!.getAttribute('data-map-time')
+  expect(['dawn', 'day', 'dusk', 'night']).toContain(mapTime)
+})
+
+test('focus mode: the map is marked while a flight is selected, and during a replay', () => {
+  const lhr = {
+    icao: 'EGLL',
+    iata: 'LHR',
+    name: 'Heathrow',
+    latitude: 51.47,
+    longitude: -0.45,
+  }
+  const jfk = {
+    icao: 'KJFK',
+    iata: 'JFK',
+    name: 'JFK',
+    latitude: 40.64,
+    longitude: -73.78,
+  }
+  const routed = { ...flight('1', 52, -30), origin: lhr, destination: jfk }
+  const focusOf = (container: HTMLElement) =>
+    container.querySelector('.map')!.getAttribute('data-focus')
+
+  const { container, rerender } = render(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBeNull() // nothing selected: nothing dims
+
+  rerender(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId="1"
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBe('selected')
+
+  rerender(
+    <FlightMap
+      flights={[routed, flight('2', 49, 5)]}
+      selectedId="1"
+      replay={{ flight: routed, startedAt: 0, phase: 'flying', progress: 0.5 }}
+      onSelect={() => {}}
+    />,
+  )
+  expect(focusOf(container)).toBe('replay')
+})
+
+test('featured planes get the ring class', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0), flight('2', 49, 5)]}
+      selectedId={null}
+      featuredIds={new Set(['2'])}
+      onSelect={() => {}}
+    />,
+  )
+  expect(screen.getByTitle('CS1').classList.contains('featured')).toBe(false)
+  expect(screen.getByTitle('CS2').classList.contains('featured')).toBe(true)
+})
+
+const storm: WeatherArea = {
+  id: 'w1',
+  hazard: 'thunderstorm',
+  region: 'North Atlantic',
+  altitude_min_ft: 0,
+  altitude_max_ft: 45000,
+  valid_from: 0,
+  valid_to: 1,
+  polygon: [
+    { latitude: 46, longitude: -52 },
+    { latitude: 46, longitude: -44 },
+    { latitude: 51, longitude: -44 },
+    { latitude: 51, longitude: -52 },
+    { latitude: 46, longitude: -52 },
+  ],
+  movement_dir: null,
+  movement_speed_kt: null,
+}
+
+test('a live area is labelled with its severity and name', () => {
+  const live: WeatherArea = {
+    ...storm,
+    hazard: 'tropical_cyclone',
+    severity: null,
+    name: 'Koguma',
+  }
+  const { container } = render(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      onSelect={() => {}}
+      weather={[live]}
+    />,
+  )
+  fireEvent.click(
+    screen.getAllByTitle('Tropical cyclone (Koguma), North Atlantic')[0],
+  )
+  expect(container.querySelector('.weather-label')!.textContent).toContain(
+    'Tropical cyclone (Koguma)',
+  )
+})
+
+test('draws weather icons for each area, and none without weather', () => {
+  const { rerender } = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  expect(screen.queryByTitle('Thunderstorm, North Atlantic')).toBeNull()
+
+  rerender(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={() => {}}
+    />,
+  )
+  expect(
+    screen.getAllByTitle('Thunderstorm, North Atlantic').length,
+  ).toBeGreaterThan(0)
+})
+
+test('the area outline and label only show after clicking an icon', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={() => {}}
+    />,
+  )
+  expect(container.querySelector('.weather-outline')).toBeNull()
+  expect(container.querySelector('.weather-label')).toBeNull()
+
+  fireEvent.click(screen.getAllByTitle('Thunderstorm, North Atlantic')[0])
+  expect(container.querySelector('.weather-outline polygon')).toBeTruthy()
+  const label = container.querySelector('.weather-label')!.textContent
+  expect(label).toContain('Thunderstorm')
+  expect(label).toContain('North Atlantic')
+  expect(label).toContain('up to 45,000 ft')
+
+  // Clicking the selected area's icon again closes it.
+  fireEvent.click(screen.getAllByTitle('Thunderstorm, North Atlantic')[0])
+  expect(container.querySelector('.weather-outline')).toBeNull()
+})
+
+test('selecting a weather area deselects the flight, and the map background clears it', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId="1"
+      weather={[storm]}
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(screen.getAllByTitle('Thunderstorm, North Atlantic')[0])
+  expect(onSelect).toHaveBeenCalledTimes(1)
+  expect(onSelect).toHaveBeenLastCalledWith(null)
+  expect(container.querySelector('.weather-outline')).toBeTruthy()
+
+  fireEvent.click(container.querySelector('.map')!)
+  expect(container.querySelector('.weather-outline')).toBeNull()
+})
+
+test('selecting a plane clears the selected weather area', () => {
+  const onSelect = vi.fn()
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(screen.getAllByTitle('Thunderstorm, North Atlantic')[0])
+  fireEvent.click(screen.getByTitle('CS1'))
+  expect(container.querySelector('.weather-outline')).toBeNull()
+  expect(onSelect).toHaveBeenLastCalledWith('1')
+})
+
+test('zooming in adds icons for a large area without moving the first', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={() => {}}
+    />,
+  )
+  const icons = () =>
+    [...container.querySelectorAll<HTMLElement>('.weather-icon')].map(
+      (el) => `${el.style.left},${el.style.top}`,
+    )
+  const before = icons()
+  for (let i = 0; i < 4; i++)
+    fireEvent.click(screen.getByRole('button', { name: 'Zoom in' }))
+  const after = icons()
+  expect(after.length).toBeGreaterThan(before.length)
+  expect(after[0]).toBe(before[0])
+})
+
+test('there is no weather control without weather, and it returns with it', () => {
+  const props = {
+    flights: [flight('1', 50, 0)],
+    selectedId: null,
+    onSelect: () => {},
+  }
+  const { rerender } = render(<FlightMap {...props} weather={[]} />)
+  expect(screen.queryByRole('button', { name: 'Weather' })).toBeNull()
+  expect(screen.getByRole('button', { name: 'Zoom in' })).toBeTruthy() // the others stay
+
+  rerender(<FlightMap {...props} weather={[storm]} />)
+  expect(screen.getByRole('button', { name: 'Weather' })).toBeTruthy()
+})
+
+test('a weather control switched off stays off when the weather drops out and returns', () => {
+  const props = {
+    flights: [flight('1', 50, 0)],
+    selectedId: null,
+    onSelect: () => {},
+  }
+  const { rerender } = render(<FlightMap {...props} weather={[storm]} />)
+  fireEvent.click(screen.getByRole('button', { name: 'Weather' }))
+
+  rerender(<FlightMap {...props} weather={[]} />)
+  rerender(<FlightMap {...props} weather={[storm]} />)
+  const toggle = screen.getByRole('button', { name: 'Weather' })
+  expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  expect(screen.queryByTitle('Thunderstorm, North Atlantic')).toBeNull()
+})
+
+test('the weather control hides and shows the icons, planes stay', () => {
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={() => {}}
+    />,
+  )
+  const toggle = screen.getByRole('button', { name: 'Weather' })
+  expect(toggle.getAttribute('aria-pressed')).toBe('true')
+  expect(
+    screen.getAllByTitle('Thunderstorm, North Atlantic').length,
+  ).toBeGreaterThan(0)
+
+  fireEvent.click(toggle)
+  expect(toggle.getAttribute('aria-pressed')).toBe('false')
+  expect(screen.queryByTitle('Thunderstorm, North Atlantic')).toBeNull()
+  expect(screen.getByTitle('CS1')).toBeTruthy()
+
+  fireEvent.click(toggle)
+  expect(
+    screen.getAllByTitle('Thunderstorm, North Atlantic').length,
+  ).toBeGreaterThan(0)
+})
+
+test('hiding the weather drops the selected area, and showing it again starts clean', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[]}
+      selectedId={null}
+      weather={[storm]}
+      onSelect={() => {}}
+    />,
+  )
+  fireEvent.click(screen.getAllByTitle('Thunderstorm, North Atlantic')[0])
+  expect(container.querySelector('.weather-outline')).toBeTruthy()
+
+  const toggle = screen.getByRole('button', { name: 'Weather' })
+  fireEvent.click(toggle)
+  expect(container.querySelector('.weather-outline')).toBeNull()
+  expect(container.querySelector('.weather-label')).toBeNull()
+
+  fireEvent.click(toggle)
+  expect(container.querySelector('.weather-outline')).toBeNull()
+})
+
+test('the weather control does not deselect the flight', () => {
+  const onSelect = vi.fn()
+  render(
+    <FlightMap
+      flights={[]}
+      selectedId="1"
+      weather={[storm]}
+      onSelect={onSelect}
+    />,
+  )
+  fireEvent.click(screen.getByRole('button', { name: 'Weather' }))
+  expect(onSelect).not.toHaveBeenCalled()
+})
+
+test('the world layer is drawn larger and scaled down, so the view is unchanged', () => {
+  const { container } = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  const world = container.querySelector<HTMLElement>('.map-world')!
+  const zoom = Number(world.style.getPropertyValue('--real-zoom'))
+  const scale = Number(world.style.getPropertyValue('--zoom'))
+  // Larger than the box by the factor it is scaled down by: same size on screen.
+  const larger = parseFloat(world.style.width) / 100
+  expect(larger).toBeGreaterThan(1)
+  expect(scale * larger).toBeCloseTo(zoom)
+  expect(world.style.transform).toContain(`scale(${scale})`)
+})
+
+// A ResizeObserver that reports one fixed size as soon as it observes.
+function stubBoxSize(width: number, height: number) {
+  vi.stubGlobal(
+    'ResizeObserver',
+    class {
+      cb: (e: unknown[]) => void
+      constructor(cb: (e: unknown[]) => void) {
+        this.cb = cb
+      }
+      observe() {
+        this.cb([{ contentRect: { width, height } }])
+      }
+      disconnect() {}
+    },
+  )
+}
+
+test('a tall box draws the world wider than the box, and a wide one does not', () => {
+  stubBoxSize(300, 225) // 4:3, like a phone held upright
+  const tall = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  const widthOf = (c: HTMLElement) =>
+    parseFloat(c.querySelector<HTMLElement>('.map-world')!.style.width)
+  const tallWidth = widthOf(tall.container)
+  cleanup()
+
+  stubBoxSize(700, 272) // shaped like the world
+  const wide = render(
+    <FlightMap flights={[]} selectedId={null} onSelect={() => {}} />,
+  )
+  expect(widthOf(wide.container)).toBe(300) // WORLD_SCALE x 100%
+  expect(tallWidth).toBeGreaterThan(300 * 1.5)
+  vi.unstubAllGlobals()
+})
+
+test('in a tall box only the planes in the visible part of the world are drawn', () => {
+  stubBoxSize(300, 225)
+  render(
+    <FlightMap
+      flights={[flight('1', 50, 10), flight('2', -30, 150)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  // The map opens on Europe: Europe is drawn, Australia is out of the box.
+  expect(screen.queryByTitle('CS1')).toBeTruthy()
+  expect(screen.queryByTitle('CS2')).toBeNull()
+  vi.unstubAllGlobals()
+})
+
+// The map box is overflow: clip, so the browser can't scroll a focused plane
+// into view: the map pans to it instead.
+test('tabbing to a plane outside the box pans the map to it', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true })) // pan at once
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 10)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const world = container.querySelector('.map-world') as HTMLElement
+  const plane = screen.getByTitle('CS1')
+  const rect = (left: number) =>
+    ({
+      left,
+      right: left + 28,
+      top: 100,
+      bottom: 128,
+      width: 28,
+      height: 28,
+    }) as DOMRect
+  vi.spyOn(
+    container.querySelector('.map')!,
+    'getBoundingClientRect',
+  ).mockReturnValue({
+    left: 0,
+    right: 1000,
+    top: 0,
+    bottom: 400,
+    width: 1000,
+    height: 400,
+  } as DOMRect)
+  vi.spyOn(plane, 'matches').mockReturnValue(true) // as if focused by keyboard
+
+  // Inside the box: nothing moves.
+  vi.spyOn(plane, 'getBoundingClientRect').mockReturnValue(rect(500))
+  const before = world.style.transform
+  fireEvent.focus(plane)
+  expect(world.style.transform).toBe(before)
+
+  // Outside it (to the right): the view shifts.
+  vi.spyOn(plane, 'getBoundingClientRect').mockReturnValue(rect(1500))
+  fireEvent.focus(plane)
+  expect(world.style.transform).not.toBe(before)
+  vi.unstubAllGlobals()
+})

@@ -1,4 +1,4 @@
-import type { Flight } from './types'
+import type { Flight } from './data/types'
 
 // A valid flight for tests: pass only the fields a test cares about.
 export const makeFlight = (overrides: Partial<Flight> = {}): Flight => ({

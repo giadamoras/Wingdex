@@ -17,7 +17,10 @@ needs a written agreement for public use (see the data terms below), and hosting
 `docs/plan.md` has the scope and roadmap, and `docs/history.md` how it was built.
 
 - `backend/` — Python + FastAPI (flight and weather data API)
-- `frontend/` — React + TypeScript + Vite
+- `frontend/` — React + TypeScript + Vite. `src/` is grouped by feature (`map/`, `card/`, `collection/`,
+  `quest/`, `onboarding/`, `data/`), with `shared-ui/` and `shared-lib/` for what several features use,
+  and `styles/` for the stylesheets (`index.css` lists them in cascade order). Tests sit next to the code
+  they test.
 
 ## Setup
 

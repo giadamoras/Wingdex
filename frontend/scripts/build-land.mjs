@@ -1,11 +1,11 @@
-// One-off generator for src/worldLandData.ts: downloads Natural Earth's 1:110m land
+// One-off generator for src/map/worldLandData.ts: downloads Natural Earth's 1:110m land
 // polygons (public domain) and writes them as compact [lon, lat] rings.
 // Run from frontend/: node scripts/build-land.mjs
 import { writeFileSync } from 'node:fs'
 
 const SOURCE =
   'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_110m_land.geojson'
-const OUT = new URL('../src/worldLandData.ts', import.meta.url)
+const OUT = new URL('../src/map/worldLandData.ts', import.meta.url)
 const SOUTH_LIMIT = -60 // matches MAP_BOUNDS.south: Antarctica is left out
 
 const round = (n) => Math.round(n * 10) / 10 // 0.1 degree is plenty at 1:110m

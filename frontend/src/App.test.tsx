@@ -1,23 +1,23 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
-import { fetchDataSources, fetchWeather } from './api'
-import { QUEST_STORAGE_KEY, saveDailyQuest } from './dailyQuest'
-import { dayKey } from './dates'
-import { loadJournal, saveJournal } from './journal'
-import { JournalProvider } from './JournalContext'
-import { markOnboardingSeen } from './onboardingSeen'
-import { QUEST_TEMPLATES } from './quest'
-import type { WeatherArea } from './types'
-import { ROUTE_LOOKUP_DELAY_MS } from './useFlightRoute'
-import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './useFlights'
-import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './useWeather'
+import { fetchDataSources, fetchWeather } from './data/api'
+import { QUEST_STORAGE_KEY, saveDailyQuest } from './quest/dailyQuest'
+import { dayKey } from './shared-lib/dates'
+import { loadJournal, saveJournal } from './collection/journal'
+import { JournalProvider } from './collection/JournalContext'
+import { markOnboardingSeen } from './onboarding/onboardingSeen'
+import { QUEST_TEMPLATES } from './quest/quest'
+import type { WeatherArea } from './data/types'
+import { ROUTE_LOOKUP_DELAY_MS } from './card/useFlightRoute'
+import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './data/useFlights'
+import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './data/useWeather'
 
 // Only the weather request is replaced. The tests below stub the global fetch
 // in the order flights are requested, and a second request on mount would
 // break that, so weather gets its own mock (set per test in beforeEach).
-vi.mock('./api', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('./api')>()),
+vi.mock('./data/api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./data/api')>()),
   fetchWeather: vi.fn(),
   fetchDataSources: vi.fn(),
 }))
