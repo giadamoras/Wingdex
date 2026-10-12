@@ -102,7 +102,7 @@ export function Onboarding({
   )
   // With a card open the bubble is a click-through hint (no buttons), so it
   // can never block the card's own Catch/journey buttons. Reduced motion turns off the
-// enter and exit animations, so everything appears and unmounts at once.
+  // enter and exit animations, so everything appears and unmounts at once.
   const bubbleClass = cardOpen ? 'onboarding-bubble hint' : 'onboarding-bubble'
 
   return (

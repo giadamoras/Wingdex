@@ -23,7 +23,6 @@ export function BadgePopup({
     return () => clearTimeout(timer)
   }, [badge, onDismiss])
 
-
   const content = (
     <>
       <span className="badge-popup-icon" aria-hidden="true">
