@@ -740,7 +740,7 @@ test('the Badges tab reflects unlocked and locked badges', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
 
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
-  fireEvent.click(screen.getByRole('tab', { name: 'Badges' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Badges' }))
 
   expect(screen.getByText('First Catch').closest('li')?.className).toContain(
     'unlocked',
@@ -784,7 +784,7 @@ test('the Facts tab shows each learned fact once, even from repeat catches', asy
   await act(() => vi.advanceTimersByTimeAsync(0))
 
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
-  fireEvent.click(screen.getByRole('tab', { name: 'Facts' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Facts' }))
 
   expect(screen.getByRole('heading', { name: 'Facts (1)' })).toBeTruthy()
   expect(screen.getAllByText('Repeated fact.')).toHaveLength(1)

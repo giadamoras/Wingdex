@@ -37,8 +37,8 @@ export interface ReplayState {
 }
 
 // Runs one replay at a time, ticking every animation frame while active.
-// Under reduced motion there is no ghost: the replay ends right away, so only
-// the camera fit (done by the map) remains.
+// It also runs under reduced motion: the journey is what the button asks for,
+// and only the camera fit (done by the map) becomes instant.
 export function useReplay() {
   const [run, setRun] = useState<{ flight: Flight; startedAt: number } | null>(
     null,
@@ -56,7 +56,7 @@ export function useReplay() {
         t - run.startedAt,
         run.flight.duration_min ?? 0,
       )
-      if (phase === 'done' || prefersReducedMotion()) setRun(null)
+      if (phase === 'done') setRun(null)
       else {
         setNow(t)
         frame = requestAnimationFrame(tick)

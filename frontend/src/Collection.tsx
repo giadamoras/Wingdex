@@ -7,39 +7,32 @@ import { useJournalContext } from './useJournalContext'
 
 type Tab = 'journal' | 'badges' | 'facts'
 
-// Journal, Badges and Facts tabs, reached from the map (simple view state
-// in App.tsx, no router).
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'journal', label: 'Journal' },
+  { id: 'badges', label: 'Badges' },
+  { id: 'facts', label: 'Facts' },
+]
+
+// Journal, Badges and Facts views, reached from the map (simple view state
+// in App.tsx, no router). The switcher is plain toggle buttons, not an ARIA
+// tablist, which would also need panels and arrow-key navigation.
 export function Collection() {
   const { journal } = useJournalContext()
   const [tab, setTab] = useState<Tab>('journal')
 
   return (
     <section className="collection">
-      <div className="collection-tabs" role="tablist">
-        <button
-          role="tab"
-          aria-selected={tab === 'journal'}
-          className={tab === 'journal' ? 'tab active' : 'tab'}
-          onClick={() => setTab('journal')}
-        >
-          Journal
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'badges'}
-          className={tab === 'badges' ? 'tab active' : 'tab'}
-          onClick={() => setTab('badges')}
-        >
-          Badges
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'facts'}
-          className={tab === 'facts' ? 'tab active' : 'tab'}
-          onClick={() => setTab('facts')}
-        >
-          Facts
-        </button>
+      <div className="collection-tabs">
+        {TABS.map(({ id, label }) => (
+          <button
+            key={id}
+            aria-pressed={tab === id}
+            className={tab === id ? 'tab active' : 'tab'}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
       {tab === 'journal' && <JournalList entries={journal} />}
       {tab === 'badges' && (

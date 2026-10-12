@@ -1361,6 +1361,11 @@ main.has-onboarding {
     animation: none;
   }
 
+  /* Planes hop to each new position instead of gliding for 5 s. */
+  .plane {
+    transition: none;
+  }
+
   .plane-departing {
     display: none; /* the plane just snaps */
   }

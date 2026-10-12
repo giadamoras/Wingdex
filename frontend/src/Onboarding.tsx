@@ -2,9 +2,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { Mascot, type MascotMood } from './Mascot'
 import { prefersReducedMotion } from './replay'
+import { springIn } from './springIn'
 import type { OnboardingStep } from './useOnboarding'
-
-const SPRING = { type: 'spring' as const, stiffness: 400, damping: 22 }
 const TYPE_MS = 25 // per character
 
 // How much of `text` has been "typed" so far. Progress is stored with the text
@@ -47,8 +46,8 @@ function lineFor(step: OnboardingStep, hasTarget: boolean, cardOpen: boolean) {
 // The mascot stays docked bottom-left for the whole flow and "says" each step
 // in a speech bubble beside it. While a card is open the bubble
 // shrinks to a click-through hint (see .hint in index.css), because its fixed
-// position could otherwise block the card's own Catch/journey buttons. Built with Framer Motion, except
-// under reduced motion, where it uses plain <div>s with no transitions.
+// position could otherwise block the card's own Catch/journey buttons. Reduced motion turns off the
+// enter and exit animations, so everything appears and unmounts at once.
 export function Onboarding({
   step,
   cardOpen,
@@ -102,28 +101,21 @@ export function Onboarding({
     </>
   )
   // With a card open the bubble is a click-through hint (no buttons), so it
-  // can never block the card's own Catch/journey buttons.
+  // can never block the card's own Catch/journey buttons. Reduced motion turns off the
+// enter and exit animations, so everything appears and unmounts at once.
   const bubbleClass = cardOpen ? 'onboarding-bubble hint' : 'onboarding-bubble'
 
-  if (reduced)
-    return (
-      step && (
-        <div className="onboarding" role="status">
-          <Mascot className="onboarding-mascot" mood={mood} />
-          {step && <div className={bubbleClass}>{bubbleContent}</div>}
-        </div>
-      )
-    )
   return (
     <AnimatePresence>
       {step && (
         <motion.div
           className="onboarding"
           role="status"
-          initial={{ opacity: 0, y: 20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          transition={SPRING}
+          {...springIn(
+            { opacity: 0, y: 20, scale: 0.9 },
+            { opacity: 1, y: 0, scale: 1 },
+            { opacity: 0, y: 20, scale: 0.9 },
+          )}
         >
           <Mascot className="onboarding-mascot" mood={mood} />
           <AnimatePresence mode="wait">
@@ -132,10 +124,11 @@ export function Onboarding({
                 key={`${step}-${cardOpen}`}
                 className={bubbleClass}
                 style={{ originX: 0, originY: 1 }}
-                initial={{ opacity: 0, scale: 0.7 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.7 }}
-                transition={SPRING}
+                {...springIn(
+                  { opacity: 0, scale: 0.7 },
+                  { opacity: 1, scale: 1 },
+                  { opacity: 0, scale: 0.7 },
+                )}
               >
                 {bubbleContent}
               </motion.div>

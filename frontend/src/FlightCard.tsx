@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import type { Flight, FlightRoute, WeatherArea } from './types'
 import { formatClimb, formatDuration } from './format'
 import { getFact } from './facts'
-import { prefersReducedMotion } from './replay'
+import { springIn } from './springIn'
 import { Stamp } from './Stamp'
 import type { RouteStatus } from './useFlightRoute'
 
@@ -70,17 +70,19 @@ export function FlightCard({
             {climb}
           </span>
         )}
-        {flight.duration_min !== null &&
-          (flight.duration_estimated ? (
-            <span
-              className="chip estimate"
-              title="Estimated from the distance, not a scheduled time"
-            >
-              ~{formatDuration(flight.duration_min)}
-            </span>
-          ) : (
-            <span className="chip">{formatDuration(flight.duration_min)}</span>
-          ))}
+        {flight.duration_min !== null && (
+          <span
+            className={flight.duration_estimated ? 'chip estimate' : 'chip'}
+            title={
+              flight.duration_estimated
+                ? 'Estimated from the distance, not a scheduled time'
+                : undefined
+            }
+          >
+            {flight.duration_estimated && '~'}
+            {formatDuration(flight.duration_min)}
+          </span>
+        )}
       </header>
       {/* Route only when known: the feed has it, or the lookup found it. */}
       {flight.origin && flight.destination ? (
@@ -129,15 +131,10 @@ export function FlightCard({
     </>
   )
 
-  // Reduced motion: skip Framer Motion entirely, not just shorten it.
-  if (prefersReducedMotion())
-    return <section className="card passport-page">{content}</section>
   return (
     <motion.section
       className="card passport-page"
-      initial={{ scale: 0.6, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 400, damping: 22 }}
+      {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
     >
       {content}
     </motion.section>
