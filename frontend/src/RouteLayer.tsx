@@ -68,6 +68,11 @@ function RouteLine({
   )
 }
 
+// A part of the route shorter than this share of it is left out. A plane that
+// has arrived (or has just left) has a part of almost no length, and a line
+// that short, with its round ends, was drawn as a big grey oval on phones.
+const MIN_PART = 0.005
+
 // The selected flight's route, drawn above the other planes (but under the
 // selected one, see styles/route.css). It is the great circle from origin to
 // destination, bent so it passes exactly through the plane (see curveThrough):
@@ -117,8 +122,18 @@ export function RouteLayer({
           <RouteLine className="route-ahead" points={toSvg(curve())} />
         ) : (
           <>
-            <RouteLine className="route-flown" points={toSvg(curve(0, done))} />
-            <RouteLine className="route-ahead" points={toSvg(curve(done, 1))} />
+            {done > MIN_PART && (
+              <RouteLine
+                className="route-flown"
+                points={toSvg(curve(0, done))}
+              />
+            )}
+            {done < 1 - MIN_PART && (
+              <RouteLine
+                className="route-ahead"
+                points={toSvg(curve(done, 1))}
+              />
+            )}
           </>
         )}
         {replay &&

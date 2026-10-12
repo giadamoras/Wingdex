@@ -80,6 +80,29 @@ test('each route line has an outline underneath it', () => {
   expect(lines[2].getAttribute('points')).toBe(lines[3].getAttribute('points'))
 })
 
+// A part with almost no length was drawn as a grey oval on phones.
+test('no dashed line is drawn once the plane has arrived', () => {
+  const arrived = {
+    ...flight,
+    latitude: jfk.latitude,
+    longitude: jfk.longitude,
+  }
+  const { container } = render(<RouteLayer flight={arrived} replay={null} />)
+  expect(container.querySelector('.route-ahead')).toBeNull()
+  expect(container.querySelector('.route-flown')).not.toBeNull()
+})
+
+test('no solid line is drawn for a plane that is still at its origin', () => {
+  const leaving = {
+    ...flight,
+    latitude: lhr.latitude,
+    longitude: lhr.longitude,
+  }
+  const { container } = render(<RouteLayer flight={leaving} replay={null} />)
+  expect(container.querySelector('.route-flown')).toBeNull()
+  expect(container.querySelector('.route-ahead')).not.toBeNull()
+})
+
 test('the replay ghost and trail follow the curve through the plane', () => {
   const replay: ReplayState = {
     flight,
