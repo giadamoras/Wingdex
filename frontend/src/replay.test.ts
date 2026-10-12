@@ -1,7 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { FIT_MS, flyMs, LAND_MS, replayAt, useReplay } from './replay'
-import type { Flight } from './types'
+import { makeFlight } from './testFlight'
 
 test('about one second of replay per hour of flight', () => {
   expect(flyMs(360)).toBe(6000)
@@ -28,7 +28,7 @@ test('a replay keeps running under reduced motion', () => {
   vi.useFakeTimers()
   vi.stubGlobal('matchMedia', () => ({ matches: true }))
   const { result } = renderHook(() => useReplay())
-  const flight = { id: 'a', duration_min: 95 } as Flight
+  const flight = makeFlight({ id: 'a' })
   act(() => result.current.start(flight))
   act(() => vi.advanceTimersByTime(FIT_MS + 1000))
   expect(result.current.replay?.phase).toBe('flying')

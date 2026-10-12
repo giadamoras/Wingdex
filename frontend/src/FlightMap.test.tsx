@@ -3,22 +3,18 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { FlightMap } from './FlightMap'
 import { MAP_BOUNDS } from './projection'
 import type { Flight, WeatherArea } from './types'
+import { makeFlight } from './testFlight'
 
 afterEach(cleanup) // unmount between tests so titles don't collide
 
-const flight = (id: string, latitude: number, longitude: number): Flight => ({
-  id,
-  callsign: `CS${id}`,
-  aircraft_type: 'A320',
-  latitude,
-  longitude,
-  altitude_ft: 30000,
-  heading: 90,
-  speed_kt: 450,
-  duration_min: 60,
-  origin: null,
-  destination: null,
-})
+const flight = (id: string, latitude: number, longitude: number): Flight =>
+  makeFlight({
+    id,
+    callsign: `CS${id}`,
+    latitude,
+    longitude,
+    duration_min: 60,
+  })
 
 test('renders one dot per flight in view at its projected position', () => {
   const { west, north } = MAP_BOUNDS

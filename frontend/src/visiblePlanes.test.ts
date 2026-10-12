@@ -4,20 +4,19 @@ import { project } from './projection'
 import type { Flight } from './types'
 import { hashString } from './hash'
 import { TOUCH_VIEW_CAP, visibleFlights, VIEW_CAP } from './visiblePlanes'
+import { makeFlight } from './testFlight'
 
-const plane = (id: string, latitude: number, longitude: number): Flight => ({
-  id,
-  callsign: id,
-  aircraft_type: null,
-  latitude,
-  longitude,
-  altitude_ft: 30000,
-  heading: 0,
-  speed_kt: 400,
-  duration_min: null,
-  origin: null,
-  destination: null,
-})
+const plane = (id: string, latitude: number, longitude: number): Flight =>
+  makeFlight({
+    id,
+    callsign: id,
+    aircraft_type: null,
+    latitude,
+    longitude,
+    heading: 0,
+    speed_kt: 400,
+    duration_min: null,
+  })
 
 // n planes spread over the whole map in a grid.
 const spread = (n: number) =>

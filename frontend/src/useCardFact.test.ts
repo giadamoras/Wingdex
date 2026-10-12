@@ -4,6 +4,7 @@ import { getFact } from './facts'
 import { useCardFact } from './useCardFact'
 import type { RouteStatus } from './useFlightRoute'
 import type { Flight } from './types'
+import { makeFlight } from './testFlight'
 
 // Each call returns a new fact, so a recompute shows up as a changed text.
 vi.mock('./facts', () => ({ getFact: vi.fn() }))
@@ -14,7 +15,7 @@ beforeEach(() => {
 })
 
 const flight = (id: string, altitude_ft = 30000) =>
-  ({ id, altitude_ft }) as Flight
+  makeFlight({ id, altitude_ft })
 
 type Props = { flight: Flight | null; status: RouteStatus }
 const renderFact = (initial: Props) =>

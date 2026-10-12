@@ -3,25 +3,15 @@ import { afterEach, expect, test, vi } from 'vitest'
 import { JournalProvider } from './JournalContext'
 import { useJournalContext } from './useJournalContext'
 import type { Flight } from './types'
+import { makeFlight } from './testFlight'
 
 afterEach(() => {
   vi.useRealTimers()
   localStorage.clear()
 })
 
-const flight = (id: string): Flight => ({
-  id,
-  callsign: id,
-  aircraft_type: 'A320',
-  latitude: 50,
-  longitude: 0,
-  altitude_ft: 36000,
-  heading: 90,
-  speed_kt: 450,
-  duration_min: 95,
-  origin: null,
-  destination: null,
-})
+const flight = (id: string): Flight =>
+  makeFlight({ id, callsign: id, altitude_ft: 36000 })
 
 const renderJournal = () =>
   renderHook(() => useJournalContext(), { wrapper: JournalProvider })

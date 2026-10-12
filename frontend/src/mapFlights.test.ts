@@ -1,20 +1,16 @@
 import { expect, test } from 'vitest'
 import { flightsForMap } from './mapFlights'
 import type { Flight } from './types'
+import { makeFlight } from './testFlight'
 
-const flight = (id: string, altitude_ft = 30000): Flight => ({
-  id,
-  callsign: id.toUpperCase(),
-  aircraft_type: 'A320',
-  latitude: 48.5,
-  longitude: 2.3,
-  altitude_ft,
-  heading: 90,
-  speed_kt: 450,
-  duration_min: 95,
-  origin: null,
-  destination: null,
-})
+const flight = (id: string, altitude_ft = 30000): Flight =>
+  makeFlight({
+    id,
+    callsign: id.toUpperCase(),
+    altitude_ft,
+    latitude: 48.5,
+    longitude: 2.3,
+  })
 
 const feed = [flight('a'), flight('b')]
 

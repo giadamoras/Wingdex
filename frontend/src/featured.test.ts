@@ -2,20 +2,16 @@ import { expect, test } from 'vitest'
 import { pickFeatured } from './featured'
 import type { Quest } from './quest'
 import type { Flight } from './types'
+import { makeFlight } from './testFlight'
 
-const flight = (id: string, aircraft_type: string | null): Flight => ({
-  id,
-  callsign: id.toUpperCase(),
-  aircraft_type,
-  latitude: 48.5,
-  longitude: 2.3,
-  altitude_ft: 30000,
-  heading: 90,
-  speed_kt: 450,
-  duration_min: 95,
-  origin: null,
-  destination: null,
-})
+const flight = (id: string, aircraft_type: string | null): Flight =>
+  makeFlight({
+    id,
+    callsign: id.toUpperCase(),
+    aircraft_type,
+    latitude: 48.5,
+    longitude: 2.3,
+  })
 
 const day = '2026-09-28'
 const none = new Set<string>()
