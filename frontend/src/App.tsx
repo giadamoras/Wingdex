@@ -14,6 +14,7 @@ import { prefersReducedMotion, useReplay } from './replay'
 import { mergeRoute } from './route'
 import type { Flight, WeatherArea } from './types'
 import { useBadgeUnlocks } from './useBadgeUnlocks'
+import { useCardFact } from './useCardFact'
 import { useDailyQuest } from './useDailyQuest'
 import { useDataSources } from './useDataSources'
 import { useFeatured } from './useFeatured'
@@ -67,6 +68,7 @@ function App() {
   // Journal all use.
   const lookup = useFlightRoute(selected)
   const current = selected && mergeRoute(selected, lookup.route)
+  const fact = useCardFact(current, lookup.status, weatherAreas)
 
   // Selecting another flight or closing the card cancels a replay.
   const select = (id: string | null) => {
@@ -102,7 +104,7 @@ function App() {
   // A catch that finishes the quest also scrolls to the top, where the quest
   // strip and its "Done!" stamp are, so it's noticed while reading the card.
   const catchFlight = () => {
-    if (!current) return
+    if (!current || fact === null) return
     const questId = questIdForCatch(
       quest,
       questDone,
@@ -110,7 +112,7 @@ function App() {
       new Date(),
       weatherAreas,
     )
-    addCatch(current, questId, weatherAreas)
+    addCatch(current, fact, questId)
     if (questId !== undefined) scrollToTop()
   }
 
@@ -187,7 +189,7 @@ function App() {
               {current && (
                 <FlightCard
                   flight={current}
-                  weather={weatherAreas}
+                  fact={fact ?? ''}
                   routeStatus={lookup.status}
                   details={lookup.route}
                   lost={lost}

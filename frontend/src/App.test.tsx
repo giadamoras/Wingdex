@@ -4,7 +4,7 @@ import App from './App'
 import { fetchDataSources, fetchWeather } from './api'
 import { QUEST_STORAGE_KEY, saveDailyQuest } from './dailyQuest'
 import { dayKey } from './dates'
-import { saveJournal } from './journal'
+import { loadJournal, saveJournal } from './journal'
 import { JournalProvider } from './JournalContext'
 import { markOnboardingSeen } from './onboardingSeen'
 import { QUEST_TEMPLATES } from './quest'
@@ -757,6 +757,16 @@ test('the Badges tab reflects unlocked and locked badges', async () => {
   expect(screen.getByText('Ocean Crosser').closest('li')?.className).toContain(
     'locked',
   )
+})
+
+test('the Journal saves the fact the card showed', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  const { container } = renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  const shown = container.querySelector('.fact')?.textContent ?? ''
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(shown).toContain(loadJournal()[0].fact)
 })
 
 test('Journal entries show only the stamp, not the fact', async () => {

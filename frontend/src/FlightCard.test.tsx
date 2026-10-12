@@ -54,7 +54,7 @@ function card(f: Flight, d: FlightRoute | null) {
   render(
     <FlightCard
       flight={f}
-      weather={[]}
+      fact="A fact."
       routeStatus={d ? 'ready' : 'idle'}
       details={d}
       lost={false}

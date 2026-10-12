@@ -28,10 +28,10 @@ const renderJournal = () =>
 
 test('the same flight is added once a day, another flight is added', () => {
   const { result } = renderJournal()
-  act(() => result.current.addCatch(flight('f1')))
-  act(() => result.current.addCatch(flight('f1')))
+  act(() => result.current.addCatch(flight('f1'), 'A fact.'))
+  act(() => result.current.addCatch(flight('f1'), 'A fact.'))
   expect(result.current.journal).toHaveLength(1)
-  act(() => result.current.addCatch(flight('f2')))
+  act(() => result.current.addCatch(flight('f2'), 'A fact.'))
   expect(result.current.journal).toHaveLength(2)
 })
 
@@ -39,8 +39,8 @@ test('the same flight can be caught again the next day', () => {
   vi.useFakeTimers()
   vi.setSystemTime(new Date(2026, 8, 25, 12))
   const { result } = renderJournal()
-  act(() => result.current.addCatch(flight('f1')))
+  act(() => result.current.addCatch(flight('f1'), 'A fact.'))
   vi.setSystemTime(new Date(2026, 8, 26, 12))
-  act(() => result.current.addCatch(flight('f1')))
+  act(() => result.current.addCatch(flight('f1'), 'A fact.'))
   expect(result.current.journal).toHaveLength(2)
 })

@@ -1,7 +1,6 @@
 import { motion } from 'framer-motion'
-import type { Flight, FlightRoute, WeatherArea } from './types'
+import type { Flight, FlightRoute } from './types'
 import { formatClimb, formatDuration } from './format'
-import { getFact } from './facts'
 import { springIn } from './springIn'
 import { Stamp } from './Stamp'
 import type { RouteStatus } from './useFlightRoute'
@@ -15,7 +14,7 @@ import type { RouteStatus } from './useFlightRoute'
 // learned (airline, tail number, ...), listed under the route when present.
 export function FlightCard({
   flight,
-  weather,
+  fact,
   routeStatus,
   details,
   lost,
@@ -27,7 +26,7 @@ export function FlightCard({
   onStopReplay,
 }: {
   flight: Flight
-  weather: WeatherArea[] // hazards the flight may be in, for its fact
+  fact: string // from useCardFact: stays the same while the card is open
   routeStatus: RouteStatus
   details: FlightRoute | null
   lost: boolean
@@ -109,7 +108,7 @@ export function FlightCard({
         <p className="lost">Signal lost - showing last known position.</p>
       )}
       <p className="fact">
-        <strong>Did you know?</strong> {getFact(flight, new Date(), weather)}
+        <strong>Did you know?</strong> {fact}
       </p>
       <div className="card-actions">
         {caught ? (
