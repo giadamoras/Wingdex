@@ -1,0 +1,126 @@
+/* Onboarding (Onboarding.tsx): the mascot docked bottom-left for the whole
+   flow, with a speech bubble beside it (BadgePopup is bottom-right, so a
+   badge unlock never collides). The wrapper ignores clicks so only the mascot
+   and bubble themselves intercept them. */
+.onboarding {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+
+.onboarding > * {
+  pointer-events: auto;
+}
+
+.onboarding-mascot {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 3px 3px 0 rgb(31 58 74 / 25%);
+}
+
+/* Speech bubble; the tail is two stacked triangles (ink outline + fill). */
+.onboarding-bubble {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  max-width: 260px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 rgb(31 58 74 / 25%);
+}
+
+.onboarding-bubble::before,
+.onboarding-bubble::after {
+  content: '';
+  position: absolute;
+  bottom: 14px;
+  border-style: solid;
+  border-color: transparent;
+}
+
+.onboarding-bubble::before {
+  left: -17px;
+  border-width: 9px 14px 9px 0;
+  border-right-color: var(--ink);
+}
+
+.onboarding-bubble::after {
+  left: -11px;
+  border-width: 7px 11px 7px 0;
+  border-right-color: #fffaf0;
+}
+
+/* Card open: a click-through hint, so it can never block the card's buttons. */
+.onboarding > .hint {
+  pointer-events: none;
+  max-width: 200px;
+}
+
+.onboarding-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.onboarding-body p {
+  margin: 0;
+  line-height: 1.4;
+}
+
+.onboarding-pending {
+  color: transparent;
+}
+
+/* While the mascot is docked, leave room under the page so a card's buttons
+   can scroll clear of it on a short viewport. */
+main.has-onboarding {
+  padding-bottom: 110px;
+}
+
+.onboarding-btn {
+  padding: 6px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.onboarding-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.onboarding-close {
+  margin-left: auto;
+  padding: 0 4px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.onboarding-close:hover {
+  opacity: 1;
+}

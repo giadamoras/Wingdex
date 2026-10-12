@@ -43,7 +43,7 @@ export function WorldLand() {
         {/* One light-to-dark gradient across the whole map (userSpaceOnUse,
             not each polygon's own box), like a poster print lit from the
             north. Stops are colour-mixed from --land, so a time-of-day
-            palette swap (see [data-map-time] in index.css) carries through
+            palette swap (see [data-map-time] in styles/map.css) carries through
             automatically. */}
         <linearGradient
           id="landFill"

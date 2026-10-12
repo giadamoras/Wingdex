@@ -1,0 +1,157 @@
+/* Fixed-position ticket panel below the map. Entrance is FlightCard.tsx's
+   Framer Motion spring now, not this CSS animation. */
+.card {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: #fffaf0;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+}
+
+/* Passport-page treatment: a faint ruled pattern for the flight card. */
+.passport-page {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgb(31 58 74 / 6%) 0,
+    rgb(31 58 74 / 6%) 1px,
+    transparent 1px,
+    transparent 26px
+  );
+}
+
+/* Header band, bled to the card's edges like a passport cover. */
+.passport-strip {
+  margin: -14px -18px 12px;
+  padding: 6px 18px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 13px 13px 0 0;
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 10px;
+  border-bottom: 2px dashed var(--ink);
+}
+
+.card h2 {
+  margin-right: auto;
+  font-size: 1.6rem;
+}
+
+.chip {
+  padding: 2px 12px;
+  background: var(--highlight);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-weight: 700;
+}
+
+/* Fact in a speech-bubble block. */
+.fact {
+  margin: 14px 0;
+  padding: 10px 14px;
+  background: var(--mint);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  line-height: 1.4;
+}
+
+/* Route line under the card header, e.g. "LHR → JFK". */
+.route {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.05em;
+}
+
+/* The cities behind the route's codes, and the extra detail from the lookup. */
+.cities {
+  margin: 2px 0 0;
+  font-size: 0.9rem;
+  opacity: 0.75;
+}
+
+.details {
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.lost,
+.route-note {
+  margin: 10px 0 0;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* A duration worked out from the route, not a scheduled one: dashed outline. */
+.chip.estimate {
+  border-style: dashed;
+}
+
+/* Where the data comes from, under the map. */
+.credits {
+  margin: 12px 0 0;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.catch {
+  padding: 8px 24px;
+  background: var(--accent);
+  color: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.catch:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* Catch (or the caught stamp) and the journey button side by side. */
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Secondary button: paper with an ink outline, next to the coral Catch. */
+.journey {
+  padding: 8px 20px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.journey:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* "Caught today" stamp in the card, where the Catch button would be. */
+.card .stamp {
+  margin: 4px 0 2px 6px;
+}

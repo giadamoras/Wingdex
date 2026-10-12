@@ -1,0 +1,65 @@
+/* Mascot (Mascot.tsx): a chibi cat pilot, cropped like a passport photo bust.
+   Static shapes - only its callers (Onboarding, QuestBanner) animate it. */
+.mascot-fur {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.mascot-scarf {
+  fill: var(--accent);
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.mascot-line {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.mascot-strap {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.mascot-lens {
+  fill: var(--highlight);
+  stroke: var(--ink);
+  stroke-width: 2;
+}
+
+.mascot-blush {
+  fill: var(--accent);
+  opacity: 0.45;
+}
+
+.mascot-eye {
+  fill: var(--ink);
+}
+
+.mascot-sparkle {
+  fill: var(--paper);
+}
+
+.mascot-line-fill {
+  fill: var(--ink);
+}
+
+.mascot-mouth {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.mascot-mouth-open {
+  fill: var(--accent);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+}

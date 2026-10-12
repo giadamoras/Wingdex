@@ -1,0 +1,65 @@
+@import '@fontsource/fredoka/600.css';
+@import '@fontsource/nunito/400.css';
+@import '@fontsource/nunito/700.css';
+
+/* Design tokens: a later region/weather palette shift only swaps these. */
+:root {
+  --paper: #f6ebd3;
+  --ink: #1f3a4a;
+  --sea: #8cc7d9;
+  --land: #ebd8a8;
+  --accent: #e4572e;
+  --highlight: #f2b531;
+  --mint: #9ad1b5;
+  --font-display: 'Fredoka', system-ui, sans-serif;
+  --font-body: 'Nunito', system-ui, sans-serif;
+}
+
+/* Typed as <color> so --sea/--land can be CSS-transitioned (see .map below):
+   an untyped custom property just swaps values instantly, but a registered
+   one lets the browser interpolate through intermediate colors, and every
+   background/fill/color-mix() that reads it recomputes each frame for free. */
+@property --sea {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8cc7d9;
+}
+
+@property --land {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ebd8a8;
+}
+
+/* Keyboard focus ring (not shown for mouse or touch). */
+:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+h1,
+h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  margin: 0;
+}
+
+h1 {
+  margin: 0;
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}

@@ -1,0 +1,52 @@
+/* Title and the Collection toggle, side by side above the quest strip. */
+.app-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+/* Same paper-button look as .journey. */
+.collection-btn {
+  padding: 8px 20px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+/* Onboarding's last step: the mascot says to peek at the Collection. */
+.collection-btn.nudge {
+  background: var(--highlight);
+  animation: nudge 0.9s ease-in-out infinite;
+}
+
+.collection-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+/* "Try again" next to the feed-down messages: a smaller paper button. */
+.retry-btn {
+  margin-left: 10px;
+  padding: 4px 14px;
+  background: #fffaf0;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  cursor: pointer;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.retry-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}

@@ -164,7 +164,7 @@ export function FlightMap({
 
   // The map's sea/land palette follows the solar time at the centre of the
   // current view, so panning to another part of the world can shift it (see
-  // index.css's [data-map-time] rules). Recomputed on every render, which
+  // styles/map.css's [data-map-time] rules). Recomputed on every render, which
   // already happens on pan/zoom and every 5 s poll, so no timer is needed.
   const { px } = centreOf(view, shape)
   const mapTime = timeOfDay(unprojectLongitude(px))
@@ -196,7 +196,7 @@ export function FlightMap({
     animateTo(panBy(view, dx, dy, shape), prefersReducedMotion() ? 0 : 300)
   }
 
-  // Focus mode (index.css): the other planes dim while a flight is selected and
+  // Focus mode (styles/planes.css): the other planes dim while a flight is selected and
   // all but vanish during its journey replay, so its route stays readable.
   const focus = replay ? 'replay' : selected ? 'selected' : undefined
 

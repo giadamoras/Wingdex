@@ -69,7 +69,7 @@ function RouteLine({
 }
 
 // The selected flight's route, drawn above the other planes (but under the
-// selected one, see index.css). It is the great circle from origin to
+// selected one, see styles/route.css). It is the great circle from origin to
 // destination, bent so it passes exactly through the plane (see curveThrough):
 // - normally: solid from the origin to the plane, dashed ahead of it;
 // - during a replay: all dashed, with a ghost plane leaving a solid trail

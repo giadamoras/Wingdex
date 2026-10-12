@@ -1,0 +1,43 @@
+/* Lightweight popup on the map when a badge unlocks, visually distinct from
+   the entry stamp: a toast, not a stamped document. */
+/* Enter/exit are BadgePopup.tsx's Framer Motion spring now, not this CSS
+   animation - which also means it can finally animate away on dismiss. */
+.badge-popup {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 280px;
+  padding: 10px 14px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 14px;
+  box-shadow: 4px 4px 0 rgb(31 58 74 / 35%);
+}
+
+.badge-popup-icon {
+  font-size: 1.6rem;
+}
+
+.badge-popup p {
+  margin: 2px 0 0;
+}
+
+.badge-popup-close {
+  margin-left: auto;
+  padding: 0 6px;
+  background: none;
+  border: none;
+  color: var(--paper);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.badge-popup-close:hover {
+  opacity: 1;
+}

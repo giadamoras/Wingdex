@@ -45,7 +45,7 @@ function lineFor(step: OnboardingStep, hasTarget: boolean, cardOpen: boolean) {
 
 // The mascot stays docked bottom-left for the whole flow and "says" each step
 // in a speech bubble beside it. While a card is open the bubble
-// shrinks to a click-through hint (see .hint in index.css), because its fixed
+// shrinks to a click-through hint (see .hint in styles/onboarding.css), because its fixed
 // position could otherwise block the card's own Catch/journey buttons. Reduced motion turns off the
 // enter and exit animations, so everything appears and unmounts at once.
 export function Onboarding({

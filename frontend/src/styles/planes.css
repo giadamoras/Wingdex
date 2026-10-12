@@ -1,0 +1,120 @@
+.plane {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  /* Centre on the position, and undo the map's zoom so planes keep their size.
+     Zoomed far out they shrink (down to 0.6, at zoom 2.4 and below), because
+     28 px planes pile up into a wall when the whole world is in view. */
+  transform: translate(-50%, -50%)
+    scale(calc(clamp(0.6, var(--real-zoom, 1) / 4, 1) / var(--zoom, 1)));
+  /* Above the land and weather; the selected route is above this (2) and the
+     selected plane above that (3), so the route reads over the traffic. */
+  z-index: 1;
+  /* Glide for one poll interval (5 s, POLL_INTERVAL_MS) so movement looks continuous. */
+  transition:
+    left 5s linear,
+    top 5s linear;
+  animation: fade-in 0.6s ease-out; /* only when a plane first appears */
+}
+
+/* Moved further than it could fly (route restart, coverage gap): snap, don't
+   slide. The icon fades in at its new spot (on the icon, not the plane, which
+   has its own appearance animation), and a copy fades out at the old one. */
+.plane.jump {
+  transition: none;
+}
+
+.plane.jump .plane-icon {
+  animation: fade-in 0.6s ease-out;
+}
+
+.plane-departing {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%)
+    scale(calc(clamp(0.6, var(--real-zoom, 1) / 4, 1) / var(--zoom, 1)));
+  z-index: 1;
+  pointer-events: none;
+  animation: fade-out 0.5s ease-in forwards;
+}
+
+.map[data-focus='replay'] .plane-departing {
+  display: none; /* like the other planes during a replay */
+}
+
+.plane.selected {
+  z-index: 3;
+}
+
+/* Focus mode (FlightMap's data-focus): with a flight selected the other planes
+   dim, and during its journey replay they all but vanish and can't be clicked,
+   so the route stays readable. The dimming is on the icon, not the plane,
+   which has its own fade-in animation. */
+.map[data-focus] .plane:not(.selected) .plane-icon {
+  opacity: 0.3;
+}
+
+.map[data-focus='replay'] .plane:not(.selected) {
+  pointer-events: none;
+}
+
+.map[data-focus='replay'] .plane:not(.selected) .plane-icon {
+  opacity: 0; /* fully: even a faint drop shadow left smudges on the sea */
+}
+
+.map[data-focus='replay'] .plane:not(.selected)::after {
+  display: none; /* the featured and target rings too */
+}
+
+.plane-icon {
+  transition: opacity 0.3s;
+  width: 100%;
+  height: 100%;
+  fill: var(--accent);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  filter: drop-shadow(1px 2px 0 rgb(31 58 74 / 35%));
+}
+
+/* Featured flight: a dashed ink ring that gently pulses. (Ink, not paper: a
+   paper ring vanished against the cream land.) Sits before the selected rule
+   so a selected featured plane shows the solid mustard ring. */
+.plane.featured::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border: 2px dashed var(--ink);
+  border-radius: 50%;
+  animation: featured-pulse 1.8s ease-in-out infinite;
+}
+
+/* Onboarding target: a bold mustard ring with an ink outline and a ripple, so
+   the plane the mascot points at is unmissable on any map palette. */
+.plane.target::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border: 4px solid var(--highlight);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 2px var(--ink),
+    inset 0 0 0 2px var(--ink);
+  animation: target-ripple 1.4s ease-out infinite;
+}
+
+/* Mustard ring that pops in when a plane is selected. */
+.plane.selected::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 3px solid var(--highlight);
+  border-radius: 50%;
+  box-shadow: none; /* clears the target ring's outline when both apply */
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}

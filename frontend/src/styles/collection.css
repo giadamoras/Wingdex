@@ -1,0 +1,143 @@
+/* Journal: a page of stamps below the map. */
+.journal {
+  margin-top: 28px;
+}
+
+.journal h2 {
+  margin-bottom: 12px;
+  font-size: 1.4rem;
+}
+
+.journal-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.journal ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.journal-entry {
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Ink stamp for a catch: multi-line (label, destination, date, callsign),
+   unlike the single-line .stamp used for "Done!" and "Caught today". Static
+   (no landing animation): it's a record of a past catch, not the moment. */
+.entry-stamp {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0;
+  padding: 5px 14px;
+  color: var(--accent);
+  border: 3px double var(--accent);
+  border-radius: 10px;
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  transform: rotate(-6deg);
+}
+
+.entry-stamp-label {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+}
+
+.entry-stamp-code {
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.entry-stamp-date {
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+}
+
+.entry-stamp-callsign {
+  font-size: 0.6rem;
+  opacity: 0.85;
+}
+
+/* Collection screen: Journal, Badges and Facts tabs. */
+.collection-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.tab {
+  padding: 8px 20px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 999px 999px 0 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.tab.active {
+  background: var(--highlight);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.badge-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fffaf0;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 rgb(31 58 74 / 20%);
+}
+
+.badge.locked {
+  opacity: 0.55;
+}
+
+.badge-icon {
+  font-size: 1.6rem;
+}
+
+.badge p {
+  margin: 2px 0 0;
+  opacity: 0.8;
+}
+
+/* Facts tab: each distinct fact learned, in a speech-bubble block like the
+   card's own fact (.fact), stacked below the map. */
+.facts-empty {
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.facts ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact-entry {
+  padding: 10px 14px;
+  background: var(--mint);
+  border: 2px solid var(--ink);
+  border-radius: 14px;
+  line-height: 1.4;
+}

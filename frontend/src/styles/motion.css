@@ -1,0 +1,50 @@
+@keyframes pop {
+  from {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* The ring is a pseudo-element, so it may use transform. */
+@keyframes featured-pulse {
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+}
+
+@keyframes nudge {
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+@keyframes target-ripple {
+  from {
+    transform: scale(0.85);
+  }
+  70%,
+  to {
+    transform: scale(1.2);
+  }
+}
+
+/* Opacity only: a transform here would replace the plane's centring translate. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}

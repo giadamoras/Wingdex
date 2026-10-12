@@ -1,0 +1,109 @@
+/* Weather hazards (WeatherLayer.tsx), under the planes: round stickers in a
+   constant screen size like the planes, each hazard with its own palette
+   colour. Only the clicked area's outline and label are drawn, so the map
+   stays calm. */
+.weather-icon {
+  position: absolute;
+  box-sizing: border-box;
+  width: 26px;
+  height: 26px;
+  padding: 3px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  cursor: pointer;
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
+  box-shadow: 1px 2px 0 rgb(31 58 74 / 35%);
+}
+
+.weather-icon[data-hazard='thunderstorm'] {
+  background: var(--highlight);
+}
+
+.weather-icon[data-hazard='turbulence'] {
+  background: var(--mint);
+}
+
+.weather-icon[data-hazard='mountain_wave'] {
+  background: color-mix(in srgb, var(--accent) 35%, var(--paper));
+}
+
+.weather-icon[data-hazard='icing'] {
+  background: color-mix(in srgb, var(--sea) 35%, white);
+}
+
+.weather-icon[data-hazard='volcanic_ash'] {
+  background: var(--accent);
+}
+
+.weather-icon[data-hazard='tropical_cyclone'] {
+  background: var(--sea);
+}
+
+/* Selected: a paper and ink double ring. */
+.weather-icon.selected {
+  box-shadow:
+    0 0 0 3px var(--paper),
+    0 0 0 5px var(--ink);
+}
+
+.hazard-icon {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/* Line-only glyphs (waves, snowflake, cyclone arms) and the bolt. */
+.hazard-icon .line {
+  fill: none;
+  stroke-width: 2;
+}
+
+.hazard-icon .accent {
+  fill: var(--accent);
+}
+
+/* Clicked area: a faint ink wash with a dashed edge. Widths divided by
+   --zoom like the route lines. */
+.weather-outline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.weather-outline polygon {
+  fill: var(--ink);
+  fill-opacity: 0.12;
+  stroke: var(--ink);
+  stroke-width: calc(2px / var(--zoom, 1));
+  stroke-dasharray: calc(6px / var(--zoom, 1)) calc(4px / var(--zoom, 1));
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Hazard, region and altitude band under the area's first icon, in the
+   chip style. The last translate is applied after the scale, so it is a
+   screen-pixel gap at any zoom. */
+.weather-label {
+  position: absolute;
+  padding: 2px 8px;
+  background: var(--highlight);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 4; /* over every plane (1-3) and the route, so busy skies can't hide it */
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)))
+    translateY(36px);
+}

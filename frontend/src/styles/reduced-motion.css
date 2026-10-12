@@ -1,0 +1,24 @@
+@media (prefers-reduced-motion: reduce) {
+  .plane,
+  .plane.selected::after,
+  .plane.featured::after,
+  .plane.target::after,
+  .collection-btn.nudge,
+  .journal-entry,
+  .plane.jump .plane-icon {
+    animation: none;
+  }
+
+  /* Planes hop to each new position instead of gliding for 5 s. */
+  .plane {
+    transition: none;
+  }
+
+  .plane-departing {
+    display: none; /* the plane just snaps */
+  }
+
+  .map {
+    transition: none;
+  }
+}

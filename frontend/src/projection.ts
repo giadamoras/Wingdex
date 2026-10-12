@@ -1,5 +1,5 @@
 // The whole world except Antarctica. The map box's aspect ratio (18 / 7 in
-// index.css) matches 360 x 140 degrees, so a degree is equally wide and tall.
+// styles/map.css) matches 360 x 140 degrees, so a degree is equally wide and tall.
 export const MAP_BOUNDS = { west: -180, east: 180, south: -60, north: 80 }
 
 // The map's default opening view centres on this point (FlightMap.tsx), and

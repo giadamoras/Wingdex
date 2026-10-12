@@ -1,0 +1,106 @@
+/* Selected flight's route, under the planes. Widths divided by --zoom like
+   the land, so lines stay the same on screen at any zoom. (Not named .route:
+   that is the card's route text.) */
+.route-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 2; /* above the other planes (1), under the selected one (3) */
+}
+
+/* A paper-coloured outline under each route line, so it reads over land and
+   planes. Wider than the line, same zoom compensation. */
+.route-lines .route-casing {
+  /* (Selector as long as `.route-lines polyline`, which would set the stroke to ink.) */
+  fill: none;
+  stroke: var(--paper);
+  stroke-width: calc(7px / var(--zoom, 1));
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.85;
+}
+
+.route-lines polyline {
+  fill: none;
+  stroke: var(--ink);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+/* Flown so far (and the replay trail): solid. */
+.route-flown,
+.route-trail {
+  stroke-width: calc(3px / var(--zoom, 1));
+}
+
+/* Flat ends for the trail: it starts as a zero-length line, and with round
+   caps phones drew that as a big grey oval at the origin for seconds. */
+.route-lines .route-trail {
+  stroke-linecap: butt;
+}
+
+/* Still ahead: dashed. */
+.route-ahead {
+  stroke-width: calc(2px / var(--zoom, 1));
+  stroke-dasharray: calc(6px / var(--zoom, 1)) calc(5px / var(--zoom, 1));
+  opacity: 0.75;
+}
+
+/* Airport at each end of the route: a dot with its code in a small chip. */
+.route-end {
+  position: absolute;
+  z-index: 2; /* with the route line */
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.route-code {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 0 6px;
+  background: var(--highlight);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+/* Full-layer box moved every frame by RouteLayer, so translate percentages
+   are relative to the whole map layer. The ghost sits at its top-left corner. */
+.ghost-track {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3; /* over the route and the other planes */
+}
+
+/* Replay ghost: a see-through copy of the plane. */
+.ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Ghost and trail fade away when the replay lands (LAND_MS = 0.6 s). */
+.ghost.fading,
+.route-trail.fading {
+  animation: fade-out 0.6s ease-in forwards;
+}

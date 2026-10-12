@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Hazard } from './types'
 
 // One small glyph per hazard, drawn in a 24 x 24 box inside a round sticker
-// (see .weather-icon in index.css, which colours the sticker per hazard).
+// (see .weather-icon in styles/weather.css, which colours the sticker per hazard).
 // Chunky strokes and fills, like the plane silhouettes.
 const GLYPHS: Record<Hazard, ReactNode> = {
   // Cloud with a bolt.

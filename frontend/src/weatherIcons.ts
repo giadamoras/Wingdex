@@ -26,7 +26,7 @@ export const MAX_ICONS = 4
 // Roughly one icon per this many screen pixels of the area's longest side.
 const ICON_SPACING_PX = 50
 // Screen pixels per percent of the world box's width at zoom 1. The map is at
-// most about 1000 px wide (see `main` in index.css), so this is an estimate;
+// most about 1000 px wide (see `main` in styles/base.css), so this is an estimate;
 // the exact width only shifts when icons are added, never where they sit.
 const PX_PER_WORLD_PCT = 10
 // The box is 360 x 140 degrees, so 1% of its height is shorter on screen than
