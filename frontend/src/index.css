@@ -765,6 +765,12 @@ h1 {
     position: absolute;
     inset: -9px;
   }
+
+  /* No drop shadow: Safari draws every filtered icon as its own layer, and with
+     hundreds of planes that froze and crashed an iPhone. */
+  .plane-icon {
+    filter: none;
+  }
 }
 
 /* Fixed-position ticket panel below the map. Entrance is FlightCard.tsx's

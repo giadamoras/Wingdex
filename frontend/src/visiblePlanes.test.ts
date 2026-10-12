@@ -1,9 +1,9 @@
-import { expect, test } from 'vitest'
+import { expect, test, vi } from 'vitest'
 import { centredOn, type View } from './panzoom'
 import { project } from './projection'
 import type { Flight } from './types'
 import { hashString } from './hash'
-import { visibleFlights, VIEW_CAP } from './visiblePlanes'
+import { TOUCH_VIEW_CAP, visibleFlights, VIEW_CAP } from './visiblePlanes'
 
 const plane = (id: string, latitude: number, longitude: number): Flight => ({
   id,
@@ -40,6 +40,23 @@ test('a full live feed is thinned to the view cap', () => {
   const shown = visibleFlights(spread(5000), world, []).length
   expect(shown).toBeGreaterThan(VIEW_CAP * 0.8)
   expect(shown).toBeLessThan(VIEW_CAP * 1.2)
+})
+
+test('a touch screen draws fewer planes, and all of them once zoomed in', () => {
+  vi.stubGlobal('matchMedia', () => ({ matches: true }))
+  try {
+    const flights = spread(5000)
+    const shown = visibleFlights(flights, world, []).length
+    expect(shown).toBeGreaterThan(TOUCH_VIEW_CAP * 0.8)
+    expect(shown).toBeLessThan(TOUCH_VIEW_CAP * 1.2)
+    // Zoomed in far enough, nothing is thinned any more.
+    const view = at(20, 0, 9)
+    const inView = visibleFlights(flights, view, [])
+    expect(inView.length).toBeLessThan(TOUCH_VIEW_CAP)
+    expect(visibleFlights(inView, view, [])).toHaveLength(inView.length)
+  } finally {
+    vi.unstubAllGlobals()
+  }
 })
 
 test('fewer planes in view than the cap are all drawn', () => {

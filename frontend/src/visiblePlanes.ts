@@ -7,6 +7,17 @@ import type { Flight } from './types'
 // 57 fps and 1,500 only 32 (software rendering), so the server may send many
 // more planes than this to fill sparse regions, and the view never draws more.
 export const VIEW_CAP = 800
+// Phones draw far fewer: with the whole live feed in view they struggled and
+// crashed while panning. Zooming in lowers the count in view, so all planes
+// show again once fewer than the cap are in view. A first guess, to tune on a
+// real phone.
+export const TOUCH_VIEW_CAP = 300
+
+function viewCap(): number {
+  const touch =
+    typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
+  return touch ? TOUCH_VIEW_CAP : VIEW_CAP
+}
 // Planes just outside the view are kept, so they don't pop in at the edge.
 const MARGIN = 0.05
 
@@ -37,7 +48,7 @@ export function visibleFlights(
       x / 100 >= left && x / 100 <= right && y / 100 >= top && y / 100 <= bottom
     )
   })
-  const share = Math.min(1, VIEW_CAP / Math.max(inView.length, 1))
+  const share = Math.min(1, viewCap() / Math.max(inView.length, 1))
   const drawn =
     share === 1
       ? inView
