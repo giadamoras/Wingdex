@@ -113,6 +113,10 @@ export function usePanZoom(
 
   const onPointerDown = (e: PointerEvent) => {
     stopAnimation()
+    // A new first finger means no other finger is down: forget any left over
+    // from a lost pointerup (e.g. while the page froze), or this touch would
+    // count as a pinch.
+    if (e.isPrimary) pointers.current.clear()
     if (pointers.current.size === 0) {
       dragged.current = false
       travelled.current = 0

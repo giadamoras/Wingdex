@@ -174,6 +174,43 @@ test('a drag pans the map and does not count as a click', () => {
   expect(onSelect).not.toHaveBeenCalled()
 })
 
+// A pointerup can get lost (the page froze): the next touch must still drag.
+test('a touch after a lost pointerup drags instead of pinching', () => {
+  const { container } = render(
+    <FlightMap
+      flights={[flight('1', 50, 0)]}
+      selectedId={null}
+      onSelect={() => {}}
+    />,
+  )
+  const map = container.querySelector('.map') as HTMLElement
+  withMapBox(map)
+  const zoomOf = () => worldTransform(container).match(/scale\(.*\)/)?.[0]
+  const zoom = zoomOf()
+
+  fireEvent.pointerDown(map, {
+    pointerId: 1,
+    isPrimary: true,
+    clientX: 100,
+    clientY: 100,
+  })
+  // ...no pointerup for finger 1. A new first finger lands and drags:
+  fireEvent.pointerDown(map, {
+    pointerId: 2,
+    isPrimary: true,
+    clientX: 500,
+    clientY: 200,
+  })
+  fireEvent.pointerMove(map, {
+    pointerId: 2,
+    isPrimary: true,
+    clientX: 540,
+    clientY: 220,
+  })
+
+  expect(zoomOf()).toBe(zoom) // panned, not zoomed
+})
+
 test('zoom buttons change the view without deselecting; reset restores it', () => {
   const onSelect = vi.fn()
   const { container } = render(
