@@ -205,6 +205,10 @@ export function FlightMap({
       className="map"
       data-map-time={mapTime}
       data-focus={focus}
+      // Clicking the background deselects: a pointer convenience, not a control
+      // (keyboard users deselect with the plane's own button), so it is
+      // marked as presentation for the linter and screen readers.
+      role="presentation"
       ref={mapRef}
       onFocus={panToFocus}
       onClick={() => {
