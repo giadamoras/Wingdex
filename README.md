@@ -73,6 +73,9 @@ start the backend with the env file:
 cd backend; .venv\Scripts\uvicorn app.main:app --env-file .env
 ```
 
+A `FLIGHT_SOURCE` or `WEATHER_SOURCE` already set in your terminal wins over `.env`, and the
+backend then quietly serves mock data. Check `/health`: it should say `opensky` (or `awc`).
+
 Don't add `--reload` in live mode: every restart refetches and spends credits.
 
 `/health` shows the active source and, for live data, the credit guard's state and remaining
@@ -91,6 +94,16 @@ Live flights get their aircraft type from a bundled file built from OpenSky's ai
 route when you tap one, looked up from [adsbdb](https://github.com/mrjackwills/adsbdb) by the
 backend (`GET /flights/{id}/route`). Both can be missing, and the card then hides what it doesn't
 know.
+
+## Known limits
+
+- **One tab at a time.** The Journal is kept in your browser's local storage, and each tab saves
+  its whole copy. Catches made in two tabs at once overwrite each other (the last tab to save
+  wins), and a tab doesn't see the other's catches until it is reloaded.
+- **Phones and live data.** The live feed is about 3 MB, so a weak connection makes the first load
+  slow. Touch screens draw at most 300 planes in view (800 on desktop) and drop the planes' shadow,
+  because an iPhone 13 crashed Safari with more. Zoomed out, or in a very busy area, some planes
+  are hidden: zoom in to see them.
 
 ## Checks
 
