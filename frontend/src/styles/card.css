@@ -3,18 +3,18 @@
 .card {
   margin-top: 16px;
   padding: 14px 18px;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 3px solid var(--ink);
   border-radius: 16px;
-  box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+  box-shadow: 6px 6px 0 var(--ink-25);
 }
 
 /* Passport-page treatment: a faint ruled pattern for the flight card. */
 .passport-page {
   background-image: repeating-linear-gradient(
     to bottom,
-    rgb(31 58 74 / 6%) 0,
-    rgb(31 58 74 / 6%) 1px,
+    var(--ink-6) 0,
+    var(--ink-6) 1px,
     transparent 1px,
     transparent 26px
   );
@@ -111,7 +111,7 @@
 .catch {
   padding: 8px 24px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: 3px solid var(--ink);
   border-radius: 999px;
   font-family: var(--font-display);
@@ -136,7 +136,7 @@
 /* Secondary button: paper with an ink outline, next to the coral Catch. */
 .journey {
   padding: 8px 20px;
-  background: #fffaf0;
+  background: var(--paper-light);
   color: var(--ink);
   border: 3px solid var(--ink);
   border-radius: 999px;

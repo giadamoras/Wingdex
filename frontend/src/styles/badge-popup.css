@@ -15,7 +15,7 @@
   background: var(--ink);
   color: var(--paper);
   border-radius: 14px;
-  box-shadow: 4px 4px 0 rgb(31 58 74 / 35%);
+  box-shadow: 4px 4px 0 var(--ink-35);
 }
 
 .badge-popup-icon {

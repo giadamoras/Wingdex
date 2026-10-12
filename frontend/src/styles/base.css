@@ -11,6 +11,13 @@
   --accent: #e4572e;
   --highlight: #f2b531;
   --mint: #9ad1b5;
+  --paper-light: #fffaf0; /* cards, tickets and buttons: a lighter paper */
+  --on-accent: #fff; /* text on the coral buttons */
+  /* The ink at a few strengths, for flat shadows and faint lines. */
+  --ink-6: color-mix(in srgb, var(--ink) 6%, transparent);
+  --ink-20: color-mix(in srgb, var(--ink) 20%, transparent);
+  --ink-25: color-mix(in srgb, var(--ink) 25%, transparent);
+  --ink-35: color-mix(in srgb, var(--ink) 35%, transparent);
   --font-display: 'Fredoka', system-ui, sans-serif;
   --font-body: 'Nunito', system-ui, sans-serif;
 }

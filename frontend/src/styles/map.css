@@ -31,7 +31,7 @@
     var(--sea);
   border: 4px solid var(--ink);
   border-radius: 16px;
-  box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+  box-shadow: 6px 6px 0 var(--ink-25);
   cursor: grab;
   touch-action: none; /* the map handles drag and pinch itself */
   user-select: none;
@@ -110,8 +110,7 @@
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   filter: drop-shadow(
-    calc(0.4px / var(--zoom, 1)) calc(0.8px / var(--zoom, 1)) 0
-      rgb(31 58 74 / 20%)
+    calc(0.4px / var(--zoom, 1)) calc(0.8px / var(--zoom, 1)) 0 var(--ink-20)
   );
 }
 

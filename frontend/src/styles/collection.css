@@ -100,10 +100,10 @@
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 2px solid var(--ink);
   border-radius: 12px;
-  box-shadow: 3px 3px 0 rgb(31 58 74 / 20%);
+  box-shadow: 3px 3px 0 var(--ink-20);
 }
 
 .badge.locked {

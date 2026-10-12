@@ -13,7 +13,7 @@
   background: var(--paper);
   cursor: pointer;
   transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
-  box-shadow: 1px 2px 0 rgb(31 58 74 / 35%);
+  box-shadow: 1px 2px 0 var(--ink-35);
 }
 
 .weather-icon[data-hazard='thunderstorm'] {

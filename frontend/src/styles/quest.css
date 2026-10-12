@@ -2,10 +2,10 @@
 .quest {
   margin-bottom: 16px;
   padding: 10px 16px;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 3px solid var(--ink);
   border-radius: 16px;
-  box-shadow: 6px 6px 0 rgb(31 58 74 / 25%);
+  box-shadow: 6px 6px 0 var(--ink-25);
 }
 
 .quest-head {

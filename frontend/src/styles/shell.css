@@ -11,7 +11,7 @@
 /* Same paper-button look as .journey. */
 .collection-btn {
   padding: 8px 20px;
-  background: #fffaf0;
+  background: var(--paper-light);
   color: var(--ink);
   border: 3px solid var(--ink);
   border-radius: 999px;
@@ -36,7 +36,7 @@
 .retry-btn {
   margin-left: 10px;
   padding: 4px 14px;
-  background: #fffaf0;
+  background: var(--paper-light);
   color: var(--ink);
   border: 3px solid var(--ink);
   border-radius: 999px;

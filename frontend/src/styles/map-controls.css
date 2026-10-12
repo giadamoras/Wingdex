@@ -17,7 +17,7 @@
   width: 32px;
   height: 32px;
   padding: 0;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 2px solid var(--ink);
   border-radius: 10px;
   box-shadow: 2px 2px 0 var(--ink);

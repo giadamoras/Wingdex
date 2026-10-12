@@ -22,10 +22,10 @@
   width: 72px;
   height: 72px;
   flex-shrink: 0;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 3px solid var(--ink);
   border-radius: 50%;
-  box-shadow: 3px 3px 0 rgb(31 58 74 / 25%);
+  box-shadow: 3px 3px 0 var(--ink-25);
 }
 
 /* Speech bubble; the tail is two stacked triangles (ink outline + fill). */
@@ -37,10 +37,10 @@
   max-width: 260px;
   margin-bottom: 8px;
   padding: 12px 14px;
-  background: #fffaf0;
+  background: var(--paper-light);
   border: 3px solid var(--ink);
   border-radius: 16px;
-  box-shadow: 4px 4px 0 rgb(31 58 74 / 25%);
+  box-shadow: 4px 4px 0 var(--ink-25);
 }
 
 .onboarding-bubble::before,
@@ -61,7 +61,7 @@
 .onboarding-bubble::after {
   left: -11px;
   border-width: 7px 11px 7px 0;
-  border-right-color: #fffaf0;
+  border-right-color: var(--paper-light);
 }
 
 /* Card open: a click-through hint, so it can never block the card's buttons. */
@@ -95,7 +95,7 @@ main.has-onboarding {
 .onboarding-btn {
   padding: 6px 16px;
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border: 2px solid var(--ink);
   border-radius: 999px;
   font-family: var(--font-display);
