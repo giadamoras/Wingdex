@@ -40,11 +40,12 @@ function App() {
   const { flights, jumped, departed, error, stalled, retrying, retry } =
     useFlights()
   // Null until the first response; quests and featured flights wait for it.
-  const weather = useWeather()
-  const weatherAreas = weather ?? NO_WEATHER
+  // weatherAreas is the same list, empty until then.
+  const weatherOrNull = useWeather()
+  const weatherAreas = weatherOrNull ?? NO_WEATHER
   const credits = creditLine(useDataSources())
   const { journal, addCatch } = useJournalContext()
-  const quest = useDailyQuest(flights, weather, journal)
+  const quest = useDailyQuest(flights, weatherOrNull, journal)
   const { replay, playedId, start, stop } = useReplay()
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
   const onboarding = useOnboarding(flights, journal.length)
@@ -92,7 +93,7 @@ function App() {
   const questDone =
     quest !== null && isQuestDone(quest, todaysCatches, weatherAreas)
   const caughtToday = todaysCatches.some((e) => e.flight.id === selected?.id)
-  const featuredIds = useFeatured(flights, weather, quest, todaysCatches)
+  const featuredIds = useFeatured(flights, weatherOrNull, quest, todaysCatches)
   const mapFlights = flightsForMap(flights, current, lost)
 
   // Catch button: records the flight in the Journal. The card stays open, so
@@ -150,7 +151,7 @@ function App() {
           <QuestBanner
             quest={quest}
             done={questDone}
-            searching={flights === null || weather === null}
+            searching={flights === null || weatherOrNull === null}
             feedDown={loadFailed}
           />
           {/* Live regions stay mounted and only their text changes: a message

@@ -1,3 +1,5 @@
+"""The API: /flights, /weather, /flights/{id}/route and /health, plus CORS, gzip and startup."""
+
 import logging
 import os
 import threading
@@ -9,7 +11,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from app.models import Flight, FlightRoute, WeatherArea
+from app.models import Flight, FlightRoute, Health, WeatherArea
 from app.providers import (
     FlightProvider,
     ProviderError,
@@ -119,14 +121,14 @@ app.add_middleware(
 
 
 @app.get("/health")
-def health(provider: Flights, weather_provider: Weather) -> dict[str, str | int | None]:
-    return {
-        "status": "ok",
-        "source": provider.name,
+def health(provider: Flights, weather_provider: Weather) -> Health:
+    return Health(
+        status="ok",
+        source=provider.name,
+        weather_source=weather_provider.name,
         **provider.status(),
-        "weather_source": weather_provider.name,
         **{f"weather_{key}": value for key, value in weather_provider.status().items()},
-    }
+    )
 
 
 @app.get("/flights")

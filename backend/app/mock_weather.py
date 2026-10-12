@@ -1,3 +1,5 @@
+"""The built-in mock weather: a few fixed hazard areas, valid around the current time."""
+
 import time
 from typing import NamedTuple
 

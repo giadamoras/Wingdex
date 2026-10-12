@@ -111,12 +111,17 @@ export function regionsOf(latitude: number, longitude: number): string[] {
 
 // Time of day where the plane is, from local solar time (UTC plus 4 minutes
 // per degree of longitude), so it doesn't depend on the viewer's time zone.
+// Solar hours at which dawn, day, dusk and night start.
+const DAWN_H = 5
+const DAY_H = 8
+const DUSK_H = 17
+const NIGHT_H = 20
 export function timeOfDay(longitude: number, now = new Date()): TimeOfDay {
   const utcHours = now.getUTCHours() + now.getUTCMinutes() / 60
   const solar = (((utcHours + longitude / 15) % 24) + 24) % 24
-  if (solar < 5 || solar >= 20) return 'night'
-  if (solar < 8) return 'dawn'
-  if (solar < 17) return 'day'
+  if (solar < DAWN_H || solar >= NIGHT_H) return 'night'
+  if (solar < DAY_H) return 'dawn'
+  if (solar < DUSK_H) return 'day'
   return 'dusk'
 }
 

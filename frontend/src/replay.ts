@@ -7,8 +7,12 @@ export const FIT_MS = 600
 export const LAND_MS = 600
 
 // About 1 s of replay per hour of flight, kept between 3 and 10 s.
+const FLY_MS_PER_HOUR = 1000
+const MIN_FLY_MS = 3000
+const MAX_FLY_MS = 10000
 export function flyMs(durationMin: number): number {
-  return Math.min(10000, Math.max(3000, (durationMin / 60) * 1000))
+  const ms = (durationMin / 60) * FLY_MS_PER_HOUR
+  return Math.min(MAX_FLY_MS, Math.max(MIN_FLY_MS, ms))
 }
 
 export type ReplayPhase = 'fitting' | 'flying' | 'landing' | 'done'

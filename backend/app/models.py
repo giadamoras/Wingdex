@@ -1,6 +1,8 @@
+"""The shapes the API sends: airports, flights, routes and weather areas."""
+
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Airport(BaseModel):
@@ -93,3 +95,17 @@ class WeatherArea(BaseModel):
     # Display only, never used by quests or facts. Live data only (the mock has neither).
     severity: str | None = None  # e.g. "Severe", "Embedded"
     name: str | None = None  # the volcano or storm, e.g. "Mt Dukono", "Koguma"
+
+
+class Health(BaseModel):
+    """What /health reports.
+
+    Each provider adds facts of its own (OpenSky's credit guard, the weather cache's age, ...),
+    so keys beyond these three are kept, not rejected.
+    """
+
+    model_config = ConfigDict(extra="allow")
+
+    status: Literal["ok"]
+    source: str  # the flight provider's name, e.g. "mock"
+    weather_source: str

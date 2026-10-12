@@ -1,3 +1,5 @@
+"""The built-in mock flights: seeded routes between real airports, flown along great circles."""
+
 import random
 import time
 from typing import NamedTuple

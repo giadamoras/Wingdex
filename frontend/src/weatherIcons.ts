@@ -2,7 +2,7 @@ import { inRing } from './attributes'
 import { project } from './projection'
 import type { Hazard, LatLon, WeatherArea } from './types'
 
-export const HAZARD_NAMES: Record<Hazard, string> = {
+const HAZARD_NAMES: Record<Hazard, string> = {
   thunderstorm: 'Thunderstorm',
   turbulence: 'Turbulence',
   mountain_wave: 'Mountain wave',
