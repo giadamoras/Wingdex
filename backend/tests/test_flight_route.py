@@ -2,6 +2,7 @@ from typing import Any
 
 import httpx
 from fastapi.testclient import TestClient
+from helpers import StubProvider
 
 from app.main import app, get_provider, get_route_service
 from app.models import Airport, Flight, FlightRoute
@@ -23,13 +24,6 @@ ROUTE = FlightRoute(
     duration_min=433,
     duration_estimated=True,
 )
-
-
-class StubProvider:
-    name = "stub"
-
-    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
-        return (LIVE, "abc123") if flight_id == "BAW117" else None
 
 
 class LoadingProvider:
@@ -55,7 +49,7 @@ class StubService:
 
 def client_with(result: FlightRoute | None | Exception) -> tuple[TestClient, StubService]:
     service = StubService(result)
-    app.dependency_overrides[get_provider] = lambda: StubProvider()
+    app.dependency_overrides[get_provider] = lambda: StubProvider(known=(LIVE, "abc123"))
     app.dependency_overrides[get_route_service] = lambda: service
     return TestClient(app), service
 

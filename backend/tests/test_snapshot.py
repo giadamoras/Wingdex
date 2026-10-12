@@ -3,6 +3,7 @@ from collections.abc import Callable
 
 import httpx
 import pytest
+from helpers import Clock
 
 from app.providers import ProviderError, RateLimited
 from app.snapshot import SnapshotCache
@@ -10,13 +11,7 @@ from app.snapshot import SnapshotCache
 TTL = 100.0
 BACKOFF = 30.0
 
-
-class Clock:
-    def __init__(self) -> None:
-        self.now = 1_000.0
-
-    def __call__(self) -> float:
-        return self.now
+START = 1_000.0
 
 
 class Source:
@@ -49,7 +44,7 @@ def cache(
 
 
 def test_a_snapshot_is_served_until_it_is_ttl_old_then_fetched_again() -> None:
-    clock, source = Clock(), Source("one", "two")
+    clock, source = Clock(START), Source("one", "two")
     snapshots = cache(source, clock)
     assert snapshots.get() == ("one", clock.now)
     clock.now += TTL - 1
@@ -60,14 +55,14 @@ def test_a_snapshot_is_served_until_it_is_ttl_old_then_fetched_again() -> None:
 
 def test_nothing_is_fetched_until_the_first_get() -> None:
     source = Source("one")
-    snapshots = cache(source, Clock())
+    snapshots = cache(source, Clock(START))
     assert snapshots.snapshot is None and source.calls == 0
     snapshots.get()
     assert snapshots.snapshot == "one"
 
 
 def test_a_failed_refresh_keeps_serving_the_old_snapshot_and_waits_before_retrying() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source("one", httpx.ConnectError("down"), "two")
     snapshots = cache(source, clock)
     snapshots.get()
@@ -82,7 +77,7 @@ def test_a_failed_refresh_keeps_serving_the_old_snapshot_and_waits_before_retryi
 
 
 def test_without_a_snapshot_a_failure_raises_then_backs_off() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source(httpx.ConnectError("down"), "one")
     snapshots = cache(source, clock)
     with pytest.raises(ProviderError, match="Feed unavailable: down"):
@@ -95,7 +90,7 @@ def test_without_a_snapshot_a_failure_raises_then_backs_off() -> None:
 
 
 def test_a_429_waits_as_long_as_the_feed_asked() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source("one", RateLimited("Feed", 300), "two")
     snapshots = cache(source, clock)
     snapshots.get()
@@ -109,7 +104,7 @@ def test_a_429_waits_as_long_as_the_feed_asked() -> None:
 
 def test_bad_data_counts_as_a_failure_too() -> None:
     source = Source("one", ValueError("not json"), ProviderError("odd"))
-    clock = Clock()
+    clock = Clock(START)
     snapshots = cache(source, clock)
     snapshots.get()
     clock.now += TTL
@@ -119,7 +114,7 @@ def test_bad_data_counts_as_a_failure_too() -> None:
 
 
 def test_any_other_error_is_a_bug_and_propagates_without_a_back_off() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source(RuntimeError("bug"), "one")
     snapshots = cache(source, clock)
     with pytest.raises(RuntimeError):
@@ -128,7 +123,7 @@ def test_any_other_error_is_a_bug_and_propagates_without_a_back_off() -> None:
 
 
 def test_the_hook_holds_a_refresh_back_and_the_old_snapshot_is_served() -> None:
-    clock, source = Clock(), Source("one", "two")
+    clock, source = Clock(START), Source("one", "two")
     allowed = [True]
     asked: list[float] = []
 
@@ -147,13 +142,13 @@ def test_the_hook_holds_a_refresh_back_and_the_old_snapshot_is_served() -> None:
 
 
 def test_with_nothing_yet_a_held_back_refresh_says_so() -> None:
-    snapshots = cache(Source("one"), Clock(), lambda now: False)
+    snapshots = cache(Source("one"), Clock(START), lambda now: False)
     with pytest.raises(ProviderError, match="No Feed data yet"):
         snapshots.get()
 
 
 def test_the_hook_is_not_asked_while_backing_off() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source("one", httpx.ConnectError("down"))
     asked: list[float] = []
 
@@ -172,7 +167,7 @@ def test_the_hook_is_not_asked_while_backing_off() -> None:
 
 
 def test_callers_arriving_together_share_one_refresh() -> None:
-    clock = Clock()
+    clock = Clock(START)
     source = Source("one")
     snapshots = cache(source, clock)
     start = threading.Barrier(8)
@@ -191,7 +186,7 @@ def test_callers_arriving_together_share_one_refresh() -> None:
 
 
 def test_reading_the_snapshot_does_not_wait_for_a_refresh_in_progress() -> None:
-    clock = Clock()
+    clock = Clock(START)
     refreshing, release = threading.Event(), threading.Event()
     calls = []
 

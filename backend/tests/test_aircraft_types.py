@@ -1,13 +1,14 @@
 import gzip
 import importlib.util
 from pathlib import Path
+from typing import Any
 
 from app.aircraft_types import DEFAULT_PATH, load_aircraft_types
 
 BACKEND = Path(__file__).resolve().parent.parent
 
 
-def load_build_script() -> object:
+def load_build_script() -> Any:
     spec = importlib.util.spec_from_file_location(
         "build_aircraft_types", BACKEND / "scripts" / "build_aircraft_types.py"
     )
@@ -56,7 +57,7 @@ def test_build_script_keeps_only_aircraft_with_a_type(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     output = tmp_path / "out" / "types.csv.gz"
-    build = load_build_script().build  # type: ignore[attr-defined]
+    build = load_build_script().build
     assert build(source, output) == 2
     assert load_aircraft_types(output) == {"4ca7b5": "B738", "a835af": "GLF6"}
 

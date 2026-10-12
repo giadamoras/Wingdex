@@ -3,6 +3,7 @@ from typing import Any
 
 import httpx
 import pytest
+from helpers import Clock
 from pydantic import ValidationError
 
 from app.constants import GROUND_MIN
@@ -83,14 +84,6 @@ class FakeAdsbdb:
         self.calls.append(path)
         status, body = self.answers.get(path, (404, {"response": "unknown"}))
         return httpx.Response(status, json=body)
-
-
-class Clock:
-    def __init__(self) -> None:
-        self.now = 1_000_000.0
-
-    def __call__(self) -> float:
-        return self.now
 
 
 def service(fake: FakeAdsbdb, clock: Clock | None = None) -> RouteService:

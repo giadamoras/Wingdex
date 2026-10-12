@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -17,7 +19,7 @@ POLYGON = [
     {"latitude": 0, "longitude": 0},
 ]
 
-VALID = {
+VALID: dict[str, Any] = {
     "id": "x",
     "hazard": "turbulence",
     "region": "Test",
@@ -30,7 +32,7 @@ VALID = {
 
 
 def test_weather_area_accepts_valid_data_without_movement() -> None:
-    area = WeatherArea(**VALID)  # type: ignore[arg-type]
+    area = WeatherArea(**VALID)
     assert area.hazard == "turbulence"
     assert area.movement_dir is None and area.movement_speed_kt is None
 
@@ -47,7 +49,7 @@ def test_weather_area_accepts_valid_data_without_movement() -> None:
 )
 def test_weather_area_rejects_invalid_values(override: dict[str, object]) -> None:
     with pytest.raises(ValidationError):
-        WeatherArea(**{**VALID, **override})  # type: ignore[arg-type]
+        WeatherArea(**{**VALID, **override})
 
 
 def test_mock_weather_has_unique_ids_and_every_hazard() -> None:

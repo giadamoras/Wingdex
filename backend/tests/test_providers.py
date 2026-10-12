@@ -1,9 +1,10 @@
 import pytest
 from fastapi.testclient import TestClient
+from helpers import StubProvider
 
 from app.main import app, get_provider, get_weather_provider
 from app.mock_providers import MockFlightProvider
-from app.models import Flight, WeatherArea
+from app.models import WeatherArea
 from app.providers import ProviderError, create_provider
 
 
@@ -31,26 +32,8 @@ def test_unknown_source_is_rejected() -> None:
         create_provider({"FLIGHT_SOURCE": "nope"})
 
 
-class StubProvider:
-    name = "stub"
-
-    def __init__(self, error: bool) -> None:
-        self.error = error
-
-    def get_flights(self) -> list[Flight]:
-        if self.error:
-            raise ProviderError("down")
-        return []
-
-    def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
-        return None
-
-    def status(self) -> dict[str, str | int | None]:
-        return {"guard": "ok"}
-
-
 def test_flights_endpoint_uses_the_provider() -> None:
-    app.dependency_overrides[get_provider] = lambda: StubProvider(error=False)
+    app.dependency_overrides[get_provider] = lambda: StubProvider()
     client = TestClient(app)
     assert client.get("/flights").json() == []
     assert client.get("/health").json() == {

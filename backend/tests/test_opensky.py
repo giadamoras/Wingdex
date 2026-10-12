@@ -2,6 +2,7 @@ from typing import Any
 
 import httpx
 import pytest
+from helpers import Clock
 
 from app.geo import destination_point, distance_nm
 from app.models import Flight
@@ -203,14 +204,6 @@ class FakeOpenSky:
         return httpx.Response(
             200, json={"time": T0, "states": self.states}, headers=self.ok_headers
         )
-
-
-class Clock:
-    def __init__(self) -> None:
-        self.now = T0
-
-    def __call__(self) -> float:
-        return self.now
 
 
 def make_provider(fake: FakeOpenSky, clock: Clock, **kwargs: Any) -> OpenSkyProvider:

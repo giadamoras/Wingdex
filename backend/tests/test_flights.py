@@ -1,3 +1,5 @@
+from typing import Any
+
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
@@ -17,7 +19,7 @@ from app.models import Flight
 
 client = TestClient(app)
 
-VALID = {
+VALID: dict[str, Any] = {
     "id": "x",
     "callsign": "TST1",
     "aircraft_type": "A320",
@@ -31,7 +33,7 @@ VALID = {
 
 
 def test_flight_accepts_valid_data_without_route() -> None:
-    flight = Flight(**VALID)  # type: ignore[arg-type]
+    flight = Flight(**VALID)
     assert flight.callsign == "TST1"
     assert flight.origin is None and flight.destination is None
 
@@ -49,7 +51,7 @@ def test_flight_accepts_valid_data_without_route() -> None:
 )
 def test_flight_rejects_out_of_range_values(override: dict[str, float]) -> None:
     with pytest.raises(ValidationError):
-        Flight(**{**VALID, **override})  # type: ignore[arg-type]
+        Flight(**{**VALID, **override})
 
 
 def test_mock_routes_use_known_airports() -> None:

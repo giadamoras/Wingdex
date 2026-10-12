@@ -6,6 +6,7 @@ from typing import Any
 
 import httpx
 import pytest
+from helpers import Clock
 
 from app.awc import (
     DEFAULT_USER_AGENT,
@@ -23,6 +24,8 @@ from app.providers import ProviderError, create_weather_provider
 SAMPLE: list[dict[str, Any]] = json.loads(
     (Path(__file__).parent / "data" / "isigmet_sample.json").read_text()
 )
+
+START = 1_800_000_000.0
 
 
 def entry(**fields: Any) -> dict[str, Any]:
@@ -194,14 +197,6 @@ class FakeAwc:
         return httpx.Response(200, json=copy.deepcopy(self.body))
 
 
-class Clock:
-    def __init__(self) -> None:
-        self.now = 1_800_000_000.0
-
-    def __call__(self) -> float:
-        return self.now
-
-
 def make_provider(fake: FakeAwc, clock: Clock, **kwargs: Any) -> AwcWeatherProvider:
     return AwcWeatherProvider(
         http=httpx.Client(transport=httpx.MockTransport(fake)), clock=clock, **kwargs
@@ -209,7 +204,7 @@ def make_provider(fake: FakeAwc, clock: Clock, **kwargs: Any) -> AwcWeatherProvi
 
 
 def test_provider_asks_with_format_json_and_our_user_agent() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     areas = make_provider(fake, clock).get_weather()
     assert len(areas) == 13
     assert fake.last is not None
@@ -218,13 +213,13 @@ def test_provider_asks_with_format_json_and_our_user_agent() -> None:
 
 
 def test_user_agent_can_be_changed() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     make_provider(fake, clock, user_agent="Other/2").get_weather()
     assert fake.last is not None and fake.last.headers["user-agent"] == "Other/2"
 
 
 def test_cache_serves_within_ttl_then_refreshes() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock, cache_ttl_s=300)
     provider.get_weather()
     clock.now += 299
@@ -236,7 +231,7 @@ def test_cache_serves_within_ttl_then_refreshes() -> None:
 
 
 def test_refresh_interval_cannot_go_below_the_floor() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock, cache_ttl_s=1)
     provider.get_weather()
     clock.now += MIN_TTL_S - 1
@@ -245,13 +240,13 @@ def test_refresh_interval_cannot_go_below_the_floor() -> None:
 
 
 def test_an_empty_answer_means_no_weather() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     fake.statuses = [204]
     assert make_provider(fake, clock).get_weather() == []
 
 
 def test_failure_serves_stale_data_then_backs_off() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock, cache_ttl_s=300)
     first = provider.get_weather()
     clock.now += 301
@@ -267,14 +262,14 @@ def test_failure_serves_stale_data_then_backs_off() -> None:
 
 
 def test_failure_with_no_data_raises() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     fake.statuses = [500]
     with pytest.raises(ProviderError):
         make_provider(fake, clock).get_weather()
 
 
 def test_rate_limit_waits_as_long_as_asked() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock, cache_ttl_s=300)
     provider.get_weather()
     clock.now += 301
@@ -289,14 +284,14 @@ def test_rate_limit_waits_as_long_as_asked() -> None:
 
 
 def test_an_unexpected_body_is_a_failure() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     fake.body = {"error": "nope"}
     with pytest.raises(ProviderError):
         make_provider(fake, clock).get_weather()
 
 
 def test_status_reports_what_is_held() -> None:
-    fake, clock = FakeAwc(), Clock()
+    fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock)
     assert provider.status() == {"areas": None, "age_s": None}
     provider.get_weather()
