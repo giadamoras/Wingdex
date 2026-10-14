@@ -1,4 +1,4 @@
-import { TURBOPROP, WIDE_BODY } from '../quest/quest'
+import { TURBOPROP, WIDE_BODY } from '../shared-lib/aircraftTypes'
 
 // Recognizable-but-simple silhouettes by aircraft family, not one drawing per
 // ICAO type code: e.g. A319/A320/A321 barely differ externally, but a
@@ -11,7 +11,7 @@ export type AircraftFamily =
   | 'turboprop'
 
 // Enough common codes to cover the mock data and a live feed, same spirit as
-// WIDE_BODY/TURBOPROP in quest.ts.
+// WIDE_BODY/TURBOPROP in aircraftTypes.ts.
 const REGIONAL_JET = new Set(['E170', 'E175', 'E190', 'E195'])
 const QUAD_OR_DOUBLE_DECK = new Set([
   'A342',

@@ -16,7 +16,7 @@ from urllib.parse import quote
 
 import httpx
 
-from app.constants import GROUND_MIN
+from app.constants import GROUND_MIN, NO_CALLSIGN
 from app.geo import distance_nm
 from app.models import Airport, Flight, FlightRoute
 from app.providers import ProviderError
@@ -186,7 +186,7 @@ class RouteService:
         """
         if flight.origin is not None and flight.destination is not None:
             return route_from_feed(flight)  # no request, no cache
-        has_callsign = flight.callsign != "Unknown"
+        has_callsign = flight.callsign != NO_CALLSIGN
         key = f"{icao24 or ''}|{flight.callsign if has_callsign else ''}"
         now = self._clock()
         with self._lock:

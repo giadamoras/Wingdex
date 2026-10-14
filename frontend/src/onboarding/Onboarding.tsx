@@ -1,7 +1,7 @@
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { Mascot, type MascotMood } from '../shared-ui/Mascot'
-import { prefersReducedMotion } from '../map/replay'
+import { prefersReducedMotion } from '../shared-lib/reducedMotion'
 import { springIn } from '../shared-lib/springIn'
 import type { OnboardingStep } from './useOnboarding'
 const TYPE_MS = 25 // per character

@@ -1,5 +1,5 @@
 import type { TargetAndTransition } from 'framer-motion'
-import { prefersReducedMotion } from '../map/replay'
+import { prefersReducedMotion } from './reducedMotion'
 
 export const SPRING = { type: 'spring' as const, stiffness: 400, damping: 22 }
 

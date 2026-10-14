@@ -6,7 +6,7 @@ import pytest
 from helpers import Clock
 from pydantic import ValidationError
 
-from app.constants import GROUND_MIN
+from app.constants import GROUND_MIN, NO_CALLSIGN
 from app.geo import distance_nm, interpolate
 from app.models import Airport, Flight
 from app.routes import (
@@ -169,7 +169,7 @@ def test_nothing_known_gives_none() -> None:
 
 def test_a_plane_without_a_callsign_only_asks_about_the_aircraft() -> None:
     fake = FakeAdsbdb({"aircraft/abc123": (200, {"response": {"aircraft": AIRCRAFT}})})
-    route = service(fake).lookup(flight_at(50.0, -30.0, callsign="Unknown"), "abc123")
+    route = service(fake).lookup(flight_at(50.0, -30.0, callsign=NO_CALLSIGN), "abc123")
     assert fake.calls == ["aircraft/abc123"]
     assert route is not None and route.aircraft_type == "B77W"
 

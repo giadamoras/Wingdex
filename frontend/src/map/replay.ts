@@ -30,9 +30,6 @@ export function replayAt(
   return { phase: 'done', progress: 1 }
 }
 
-export const prefersReducedMotion = () =>
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false
-
 export interface ReplayState {
   flight: Flight // snapshot at start: the route doesn't change
   startedAt: number // Date.now() when started, also identifies this replay

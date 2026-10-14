@@ -24,22 +24,44 @@ needs a written agreement for public use (see the data terms below), and hosting
 
 ## Setup
 
+You need Python 3.11+ for the backend and Node 22.22.2+ (or 24.15+) for the frontend.
+
+Windows (PowerShell):
+
 ```powershell
-# backend (Python 3.11+)
 cd backend
 py -3.13 -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
 
-# frontend (Node 20+)
-cd frontend
+cd ..\frontend
+npm install
+```
+
+macOS / Linux:
+
+```sh
+cd backend
+python3 -m venv .venv
+.venv/bin/python -m pip install -e ".[dev]"
+
+cd ../frontend
 npm install
 ```
 
 ## Run (two terminals)
 
+Windows (PowerShell):
+
 ```powershell
 cd backend;  .venv\Scripts\uvicorn app.main:app --reload   # http://localhost:8000/health
 cd frontend; npm run dev                                   # http://localhost:5173
+```
+
+macOS / Linux:
+
+```sh
+cd backend  && .venv/bin/uvicorn app.main:app --reload     # http://localhost:8000/health
+cd frontend && npm run dev                                 # http://localhost:5173
 ```
 
 The backend serves mock flights and weather by default, spread over the whole world, so the app
@@ -55,12 +77,21 @@ URL) and `CORS_ORIGINS` for the backend (the frontend's URL). See `backend/.env.
 </p>
 
 To open the app from a phone on the same Wi-Fi, bind both servers to the network and replace
-`<pc-ip>` with your computer's address. Allow Python and Node through Windows Firewall (private
-networks) the first time.
+`<pc-ip>` with your computer's address. The first time, allow Python and Node through the
+firewall (on Windows, for private networks).
+
+Windows (PowerShell):
 
 ```powershell
 cd backend;  $env:CORS_ORIGINS="http://<pc-ip>:5173"; .venv\Scripts\uvicorn app.main:app --host 0.0.0.0
 cd frontend; $env:VITE_API_URL="http://<pc-ip>:8000"; npm run dev -- --host   # open http://<pc-ip>:5173
+```
+
+macOS / Linux:
+
+```sh
+cd backend  && CORS_ORIGINS="http://<pc-ip>:5173" .venv/bin/uvicorn app.main:app --host 0.0.0.0
+cd frontend && VITE_API_URL="http://<pc-ip>:8000" npm run dev -- --host       # open http://<pc-ip>:5173
 ```
 
 For live data, add `--env-file .env` to the backend command as described below.
@@ -73,7 +104,11 @@ OpenSky traffic, create an API client on your own OpenSky account, copy
 start the backend with the env file:
 
 ```powershell
-cd backend; .venv\Scripts\uvicorn app.main:app --env-file .env
+cd backend; .venv\Scripts\uvicorn app.main:app --env-file .env   # Windows (PowerShell)
+```
+
+```sh
+cd backend && .venv/bin/uvicorn app.main:app --env-file .env     # macOS / Linux
 ```
 
 A `FLIGHT_SOURCE` or `WEATHER_SOURCE` already set in your terminal wins over `.env`, and the
@@ -110,14 +145,30 @@ know.
 
 ## Checks
 
+Backend, from `backend/`. Windows (PowerShell):
+
 ```powershell
-# backend (from backend/)
 .venv\Scripts\python -m pytest
 .venv\Scripts\ruff check .; .venv\Scripts\ruff format --check .
 .venv\Scripts\mypy app tests
+```
 
-# frontend (from frontend/)
-npm run typecheck; npm run lint; npm test; npm run format:check; npm run build
+macOS / Linux:
+
+```sh
+.venv/bin/python -m pytest
+.venv/bin/ruff check . && .venv/bin/ruff format --check .
+.venv/bin/mypy app tests
+```
+
+Frontend, from `frontend/` (the same on every system):
+
+```sh
+npm run typecheck
+npm run lint
+npm test
+npm run format:check
+npm run build
 ```
 
 The frontend lints with [oxlint](https://oxc.rs) (not ESLint). `frontend/scripts/build-land.mjs`

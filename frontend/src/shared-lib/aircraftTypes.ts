@@ -1,0 +1,48 @@
+// Aircraft categories by ICAO type code. Not every type: enough for the mock
+// data and the common types a live feed would show. Shared by the "wide-body"
+// and "turboprop" quests (quest.ts) and the plane silhouettes
+// (aircraftSilhouette.ts), so both agree on the same categories.
+export const WIDE_BODY = new Set([
+  'A306',
+  'A310',
+  'A332',
+  'A333',
+  'A338',
+  'A339',
+  'A342',
+  'A343',
+  'A345',
+  'A346',
+  'A359',
+  'A35K',
+  'A388',
+  'B742',
+  'B744',
+  'B748',
+  'B762',
+  'B763',
+  'B764',
+  'B772',
+  'B773',
+  'B77L',
+  'B77W',
+  'B788',
+  'B789',
+  'B78X',
+])
+export const TURBOPROP = new Set([
+  'AT43',
+  'AT45',
+  'AT72',
+  'AT73',
+  'AT75',
+  'AT76',
+  'DH8A',
+  'DH8B',
+  'DH8C',
+  'DH8D',
+  'SF34',
+  'B190',
+  'E120',
+  'C208',
+])

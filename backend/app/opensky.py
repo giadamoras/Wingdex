@@ -17,6 +17,7 @@ from typing import Any
 import httpx
 
 from app.aircraft_types import load_aircraft_types
+from app.constants import NO_CALLSIGN
 from app.geo import destination_point
 from app.models import Flight
 from app.providers import ProviderError, RateLimited
@@ -32,8 +33,6 @@ STATES_URL = "https://opensky-network.org/api/states/all"
 M_TO_FT = 3.28084
 MS_TO_KT = 1.94384
 MS_TO_FPM = 196.85  # metres per second to feet per minute
-
-NO_CALLSIGN = "Unknown"  # shown for a plane that sends no callsign
 
 # Credit guard defaults: the "normal" preset in docs/opensky-credit-guard.md.
 DEFAULT_CACHE_TTL_S = 90.0  # usual time between refreshes

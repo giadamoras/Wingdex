@@ -4,11 +4,11 @@ import httpx
 import pytest
 from helpers import Clock
 
+from app.constants import NO_CALLSIGN
 from app.geo import destination_point, distance_nm
 from app.models import Flight
 from app.opensky import (
     MAX_EXTRAPOLATE_S,
-    NO_CALLSIGN,
     OpenSkyProvider,
     Tracked,
     advance,

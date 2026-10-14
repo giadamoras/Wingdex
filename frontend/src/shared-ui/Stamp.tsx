@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
-import { prefersReducedMotion } from '../map/replay'
+import { prefersReducedMotion } from '../shared-lib/reducedMotion'
 
 // Rubber-stamp thump: starts big and faded, lands at its -8deg tilt. Shared
 // by the quest's "Done!" and the card's "Caught today" (Milestone 4's shared

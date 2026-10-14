@@ -24,6 +24,25 @@ jobs:
       - run: ruff format --check .
       - run: mypy app tests
 
+  # The oldest Python and dependency versions the project claims to support
+  # (requires-python and the lower bounds in pyproject.toml; keep them in sync).
+  # Lint and format don't depend on these versions, so they run only above.
+  backend-oldest:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: >-
+          python -m pip install -e ".[dev]"
+          "fastapi==0.115.0" "pydantic==2.8.0" "uvicorn[standard]==0.30.0" "httpx==0.27.0"
+      - run: python -m pytest
+      - run: mypy app tests
+
   frontend:
     runs-on: ubuntu-latest
     defaults:
@@ -33,7 +52,9 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
         with:
-          node-version: 22
+          # The oldest Node the README promises (jsdom, used by the tests, needs
+          # ^22.22.2 || ^24.15.0). Newer versions are assumed to work too.
+          node-version: 22.22.2
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci

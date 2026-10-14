@@ -1,2 +1,3 @@
-# Normalize line endings; git converts to the platform default on checkout
-* text=auto
+# Text files use LF line endings on every platform (Prettier checks for LF, so a
+# Windows checkout with CRLF would fail `npm run format:check`)
+* text=auto eol=lf
