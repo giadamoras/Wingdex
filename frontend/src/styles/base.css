@@ -57,6 +57,15 @@ main {
   padding: 16px;
 }
 
+/* Phones (the query is explained in shell.css): room under the page, so the
+   card's buttons can scroll clear of the browser's bottom toolbar (Safari on
+   iPhone) and the home indicator. Onboarding asks for more (onboarding.css). */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  main {
+    padding-bottom: 96px;
+  }
+}
+
 h1,
 h2 {
   font-family: var(--font-display);

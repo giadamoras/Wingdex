@@ -20,6 +20,12 @@
   font-size: 1.2rem;
 }
 
+/* The "Done!" stamp stays on the right also when it wraps onto its own line
+   (on a phone), where the title's margin no longer reaches it. */
+.quest-head .stamp {
+  margin-left: auto;
+}
+
 /* Small inverted "QUEST" tag, like a ticket stub label. */
 .quest-label {
   padding: 2px 10px;
@@ -52,4 +58,11 @@
   flex: 1;
   margin: 0;
   line-height: 1.4;
+}
+
+/* Phones: the same smaller fact text as the card's. */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  .quest-fact {
+    font-size: 0.9rem;
+  }
 }

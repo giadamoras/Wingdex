@@ -66,6 +66,14 @@
   line-height: 1.4;
 }
 
+/* Phones: smaller fact text (about 14 px, still easy to read), so a long fact
+   doesn't push the card's buttons far down. */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  .fact {
+    font-size: 0.9rem;
+  }
+}
+
 /* Route line under the card header, e.g. "LHR → JFK". */
 .route {
   margin: 10px 0 0;
@@ -125,12 +133,24 @@
   box-shadow: 1px 1px 0 var(--ink);
 }
 
-/* Catch (or the caught stamp) and the journey button side by side. */
+/* Catch and the journey button side by side. Once caught, the "Caught today"
+   stamp moves to a row of its own under the journey button, on the right like
+   the quest's "Done!". */
 .card-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+
+.card-actions:has(> .stamp) {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.card-actions > .stamp {
+  order: 1; /* after the journey button */
+  align-self: flex-end;
 }
 
 /* Secondary button: paper with an ink outline, next to the coral Catch. */

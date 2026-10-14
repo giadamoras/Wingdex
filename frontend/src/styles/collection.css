@@ -38,29 +38,30 @@
   color: var(--accent);
   border: 3px double var(--accent);
   border-radius: 10px;
+  font-size: 1rem; /* the parts below are sized in em of this, so it scales them */
   font-family: var(--font-display);
   text-transform: uppercase;
   transform: rotate(-6deg);
 }
 
 .entry-stamp-label {
-  font-size: 0.6rem;
+  font-size: 0.6em;
   letter-spacing: 0.1em;
 }
 
 .entry-stamp-code {
-  font-size: 1.2rem;
+  font-size: 1.2em;
   font-weight: 600;
   letter-spacing: 0.04em;
 }
 
 .entry-stamp-date {
-  font-size: 0.6rem;
+  font-size: 0.6em;
   letter-spacing: 0.06em;
 }
 
 .entry-stamp-callsign {
-  font-size: 0.6rem;
+  font-size: 0.6em;
   opacity: 0.85;
 }
 
@@ -140,4 +141,26 @@
   border: 2px solid var(--ink);
   border-radius: 14px;
   line-height: 1.4;
+}
+
+/* Phones: the same smaller fact text as the card's, and smaller Journal stamps. */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  .fact-entry {
+    font-size: 0.9rem;
+  }
+
+  /* Equal columns that together span the full width, so a full row lines up
+     with both edges of the page; a part-filled last row stays on the left. */
+  .journal ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(5.8rem, 1fr));
+    gap: 10px;
+  }
+
+  .entry-stamp {
+    box-sizing: border-box; /* padding and border inside the column's width */
+    width: 100%;
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
 }

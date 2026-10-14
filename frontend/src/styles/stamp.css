@@ -15,6 +15,13 @@
 
 /* Reduced motion: Stamp.tsx renders a plain span with no Framer Motion, so
    the resting tilt has to come from CSS instead of the animate prop. */
+/* Phones: a little smaller (see the phone query in shell.css). */
+@media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
+  .stamp {
+    font-size: 0.9rem;
+  }
+}
+
 .stamp-still {
   transform: rotate(-8deg);
 }
