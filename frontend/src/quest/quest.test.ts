@@ -251,3 +251,9 @@ test('questIdForCatch gives the id only when the catch finishes the quest', () =
   expect(at(always('q1'), true)).toBeUndefined() // already done today
   expect(at(null, false)).toBeUndefined() // no quest yet
 })
+
+test('airline quest titles use "an" before a vowel', () => {
+  expect(quest('airline-UAE').title).toBe('Catch an Emirates flight')
+  expect(quest('airline-RYR').title).toBe('Catch a Ryanair flight')
+  expect(quest('airline-KLM').title).toBe('Catch a KLM flight')
+})

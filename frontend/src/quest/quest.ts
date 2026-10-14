@@ -174,7 +174,8 @@ export const QUEST_TEMPLATES: Quest[] = [
   },
   ...AIRLINE_QUESTS.map(({ code, name, conceptFact }): Quest => ({
     id: `airline-${code}`,
-    title: `Catch a ${name} flight`,
+    // "an Emirates", "a Ryanair" (a vowel letter is enough for these names)
+    title: `Catch ${/^[AEIOU]/.test(name) ? 'an' : 'a'} ${name} flight`,
     conceptFact,
     matches: (f) => airlineOf(f.callsign) === code,
   })),
