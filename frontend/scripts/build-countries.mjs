@@ -1,7 +1,8 @@
 // One-off generator for src/map/countryData.ts: downloads Natural Earth's 1:110m
 // country boundaries (public domain) and writes them as compact border rings
 // plus a label point and importance rank per country.
-// Run from frontend/: node scripts/build-countries.mjs && npx prettier --write src/map/countryData.ts
+// Run from frontend/: node scripts/build-countries.mjs (the output is left out of
+// Prettier, see .prettierignore, so it stays one country per line)
 import { writeFileSync } from 'node:fs'
 
 const SOURCE =

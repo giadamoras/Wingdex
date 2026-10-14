@@ -18,11 +18,22 @@ Status: the app runs locally with mock or live data. Deployment is postponed: li
 needs a written agreement for public use (see the data terms below), and hosting costs money.
 `docs/plan.md` has the scope and roadmap, and `docs/history.md` how it was built.
 
-- `backend/` — Python + FastAPI (flight and weather data API)
-- `frontend/` — React + TypeScript + Vite. `src/` is grouped by feature (`map/`, `card/`, `collection/`,
-  `quest/`, `onboarding/`, `data/`), with `shared-ui/` and `shared-lib/` for what several features use,
-  and `styles/` for the stylesheets (`index.css` lists them in cascade order). Tests sit next to the code
-  they test.
+## How it works
+
+- **`backend/`: Python + FastAPI, world data only.** It serves `/flights`, `/weather`,
+  `/flights/{id}/route` and `/health`. Flights come from built-in mock data or OpenSky, weather from
+  mock data or the Aviation Weather Center. Each live feed is one shared, cached snapshot, so any
+  number of players cost one upstream request per refresh. A tapped flight's route is looked up from
+  adsbdb and kept in memory only.
+- **`frontend/`: React + TypeScript + Vite.** It polls flights every 5 s and weather every 5
+  minutes. The map uses no map library: its projection, pan and zoom are hand-written, and the
+  coastlines and borders are Natural Earth data drawn as SVG. Planes glide between polls, and at most
+  800 are drawn in view (300 on touch screens). `src/` is grouped by feature (`map/`, `card/`,
+  `collection/`, `quest/`, `onboarding/`, `data/`), with `shared-ui/` and `shared-lib/` for what
+  several features use, and `styles/` for the stylesheets. Tests sit next to the code they test.
+- **Game state stays in your browser.** The Journal, badges and today's quest are saved in local
+  storage; there are no accounts. Facts, quests and badges are worked out from a flight's own data:
+  altitude, aircraft type, region, time of day and the weather it is in.
 
 ## Setup
 

@@ -1,2 +1,3 @@
 # Generated coordinate data: Prettier would put every number on its own line.
 src/map/worldLandData.ts
+src/map/countryData.ts
