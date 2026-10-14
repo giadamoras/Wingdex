@@ -1,4 +1,4 @@
-import { MAP_BOUNDS, project } from './projection'
+import { MAP_BOUNDS, project, svgRing } from './projection'
 import { WORLD_LAND } from './worldLandData'
 
 // Graticule every 30 degrees (denser lines clutter the world view).
@@ -19,14 +19,7 @@ for (
   lats.push(l)
 
 // Polygon points are computed once: the coastlines never change.
-const shapes = WORLD_LAND.map((ring) =>
-  ring
-    .map(([lon, lat]) => {
-      const { x, y } = project(lat, lon)
-      return `${x.toFixed(2)},${y.toFixed(2)}`
-    })
-    .join(' '),
-)
+const shapes = WORLD_LAND.map((ring) => svgRing(ring, 2))
 
 // The real geography (Natural Earth coastlines), rendered with a poster-style
 // illustrated fill instead of a flat colour. Same coordinate system as the

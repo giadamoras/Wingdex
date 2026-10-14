@@ -12,7 +12,12 @@ import {
   type Shape,
 } from './panzoom'
 import { PlaneIcon } from './PlaneIcon'
-import { DEFAULT_CENTER, project, unprojectLongitude } from './projection'
+import {
+  DEFAULT_CENTER,
+  placeAt,
+  project,
+  unprojectLongitude,
+} from './projection'
 import { prefersReducedMotion } from '../shared-lib/reducedMotion'
 import { FIT_MS, type ReplayState } from './replay'
 import { RouteLayer } from './RouteLayer'
@@ -27,12 +32,15 @@ import { WorldLand } from './WorldLand'
 // then only stretches that picture, has more detail to stretch when you zoom in.
 const WORLD_SCALE = 3
 
+// How long the map takes to pan to a plane reached with the Tab key.
+const PAN_TO_FOCUS_MS = 300
+
 const NO_JUMPS = new Set<string>()
 const NO_DEPARTED: Flight[] = []
 const NO_FEATURED = new Set<string>()
 const NO_WEATHER: WeatherArea[] = []
 
-// Opening view: zoomed in on Europe, roughly the old Europe-only map. In a box
+// Opening view: zoomed in on Europe, the busiest part of the map. In a box
 // that shows only part of the world (a phone held upright) the zoom is lower by
 // the same factor, so about as much of Europe is in view as on a wide map.
 const europe = project(DEFAULT_CENTER.latitude, DEFAULT_CENTER.longitude)
@@ -194,7 +202,10 @@ export function FlightMap({
     // Move the target's centre to the box's centre (fractions of the box).
     const dx = (box.left + box.width / 2 - (r.left + r.width / 2)) / box.width
     const dy = (box.top + box.height / 2 - (r.top + r.height / 2)) / box.height
-    animateTo(panBy(view, dx, dy, shape), prefersReducedMotion() ? 0 : 300)
+    animateTo(
+      panBy(view, dx, dy, shape),
+      prefersReducedMotion() ? 0 : PAN_TO_FOCUS_MS,
+    )
   }
 
   // Focus mode (styles/planes.css): the other planes dim while a flight is selected and
@@ -243,21 +254,17 @@ export function FlightMap({
             replay={replay?.flight.id === selected.id ? replay : null}
           />
         )}
-        {departed.map((f) => {
-          const { x, y } = project(f.latitude, f.longitude)
-          return (
-            <div
-              key={`${f.id}-departed`}
-              className="plane-departing"
-              style={{ left: `${x}%`, top: `${y}%` }}
-              aria-hidden="true"
-            >
-              <PlaneIcon heading={f.heading} aircraftType={f.aircraft_type} />
-            </div>
-          )
-        })}
+        {departed.map((f) => (
+          <div
+            key={`${f.id}-departed`}
+            className="plane-departing"
+            style={placeAt(f)}
+            aria-hidden="true"
+          >
+            <PlaneIcon heading={f.heading} aircraftType={f.aircraft_type} />
+          </div>
+        ))}
         {drawn.map((f) => {
-          const { x, y } = project(f.latitude, f.longitude)
           const className = [
             'plane',
             f.id === selectedId && 'selected',
@@ -274,7 +281,7 @@ export function FlightMap({
               title={f.callsign}
               aria-label={f.callsign}
               aria-pressed={f.id === selectedId}
-              style={{ left: `${x}%`, top: `${y}%` }}
+              style={placeAt(f)}
               onClick={(e) => {
                 e.stopPropagation() // don't trigger the map's deselect
                 setWeatherId(null)

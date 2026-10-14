@@ -1,24 +1,9 @@
 import { useMemo } from 'react'
 import { formatAltitudeBand } from '../shared-lib/format'
 import { HazardIcon } from './HazardIcon'
-import { project } from './projection'
-import type { LatLon, WeatherArea } from '../data/types'
+import { placeAt, svgPoints } from './projection'
+import type { WeatherArea } from '../data/types'
 import { hazardTitle, iconCount, iconOrder } from './weatherIcons'
-
-// Percent position for an HTML element on the world layer.
-const placeAt = (p: LatLon) => {
-  const { x, y } = project(p.latitude, p.longitude)
-  return { left: `${x}%`, top: `${y}%` }
-}
-
-// SVG "x,y x,y ..." for the polygon, in the same 0-100 box as the land.
-const toSvg = (points: LatLon[]) =>
-  points
-    .map((p) => {
-      const { x, y } = project(p.latitude, p.longitude)
-      return `${x.toFixed(3)},${y.toFixed(3)}`
-    })
-    .join(' ')
 
 // Weather hazards, drawn under the planes: a few round icons per area (how
 // many depends on its size on screen, see weatherIcons.ts). The area's shape
@@ -51,7 +36,7 @@ export function WeatherLayer({
           preserveAspectRatio="none"
           aria-hidden="true"
         >
-          <polygon points={toSvg(selected.polygon)} />
+          <polygon points={svgPoints(selected.polygon, 3)} />
         </svg>
       )}
       {areas.flatMap((area) => {

@@ -6,13 +6,16 @@ import {
   curveThrough,
   interpolate,
   progressAlong,
-  routePoints,
   splitAtDateLine,
 } from './geo'
+import type { Point } from './geo'
 
 const LHR = { latitude: 51.47, longitude: -0.454 }
 const JFK = { latitude: 40.641, longitude: -73.778 }
 const pt = (latitude: number, longitude: number) => ({ latitude, longitude })
+// The plain great circle: a plane at the origin is on the arc, so the curve
+// through it is not bent.
+const greatCircle = (a: Point, b: Point) => curveThrough(a, b, a)
 
 test('London to New York is about 2,990 nm', () => {
   // 3440 nm = Earth's mean radius, the same constant as the backend.
@@ -101,17 +104,6 @@ test('the offset takes the short way round across the date line', () => {
   expect((p.longitude + 360) % 360).toBeCloseTo(180.1, 6)
 })
 
-test('routePoints covers the requested section, ends included', () => {
-  const all = routePoints(LHR, JFK)
-  expect(all).toHaveLength(65)
-  expect(all[0].latitude).toBeCloseTo(LHR.latitude)
-  expect(all[64].longitude).toBeCloseTo(JFK.longitude)
-
-  const second = routePoints(LHR, JFK, 0.5, 1)
-  expect(second.length).toBeLessThan(all.length)
-  expect(second[0].latitude).toBeCloseTo(interpolate(LHR, JFK, 0.5).latitude)
-})
-
 const AKL = { latitude: -37.008, longitude: 174.792 }
 const BOG = { latitude: 4.702, longitude: -74.147 }
 
@@ -124,12 +116,12 @@ const biggestJump = (parts: { longitude: number }[][]) =>
   )
 
 test('a path that does not cross the date line stays in one part', () => {
-  const path = routePoints(LHR, JFK)
+  const path = greatCircle(LHR, JFK)
   expect(splitAtDateLine(path)).toEqual([path])
 })
 
 test('Auckland to Bogota crosses the date line eastbound and is split there', () => {
-  const path = routePoints(AKL, BOG)
+  const path = greatCircle(AKL, BOG)
   // Unsplit, the path jumps almost all the way round the world once.
   expect(biggestJump([path])).toBeGreaterThan(300)
 
@@ -148,7 +140,7 @@ test('Auckland to Bogota crosses the date line eastbound and is split there', ()
 })
 
 test('the same flight the other way (westbound) is split too', () => {
-  const parts = splitAtDateLine(routePoints(BOG, AKL))
+  const parts = splitAtDateLine(greatCircle(BOG, AKL))
   expect(parts).toHaveLength(2)
   expect(parts[0][parts[0].length - 1].longitude).toBe(-180)
   expect(parts[1][0].longitude).toBe(180)

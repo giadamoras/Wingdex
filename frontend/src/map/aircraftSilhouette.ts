@@ -43,10 +43,10 @@ interface Silhouette {
 }
 
 // Every path is hand-built from the same nose/wing/tail recipe as the
-// original narrow-body shape (mirrored left/right around x=12), just with
-// different proportions and engine call-outs per family.
+// narrow-body shape (mirrored left/right around x=12), just with different
+// proportions and engine call-outs per family.
 export const SILHOUETTES: Record<AircraftFamily, Silhouette> = {
-  // The original generic silhouette: no visible engines.
+  // The default shape, also used for an unknown type: no visible engines.
   narrowBody: {
     body: 'M12 2c1 0 1.6 1 1.6 2.4V9L22 13.6V16l-8.4-2.2V19l2.2 1.6V22L12 21l-3.8 1v-1.4l2.2-1.6v-5.2L2 16v-2.4L10.4 9V4.4C10.4 3 11 2 12 2z',
   },

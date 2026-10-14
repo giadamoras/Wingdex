@@ -25,6 +25,7 @@ DEFAULT_USER_AGENT = "AirspaceExplorer/0.1"
 DEFAULT_CACHE_TTL_S = 300.0  # advisories change slowly; the feed itself refreshes each minute
 MIN_TTL_S = 60.0  # refreshes never come closer together than this
 FAILURE_BACKOFF_S = 60  # wait this long after a failed request before trying again
+HTTP_TIMEOUT_S = 20  # per request
 ENTRY_CAP = 400  # the API returns at most this many entries per query
 NO_CEILING_FT = 60000  # our own top for an advisory that gives none
 # Longitude jump that means a polygon straddles the date line (we drop it, see map_entry).
@@ -216,7 +217,7 @@ class AwcWeatherProvider:
         self._user_agent = user_agent
         self._ttl = max(cache_ttl_s, MIN_TTL_S)  # a bad setting can't hammer the API
         self._owns_http = http is None  # close only a client made here, not one handed in
-        self._http = http if http is not None else httpx.Client(timeout=20)
+        self._http = http if http is not None else httpx.Client(timeout=HTTP_TIMEOUT_S)
         self._clock = clock
         self._cache: SnapshotCache[list[WeatherArea]] = SnapshotCache(
             "AWC",

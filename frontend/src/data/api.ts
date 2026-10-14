@@ -11,8 +11,8 @@ import {
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
 
 // How long a request may take, reading the body included, before it counts as
-// failed. A refresh of the live feed can take about 20 s on the backend, so leave
-// room above that.
+// failed. A refresh of the live feed can take 20 s on the backend
+// (HTTP_TIMEOUT_S in backend/app/opensky.py), so leave room above that.
 export const REQUEST_TIMEOUT_MS = 30_000
 
 // Runs one request and aborts it after REQUEST_TIMEOUT_MS, or when the caller's
@@ -35,11 +35,22 @@ async function withTimeout<T>(
   }
 }
 
+// GET one path and parse the JSON body. A failed status throws, except a 404
+// when `notFound` is "null": then it means "nothing known" and gives null.
+async function getJson(
+  path: string,
+  signal: AbortSignal,
+  notFound: 'throw' | 'null' = 'throw',
+): Promise<unknown> {
+  const res = await fetch(`${API_URL}${path}`, { signal })
+  if (res.status === 404 && notFound === 'null') return null
+  if (!res.ok) throw new Error(`GET ${path} failed: ${res.status}`)
+  return res.json()
+}
+
 export function fetchFlights(signal?: AbortSignal): Promise<Flight[]> {
   return withTimeout(signal, async (s) => {
-    const res = await fetch(`${API_URL}/flights`, { signal: s })
-    if (!res.ok) throw new Error(`GET /flights failed: ${res.status}`)
-    const data: unknown = await res.json()
+    const data = await getJson('/flights', s)
     // Not a list: the poll fails and the last good flights stay. A bad row is
     // dropped, so one bad plane cannot take the whole feed down.
     if (!Array.isArray(data)) throw new Error('GET /flights: expected a list')
@@ -54,14 +65,9 @@ export function fetchRoute(
   signal?: AbortSignal,
 ): Promise<FlightRoute | null> {
   return withTimeout(signal, async (s) => {
-    const res = await fetch(
-      `${API_URL}/flights/${encodeURIComponent(flightId)}/route`,
-      { signal: s },
-    )
-    if (res.status === 404) return null
-    if (!res.ok)
-      throw new Error(`GET /flights/${flightId}/route failed: ${res.status}`)
-    const data: unknown = await res.json()
+    const path = `/flights/${encodeURIComponent(flightId)}/route`
+    const data = await getJson(path, s, 'null')
+    if (data === null) return null
     if (!isFlightRoute(data)) throw new Error('GET route: expected an object')
     return data
   })
@@ -69,9 +75,7 @@ export function fetchRoute(
 
 export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
   return withTimeout(signal, async (s) => {
-    const res = await fetch(`${API_URL}/weather`, { signal: s })
-    if (!res.ok) throw new Error(`GET /weather failed: ${res.status}`)
-    const data: unknown = await res.json()
+    const data = await getJson('/weather', s)
     if (!Array.isArray(data)) throw new Error('GET /weather: expected a list')
     return keepValid(data, isWeatherArea, 'weather areas')
   })
@@ -80,9 +84,7 @@ export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
 // Which sources the backend uses (mock or live), for the credit line.
 export function fetchDataSources(signal?: AbortSignal): Promise<DataSources> {
   return withTimeout(signal, async (s) => {
-    const res = await fetch(`${API_URL}/health`, { signal: s })
-    if (!res.ok) throw new Error(`GET /health failed: ${res.status}`)
-    const data: unknown = await res.json()
+    const data = await getJson('/health', s)
     if (!isDataSources(data)) throw new Error('GET /health: unexpected shape')
     return { source: data.source, weather_source: data.weather_source }
   })

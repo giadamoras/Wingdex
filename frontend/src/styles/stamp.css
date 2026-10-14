@@ -1,5 +1,5 @@
 /* Rubber stamp: coral ink, double border, slight tilt. The tilt and the
-   thump-down entrance are now Stamp.tsx's Framer Motion spring, not CSS. */
+   thump-down entrance are Stamp.tsx's Framer Motion spring, not CSS. */
 .stamp {
   /* inline-block: a plain <span> would ignore Framer Motion's transform too */
   display: inline-block;

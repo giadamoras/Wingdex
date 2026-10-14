@@ -8,32 +8,18 @@ import {
 } from './geo'
 import type { Point } from './geo'
 import { PlaneIcon } from './PlaneIcon'
-import { project } from './projection'
+import { placeAt, project, svgPoints } from './projection'
 import type { ReplayState } from './replay'
 import type { Airport, Flight } from '../data/types'
 
-// SVG "x,y x,y ..." for points, in the same 0-100 box as the land: one string
-// for each part of the path, since a path that crosses the date line has to be
-// drawn as separate lines (see splitAtDateLine).
+// SVG points for a path: one string for each part, since a path that crosses
+// the date line has to be drawn as separate lines (see splitAtDateLine).
 const toSvg = (points: Point[]) =>
-  splitAtDateLine(points).map((part) =>
-    part
-      .map((p) => {
-        const { x, y } = project(p.latitude, p.longitude)
-        return `${x.toFixed(3)},${y.toFixed(3)}`
-      })
-      .join(' '),
-  )
-
-// Percent position for an HTML element on the world layer.
-const placeAt = (p: Point) => {
-  const { x, y } = project(p.latitude, p.longitude)
-  return { left: `${x}%`, top: `${y}%` }
-}
+  splitAtDateLine(points).map((part) => svgPoints(part, 3))
 
 // Position for a continuously moving element, as a transform on a full-layer
 // wrapper (percentages of the layer). Unlike left/top, browsers don't round it
-// to whole layer pixels before the map's zoom, which made the ghost hop.
+// to whole layer pixels before the map's zoom, which would make the ghost hop.
 const trackAt = (p: Point) => {
   const { x, y } = project(p.latitude, p.longitude)
   return { transform: `translate(${x}%, ${y}%)` }
@@ -70,7 +56,7 @@ function RouteLine({
 
 // A part of the route shorter than this share of it is left out. A plane that
 // has arrived (or has just left) has a part of almost no length, and a line
-// that short, with its round ends, was drawn as a big grey oval on phones.
+// that short, with its round ends, shows as a big grey oval on phones.
 const MIN_PART = 0.005
 
 // The selected flight's route, drawn above the other planes (but under the

@@ -49,6 +49,7 @@ RESERVE_PROBE_S = 1800  # under the reserve, check again at most this often
 MAX_EXTRAPOLATE_S = 600  # never move a plane further than 10 minutes past its last report
 FAILURE_BACKOFF_S = 30  # wait this long after a failed request before trying again
 TOKEN_MARGIN_S = 60  # renew the token this long before it expires
+HTTP_TIMEOUT_S = 20  # per request; the frontend's own timeout leaves room for it
 
 
 @dataclass(frozen=True)
@@ -240,7 +241,7 @@ class OpenSkyProvider:
         self._last_pause: str | None = None
         self._max_flights = max_flights
         self._owns_http = http is None  # close only a client made here, not one handed in
-        self._http = http if http is not None else httpx.Client(timeout=20)
+        self._http = http if http is not None else httpx.Client(timeout=HTTP_TIMEOUT_S)
         self._clock = clock
         # The snapshot, its age and the back-off after a failure; the credit guard decides
         # whether a refresh may go ahead (see _may_refresh).
@@ -289,7 +290,7 @@ class OpenSkyProvider:
         """What /health shows: the credit guard's state and how old the served data is.
 
         Read without the refresh lock on purpose: a refresh holds it for the whole request
-        (up to 20 s) and /health must not wait. At worst a number is one request (a few
+        (up to HTTP_TIMEOUT_S) and /health must not wait. At worst a number is one request (a few
         credits) out of date.
         """
         now = self._clock()

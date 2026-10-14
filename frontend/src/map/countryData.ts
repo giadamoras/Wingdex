@@ -2,7 +2,7 @@
 // admin-0 countries (public domain). Do not edit by hand.
 export interface Country {
   name: string
-  labelRank: number // 2 (major) - 7 (minor); see countryLabelMinZoom()
+  labelRank: number // 2 (major) - 7 (minor); sets the font size in CountryBorders
   label: [number, number] // [longitude, latitude] label anchor
   rings: [number, number][][] // border ring(s), outer only, no holes
 }

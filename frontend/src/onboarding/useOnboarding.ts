@@ -20,7 +20,7 @@ export function useOnboarding(flights: Flight[] | null, journalLength: number) {
   // from a past session doesn't instantly finish this step.
   const catchStartLength = useRef(journalLength)
   // The highlighted flight, pinned once picked: planes move every poll, so
-  // re-picking "nearest to the centre" each render made the ring hop around.
+  // re-picking "nearest to the centre" each render would make the ring hop.
   const [pinnedId, setPinnedId] = useState<string | null>(null)
 
   useEffect(() => {

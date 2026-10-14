@@ -133,19 +133,3 @@ export function splitAtDateLine(points: Point[]): Point[][] {
   parts.push(current)
   return parts
 }
-
-// Points along the great circle from fraction `from` to `to` (0..1), so the
-// curve looks smooth on the flat map. Always includes both ends.
-export function routePoints(
-  a: Point,
-  b: Point,
-  from = 0,
-  to = 1,
-  segments = 64,
-): Point[] {
-  // Fewer segments for a short section, but at least one.
-  const n = Math.max(1, Math.ceil(segments * (to - from)))
-  return Array.from({ length: n + 1 }, (_, i) =>
-    interpolate(a, b, from + ((to - from) * i) / n),
-  )
-}

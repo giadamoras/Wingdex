@@ -52,8 +52,8 @@ function App() {
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
   const onboarding = useOnboarding(flights, journal.length)
 
-  // 'map' vs the Collection screen (Journal + Badges tabs); a plain view
-  // state, no router, per the Milestone 4 plan.
+  // 'map' vs the Collection screen (Journal, Badges and Facts tabs): a plain
+  // view state, no router.
   const [view, setView] = useState<'map' | 'collection'>('map')
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.

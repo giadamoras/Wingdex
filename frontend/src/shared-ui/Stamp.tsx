@@ -2,9 +2,8 @@ import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import { prefersReducedMotion } from '../shared-lib/reducedMotion'
 
-// Rubber-stamp thump: starts big and faded, lands at its -8deg tilt. Shared
-// by the quest's "Done!" and the card's "Caught today" (Milestone 4's shared
-// stamp look), now a spring instead of the old CSS `stamp` keyframes. Under
+// Rubber-stamp thump, as a spring: starts big and faded, lands at its -8deg
+// tilt. Shared by the quest's "Done!" and the card's "Caught today". Under
 // reduced motion, skip Framer Motion entirely rather than just shortening the
 // transition - a plain <span> with the final rotate baked into the CSS.
 export function Stamp({ children }: { children: ReactNode }) {

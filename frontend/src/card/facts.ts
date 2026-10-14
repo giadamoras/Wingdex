@@ -298,14 +298,14 @@ export function getFact(
   now = new Date(),
   weather: WeatherArea[] = [],
 ): string {
+  // The same pick all day for this flight (see above).
+  const pick = (facts: Fact[]) =>
+    facts[hashString(flight.id + dayKey(now)) % facts.length].text
   const hazards = weatherAt(flight, weather, now)
   const weatherFacts = FACTS.filter(
     (f) => f.kind === 'weather' && hazards.includes(f.value as Hazard),
   )
-  if (weatherFacts.length > 0)
-    return weatherFacts[
-      hashString(flight.id + dayKey(now)) % weatherFacts.length
-    ].text
+  if (weatherFacts.length > 0) return pick(weatherFacts)
 
   const tags = new Set([
     ...(flight.aircraft_type ? [`type:${flight.aircraft_type}`] : []),
@@ -316,5 +316,5 @@ export function getFact(
   ])
   const matches = FACTS.filter((f) => tags.has(`${f.kind}:${f.value}`))
   if (matches.length === 0) return FALLBACK_FACT
-  return matches[hashString(flight.id + dayKey(now)) % matches.length].text
+  return pick(matches)
 }

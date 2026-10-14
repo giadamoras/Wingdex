@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import type { Shape, View } from './panzoom'
 import { COUNTRIES } from './countryData'
-import { project } from './projection'
+import { project, svgRing } from './projection'
 
 // Font size in real screen pixels (constant, like the plane icons - see
 // .country-label's scale(1/--zoom) - not scaled with the map like the land).
@@ -24,14 +24,7 @@ const CHAR_WIDTH_FACTOR = 0.62
 // only (no holes), so a coastal border segment overlaps the coastline itself
 // - normal on a political map, not a bug.
 const borderRings = COUNTRIES.flatMap((c) =>
-  c.rings.map((ring) =>
-    ring
-      .map(([lon, lat]) => {
-        const { x, y } = project(lat, lon)
-        return `${x.toFixed(2)},${y.toFixed(2)}`
-      })
-      .join(' '),
-  ),
+  c.rings.map((ring) => svgRing(ring, 2)),
 )
 
 // Each country's label position (percent of the map box, like a plane's

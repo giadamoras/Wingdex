@@ -45,10 +45,16 @@ export const MAX_ZOOM = 16
 // FlightMap.tsx).
 export const TOUCH_MAX_ZOOM = 9
 
-export function maxZoom(): number {
-  const touch =
+// True on a touch screen (a coarse pointer). The map zooms less far and draws
+// fewer planes there. False where matchMedia is missing (jsdom in tests).
+export function isTouch(): boolean {
+  return (
     typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-  return touch ? TOUCH_MAX_ZOOM : MAX_ZOOM
+  )
+}
+
+export function maxZoom(): number {
+  return isTouch() ? TOUCH_MAX_ZOOM : MAX_ZOOM
 }
 
 const clamp = (n: number, min: number, max: number) =>

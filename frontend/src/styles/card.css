@@ -1,5 +1,5 @@
-/* Fixed-position ticket panel below the map. Entrance is FlightCard.tsx's
-   Framer Motion spring now, not this CSS animation. */
+/* Fixed-position ticket panel below the map. Its entrance is FlightCard.tsx's
+   Framer Motion spring, not CSS. */
 .card {
   margin-top: 16px;
   padding: 14px 18px;

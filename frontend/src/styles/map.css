@@ -66,7 +66,7 @@
    another part of the world can shift it. Only the map surface changes here -
    card/button/journal tokens (--paper, --ink, --accent, --highlight, --mint)
    stay constant. "day" uses the --sea/--land defaults above, so it needs no
-   override block. Region and weather palette shifts are a later milestone. */
+   override block. */
 .map[data-map-time='dawn'] {
   --sea: #b7c9d6;
   --land: #f3c987;

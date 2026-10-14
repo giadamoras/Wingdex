@@ -8,8 +8,8 @@ import { springIn } from '../shared-lib/springIn'
 const POPUP_MS = 4000
 
 // The caller (App.tsx) wraps this in <AnimatePresence>, which is what makes
-// the exit transition below actually run - the old CSS version had no exit
-// animation at all, since removing the DOM node cut it off immediately.
+// the exit transition below run: without it, removing the element would cut
+// the animation off at once.
 export function BadgePopup({
   badge,
   onDismiss,
@@ -23,8 +23,16 @@ export function BadgePopup({
     return () => clearTimeout(timer)
   }, [badge, onDismiss])
 
-  const content = (
-    <>
+  return (
+    <motion.div
+      className="badge-popup"
+      role="status"
+      {...springIn(
+        { opacity: 0, scale: 0.6 },
+        { opacity: 1, scale: 1 },
+        { opacity: 0, scale: 0.8 },
+      )}
+    >
       <span className="badge-popup-icon" aria-hidden="true">
         🏅
       </span>
@@ -39,20 +47,6 @@ export function BadgePopup({
       >
         ×
       </button>
-    </>
-  )
-
-  return (
-    <motion.div
-      className="badge-popup"
-      role="status"
-      {...springIn(
-        { opacity: 0, scale: 0.6 },
-        { opacity: 1, scale: 1 },
-        { opacity: 0, scale: 0.8 },
-      )}
-    >
-      {content}
     </motion.div>
   )
 }

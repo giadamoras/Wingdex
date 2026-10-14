@@ -1,5 +1,5 @@
 import { hashString } from '../shared-lib/hash'
-import { WHOLE, type Shape, type View } from './panzoom'
+import { isTouch, WHOLE, type Shape, type View } from './panzoom'
 import { project } from './projection'
 import type { Flight } from '../data/types'
 
@@ -14,9 +14,7 @@ export const VIEW_CAP = 800
 export const TOUCH_VIEW_CAP = 300
 
 function viewCap(): number {
-  const touch =
-    typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches
-  return touch ? TOUCH_VIEW_CAP : VIEW_CAP
+  return isTouch() ? TOUCH_VIEW_CAP : VIEW_CAP
 }
 // Planes just outside the view are kept, so they don't pop in at the edge.
 const MARGIN = 0.05

@@ -51,8 +51,11 @@ export function FlightCard({
   const climb = formatClimb(flight.vertical_rate_fpm)
   const detailLines = describe(flight, details)
 
-  const content = (
-    <>
+  return (
+    <motion.section
+      className="card passport-page"
+      {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
+    >
       <p className="passport-strip">Airspace Explorer · Flight Passport</p>
       <header className="card-head">
         <h2>{flight.callsign}</h2>
@@ -127,15 +130,6 @@ export function FlightCard({
           </button>
         )}
       </div>
-    </>
-  )
-
-  return (
-    <motion.section
-      className="card passport-page"
-      {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
-    >
-      {content}
     </motion.section>
   )
 }

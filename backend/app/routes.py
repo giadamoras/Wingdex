@@ -31,6 +31,7 @@ MAX_CACHE_ENTRIES = 2000
 DOWN_PAUSE_S = 15  # after a failed lookup, taps on uncached planes fail at once for this long
 MAX_CONCURRENT_LOOKUPS = 8  # requests to adsbdb in progress at once (the thread pool has 40)
 QUEUE_WAIT_S = 2  # how long a lookup waits for a free slot before giving up
+HTTP_TIMEOUT_S = 8  # per request: a player is waiting on the open card
 
 CRUISE_KT = 440  # typical average speed: the mock's long-hauls use 450-490 (40 less westbound)
 # The plane must be roughly on the way: going origin -> plane -> destination can't be much
@@ -166,7 +167,7 @@ class RouteService:
         queue_wait_s: float = QUEUE_WAIT_S,
     ) -> None:
         self._owns_http = http is None  # close only a client made here, not one handed in
-        self._http = http if http is not None else httpx.Client(timeout=8)
+        self._http = http if http is not None else httpx.Client(timeout=HTTP_TIMEOUT_S)
         self._clock = clock
         self._max_entries = max_entries
         self._slots = threading.BoundedSemaphore(max_concurrent)
@@ -206,7 +207,7 @@ class RouteService:
             except LookupUnavailable:
                 with self._lock:
                     # Counted from when the failure arrived, not from when the request began:
-                    # a timeout alone can take 8 s.
+                    # a timeout alone can take HTTP_TIMEOUT_S.
                     self._down_until = self._clock() + DOWN_PAUSE_S
                 raise
             finally:

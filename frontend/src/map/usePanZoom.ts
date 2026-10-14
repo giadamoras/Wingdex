@@ -13,6 +13,9 @@ import {
 // Pixels a pointer must move before a press counts as a drag, not a click.
 const DRAG_THRESHOLD_PX = 4
 const BUTTON_ZOOM = 1.6
+// How fast the wheel zooms: the zoom factor is exp(-deltaY * this), so one
+// usual wheel notch (deltaY 100) zooms by about 1.2x.
+const WHEEL_ZOOM_RATE = 0.002
 
 // Slow start and end for camera moves.
 const easeInOut = (t: number) =>
@@ -82,6 +85,14 @@ export function usePanZoom(
     anim.current = requestAnimationFrame(step)
   }
 
+  // Zooms by `factor` around (fx, fy), in fractions of the box (a user action,
+  // so it stops any camera animation).
+  const zoomBy = (factor: number, fx = 0.5, fy = 0.5) => {
+    stopAnimation()
+    moved.current = true
+    setView((v) => zoomAt(v, factor, fx, fy, shapeRef.current))
+  }
+
   // Converts client pixels to fractions of the map box.
   const toBox = (clientX: number, clientY: number) => {
     const r = ref.current!.getBoundingClientRect()
@@ -98,17 +109,14 @@ export function usePanZoom(
     if (!el) return
     const onWheel = (e: WheelEvent) => {
       e.preventDefault()
-      cancelAnimationFrame(anim.current)
-      const r = el.getBoundingClientRect()
-      const fx = (e.clientX - r.left) / r.width
-      const fy = (e.clientY - r.top) / r.height
-      moved.current = true
-      setView((v) =>
-        zoomAt(v, Math.exp(-e.deltaY * 0.002), fx, fy, shapeRef.current),
-      )
+      const { fx, fy } = toBox(e.clientX, e.clientY)
+      zoomBy(Math.exp(-e.deltaY * WHEEL_ZOOM_RATE), fx, fy)
     }
     el.addEventListener('wheel', onWheel, { passive: false })
     return () => el.removeEventListener('wheel', onWheel)
+    // toBox and zoomBy read only refs and setView, so the listener from the
+    // first render stays correct; re-adding it on every render would be waste.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ref])
 
   const onPointerDown = (e: PointerEvent) => {
@@ -179,16 +187,8 @@ export function usePanZoom(
       onPointerCancel: onPointerUp,
       onClickCapture,
     },
-    zoomIn: () => {
-      stopAnimation()
-      moved.current = true
-      setView((v) => zoomAt(v, BUTTON_ZOOM, 0.5, 0.5, shapeRef.current))
-    },
-    zoomOut: () => {
-      stopAnimation()
-      moved.current = true
-      setView((v) => zoomAt(v, 1 / BUTTON_ZOOM, 0.5, 0.5, shapeRef.current))
-    },
+    zoomIn: () => zoomBy(BUTTON_ZOOM),
+    zoomOut: () => zoomBy(1 / BUTTON_ZOOM),
     reset: () => {
       animateTo(startView(shapeRef.current), 0)
       moved.current = false
