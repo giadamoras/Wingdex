@@ -3,6 +3,7 @@ import { isString, keepValid } from '../data/validate'
 // Which badges have already shown their unlock popup. Badge *unlocked*
 // state itself is never stored (see badges.ts) — only this "seen" set is,
 // so a badge that's already unlocked on first load doesn't pop up again.
+// Keeps the app's old name on purpose: a new key would lose saved progress.
 export const BADGES_SEEN_KEY = 'airspace-explorer:badges-seen:v1'
 
 export function saveSeenBadges(ids: string[]) {

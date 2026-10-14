@@ -106,7 +106,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             factory.clear()
 
 
-app = FastAPI(title="Airspace Explorer API", lifespan=lifespan)
+app = FastAPI(title="Wingdex API", lifespan=lifespan)
 
 # The flight list is large and repetitive JSON; gzip shrinks it about 8x.
 app.add_middleware(GZipMiddleware, minimum_size=1000)

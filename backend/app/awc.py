@@ -21,7 +21,7 @@ from app.snapshot import SnapshotCache
 log = logging.getLogger(__name__)
 
 ISIGMET_URL = "https://aviationweather.gov/api/data/isigmet"
-DEFAULT_USER_AGENT = "AirspaceExplorer/0.1"
+DEFAULT_USER_AGENT = "Wingdex/0.1"
 DEFAULT_CACHE_TTL_S = 300.0  # advisories change slowly; the feed itself refreshes each minute
 MIN_TTL_S = 60.0  # refreshes never come closer together than this
 FAILURE_BACKOFF_S = 60  # wait this long after a failed request before trying again

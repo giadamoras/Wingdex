@@ -34,6 +34,14 @@
   stroke-width: 2;
 }
 
+/* The pilot's wings badge on the chest: gold, like the goggles' lenses. */
+.mascot-wings {
+  fill: var(--highlight);
+  stroke: var(--ink);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
 .mascot-blush {
   fill: var(--accent);
   opacity: 0.45;

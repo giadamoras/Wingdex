@@ -1,4 +1,6 @@
-# Airspace Explorer — Product & Technical Plan
+# Wingdex — Product & Technical Plan
+
+**Name.** Renamed from "Airspace Explorer" on 2026-10-14: a NATS flight-tracking app already has that name. "Wingdex" is the collect-them-all dex plus earning your wings (the learning path). The browser storage keys keep the old `airspace-explorer:` prefix on purpose: renaming them would empty every existing Journal.
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 

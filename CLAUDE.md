@@ -1,4 +1,4 @@
-# Airspace Explorer
+# Wingdex
 
 Read `docs/plan.md` before making significant changes. It is the source of truth for the project's product scope, architecture, and roadmap.
 

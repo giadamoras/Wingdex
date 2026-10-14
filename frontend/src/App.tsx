@@ -139,7 +139,11 @@ function App() {
     // has-onboarding leaves room under the page for the docked mascot.
     <main className={onboarding.step ? 'has-onboarding' : undefined}>
       <div className="app-header">
-        <h1>✈ Airspace Explorer</h1>
+        <h1>
+          {/* The favicon doubles as the logo; decorative, the text names the app. */}
+          <img className="app-logo" src="/favicon.svg" alt="" />
+          Wingdex
+        </h1>
         <button
           className={`collection-btn${onboarding.step === 'done' ? ' nudge' : ''}`}
           onClick={() => setView(view === 'map' ? 'collection' : 'map')}

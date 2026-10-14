@@ -1,10 +1,12 @@
-# Airspace Explorer
+# Wingdex
 
-A kawaii "spot & collect" game built on flight traffic. Watch planes cross a world map, tap one
+**Spot planes. Catch them. Earn your wings.**
+
+A "spot & collect" game built on flight traffic. Watch planes cross a world map, tap one
 to open its flight passport, and catch it for your collection. It runs on mock data out of the box;
 live flights are optional (see the data terms below).
 
-![Airspace Explorer: a world map with a flight passport open](docs/images/screenshot.png)
+![Wingdex: a world map with a flight passport open](docs/images/screenshot.png)
 
 - **Spot.** Planes move across the world map. Tap one for its route, type, altitude, speed and a
   "Did you know?" fact. Weather hazards (storms, turbulence, icing, volcanic ash) are drawn on the map.
@@ -73,7 +75,7 @@ URL) and `CORS_ORIGINS` for the backend (the frontend's URL). See `backend/.env.
 ### Testing on a phone
 
 <p align="center">
-  <img src="docs/images/demo-mobile.gif" alt="Airspace Explorer on a phone: the mascot guides a first catch" width="280">
+  <img src="docs/images/demo-mobile.gif" alt="Wingdex on a phone: catching a flight" width="280">
 </p>
 
 To open the app from a phone on the same Wi-Fi, bind both servers to the network and replace

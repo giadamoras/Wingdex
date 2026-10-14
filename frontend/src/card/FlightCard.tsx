@@ -56,7 +56,7 @@ export function FlightCard({
       className="card passport-page"
       {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
     >
-      <p className="passport-strip">Airspace Explorer · Flight Passport</p>
+      <p className="passport-strip">Wingdex · Flight Passport</p>
       <header className="card-head">
         <h2>{flight.callsign}</h2>
         {flight.aircraft_type && (

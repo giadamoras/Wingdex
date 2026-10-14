@@ -8,6 +8,18 @@
   margin-bottom: 12px;
 }
 
+/* The logo badge in front of the title, sized with the title's text. */
+.app-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 0.35em;
+}
+
+.app-logo {
+  width: 1.1em;
+  height: 1.1em;
+}
+
 /* Same paper-button look as .journey. */
 .collection-btn {
   padding: 8px 20px;

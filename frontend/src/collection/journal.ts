@@ -3,6 +3,7 @@ import { isJournalEntry, keepValid } from '../data/validate'
 
 // Versioned key: if the entry shape ever changes, bump to v2 instead of
 // loading old data that no longer fits.
+// Keeps the app's old name on purpose: a new key would lose saved progress.
 export const STORAGE_KEY = 'airspace-explorer:journal:v1'
 
 // Saves the whole Journal as JSON in localStorage.

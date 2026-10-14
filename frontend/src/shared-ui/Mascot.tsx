@@ -1,6 +1,7 @@
 // The onboarding/quest-completion mascot: a chibi cat pilot, cropped like a
 // passport photo bust to tie into the card's own "Flight Passport" theme.
-// No idle animation, only the entrance transition its callers apply. `mood`
+// It wears a pilot's wings badge (the "earn your wings" in Wingdex). No idle
+// animation, only the entrance transition its callers apply. `mood`
 // swaps the face: 'talk' opens the mouth, 'cheer' adds happy ^ ^ eyes. It is
 // decorative (hidden from screen readers): both callers show their message as
 // text beside it.
@@ -29,6 +30,13 @@ export function Mascot({
         d="M68 74 C76 78 82 86 79 95 C75 88 70 84 65 80 Z"
         className="mascot-scarf"
       />
+      {/* Pilot's wings pinned on the chest: two swept wings and a round
+          centre, like the badge a pilot gets on qualifying. */}
+      <path
+        d="M46 90 C40 87 33 86 27 88 C32 91 38 93 46 93 Z M54 90 C60 87 67 86 73 88 C68 91 62 93 54 93 Z"
+        className="mascot-wings"
+      />
+      <circle cx="50" cy="91" r="4" className="mascot-wings" />
       {/* Ears, outer then a smaller inner triangle. */}
       <path d="M22 32 L30 8 L41 29 Z" className="mascot-fur" />
       <path d="M78 32 L70 8 L59 29 Z" className="mascot-fur" />

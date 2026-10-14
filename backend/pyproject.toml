@@ -1,7 +1,7 @@
 [project]
-name = "airspace-explorer-backend"
+name = "wingdex-backend"
 version = "0.1.0"
-description = "Flight data API for Airspace Explorer"
+description = "Flight data API for Wingdex"
 requires-python = ">=3.11"
 dependencies = [
     # Lower bounds only. CI's backend-oldest job runs the tests and mypy with

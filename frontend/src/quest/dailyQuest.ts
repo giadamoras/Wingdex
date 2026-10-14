@@ -6,6 +6,7 @@ export interface SavedQuest {
 }
 
 // Versioned key, same idea as the Journal's.
+// Keeps the app's old name on purpose: a new key would lose saved progress.
 export const QUEST_STORAGE_KEY = 'airspace-explorer:quest:v1'
 
 export function saveDailyQuest(saved: SavedQuest) {

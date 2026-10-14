@@ -1,5 +1,6 @@
 // Whether the onboarding flow has already run once on this device. Same
 // pattern as badgesSeen.ts's seen-set, just a single flag.
+// Keeps the app's old name on purpose: a new key would lose saved progress.
 const ONBOARDING_SEEN_KEY = 'airspace-explorer:onboarding-seen:v1'
 
 export function hasSeenOnboarding(): boolean {
