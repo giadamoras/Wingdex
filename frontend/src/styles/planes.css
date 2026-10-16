@@ -94,6 +94,12 @@
   animation: featured-pulse 1.8s ease-in-out infinite;
 }
 
+/* The plane the mascot points at is drawn above the other traffic, so a
+   neighbour can't cover it and take the tap (the selected plane stays on top). */
+.plane.target {
+  z-index: 2;
+}
+
 /* Onboarding target: a bold mustard ring with an ink outline and a ripple, so
    the plane the mascot points at is unmissable on any map palette. */
 .plane.target::after {
