@@ -4,7 +4,7 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data). They are summarised in `docs/history.md`.
+- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data), then backlog item 1 (the smoke test). They are summarised in `docs/history.md`.
 - **Postponed.** Deployment (see "Deployment" below). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
@@ -83,7 +83,7 @@ Aviation-curious people without deep aviation background — including the creat
 - **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract (the frontend only needed to learn the new hazard and labels once, in step 4).
 - **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific. Fact-pool content is a static file bundled into the frontend, not an endpoint. (The "move content to a database" idea below would revisit this.)
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
-- **Tooling:** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, and `tsc`; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`.
+- **Tooling:** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`.
 - **Animation:** Framer Motion for the bouncy, springy interactions. GSAP was considered and deferred.
 - **State & persistence:** React Context/hooks + browser localStorage.
 - **Quest logic:** a small list of parameterized quest templates in `quest.ts`, each with a title, a concept fact and a `matches()` test. One is picked per local day and saved (see Milestone 3 in `docs/history.md`). There is no template engine beyond that list.
@@ -107,13 +107,13 @@ Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`
 
 ### Deployment (postponed 2026-10-07)
 
-Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode, Planespotters photos) wait with it. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend when it resumes (see `backend/.env.example`).
+Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode, Planespotters photos, an installable PWA) wait with it. The PWA was dropped from backlog item 1 on 2026-10-16 for this reason: installing only matters on a phone, which needs the app hosted on HTTPS, and while Wingdex is a portfolio piece a service worker would add caching risk (players stuck on an old version) for no user. When it is picked up: a hand-written manifest, icons made from `favicon.svg`, and a small service worker that caches the app's files, tries the network first for the page and never caches `/flights`, `/weather` or `/route`. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend when it resumes (see `backend/.env.example`).
 
 ### After the MVP: backlog in priority order
 
 Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked up on its own, after the user names it.
 
-1. **Smoke test and PWA (M).** One Playwright smoke test and an installable PWA. (The GitHub Actions workflow running the backend and frontend checks, `.github/workflows/ci.yml`, is done.)
+1. **Smoke test (done 2026-10-16).** One Playwright smoke test, run in CI; see `docs/history.md`. The PWA that was part of this item waits for deployment (see "Deployment" above).
 2. **Larger facts and quests (M).** Start by moving the facts out of `facts.ts` into a data file (stage 1 of the content-database idea below) and building one **type catalog keyed by ICAO type code** (name, family, short description) that the dex, the encyclopedia and the 3D models all share. Then grow the pools, add airline-based facts and quests (needs its own decision) and learn missing aircraft types in the background. Content quality is the weakest point seen live.
 3. **Collection dex, streak and more badges (S/M).** Types and families seen out of those that exist, countries and airlines; a streak counter; badges derived from the Journal (night owl, storm chaser, polar, many countries). Cheap, frontend only, a strong collect-them-all feel; needs the catalog from item 2.
 4. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.

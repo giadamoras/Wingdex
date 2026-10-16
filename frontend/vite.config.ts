@@ -1,8 +1,12 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vitest/config'
+import { configDefaults, defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  test: { environment: 'jsdom' },
+  // e2e/ holds the Playwright smoke test (npm run test:e2e), not Vitest tests.
+  test: {
+    environment: 'jsdom',
+    exclude: [...configDefaults.exclude, 'e2e/**'],
+  },
 })

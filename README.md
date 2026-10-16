@@ -184,6 +184,15 @@ npm run format:check
 npm run build
 ```
 
+The end-to-end smoke test (Playwright) catches one plane in a real browser. It starts the backend
+on mock data and a production build by itself, on ports 8765 and 4173, so stop nothing first. The
+first time, install its browser:
+
+```sh
+npx playwright install chromium
+npm run test:e2e
+```
+
 The frontend lints with [oxlint](https://oxc.rs) (not ESLint). `frontend/scripts/build-land.mjs`
 and `build-countries.mjs` are one-off generators for the map data in `src/`; they are not part of
 the build.
