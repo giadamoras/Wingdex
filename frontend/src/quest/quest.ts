@@ -6,7 +6,7 @@ import {
   timeOfDay,
   weatherAt,
 } from '../shared-lib/attributes'
-import { TURBOPROP, WIDE_BODY } from '../shared-lib/aircraftTypes'
+import { isTurboprop, isWideBody } from '../shared-lib/aircraftTypes'
 import { hashString } from '../shared-lib/hash'
 import type { Flight, Hazard, JournalEntry, WeatherArea } from '../data/types'
 
@@ -120,14 +120,14 @@ export const QUEST_TEMPLATES: Quest[] = [
     title: 'Catch a wide-body jet',
     conceptFact:
       'A wide-body has two aisles and a fuselage over 5 m across. The extra room is for more than seats: the cargo hold under the floor carries freight on most long flights, so these jets earn money from parcels as well as passengers. Their size also needs bigger gates, wider taxiways and longer runways, so only some airports can handle them.',
-    matches: (f) => f.aircraft_type !== null && WIDE_BODY.has(f.aircraft_type),
+    matches: (f) => isWideBody(f.aircraft_type),
   },
   {
     id: 'turboprop',
     title: 'Catch a propeller plane',
     conceptFact:
       'A turboprop is a jet engine that turns a propeller through a gearbox. A big propeller moves a lot of air slowly, which is more efficient than a fast jet exhaust at lower speeds and heights. That makes turboprops cheap to run on short routes, and many can use shorter runways than jets.',
-    matches: (f) => f.aircraft_type !== null && TURBOPROP.has(f.aircraft_type),
+    matches: (f) => isTurboprop(f.aircraft_type),
   },
   {
     id: 'ocean',

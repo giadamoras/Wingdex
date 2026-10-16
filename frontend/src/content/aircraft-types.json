@@ -1,0 +1,724 @@
+{
+  "families": {
+    "A220": {
+      "name": "Airbus A220"
+    },
+    "A320": {
+      "name": "Airbus A320 family"
+    },
+    "A300": {
+      "name": "Airbus A300 and A310"
+    },
+    "A330": {
+      "name": "Airbus A330"
+    },
+    "A340": {
+      "name": "Airbus A340"
+    },
+    "A350": {
+      "name": "Airbus A350"
+    },
+    "A380": {
+      "name": "Airbus A380"
+    },
+    "737": {
+      "name": "Boeing 737"
+    },
+    "747": {
+      "name": "Boeing 747"
+    },
+    "757": {
+      "name": "Boeing 757"
+    },
+    "767": {
+      "name": "Boeing 767"
+    },
+    "777": {
+      "name": "Boeing 777"
+    },
+    "787": {
+      "name": "Boeing 787 Dreamliner"
+    },
+    "E-Jet": {
+      "name": "Embraer E-Jets"
+    },
+    "ERJ": {
+      "name": "Embraer ERJ"
+    },
+    "CRJ": {
+      "name": "Bombardier CRJ"
+    },
+    "ATR": {
+      "name": "ATR 42 and 72"
+    },
+    "Dash 8": {
+      "name": "De Havilland Canada Dash 8"
+    },
+    "Citation": {
+      "name": "Cessna Citation"
+    },
+    "Global": {
+      "name": "Bombardier Global"
+    },
+    "Gulfstream": {
+      "name": "Gulfstream"
+    },
+    "Falcon": {
+      "name": "Dassault Falcon"
+    },
+    "Cessna 150": {
+      "name": "Cessna 150 and 152"
+    },
+    "PA-28": {
+      "name": "Piper PA-28"
+    },
+    "Diamond": {
+      "name": "Diamond"
+    },
+    "Cirrus": {
+      "name": "Cirrus"
+    },
+    "Bonanza": {
+      "name": "Beechcraft Bonanza"
+    },
+    "Cub": {
+      "name": "Piper Cub"
+    },
+    "Tecnam": {
+      "name": "Tecnam"
+    },
+    "Robinson": {
+      "name": "Robinson"
+    }
+  },
+  "types": {
+    "BCS1": {
+      "name": "Airbus A220-100",
+      "family": "A220",
+      "category": "narrowBody"
+    },
+    "BCS3": {
+      "name": "Airbus A220-300",
+      "family": "A220",
+      "category": "narrowBody"
+    },
+    "A318": {
+      "name": "Airbus A318",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A319": {
+      "name": "Airbus A319",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A320": {
+      "name": "Airbus A320",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A321": {
+      "name": "Airbus A321",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A19N": {
+      "name": "Airbus A319neo",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A20N": {
+      "name": "Airbus A320neo",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A21N": {
+      "name": "Airbus A321neo",
+      "family": "A320",
+      "category": "narrowBody"
+    },
+    "A306": {
+      "name": "Airbus A300-600",
+      "family": "A300",
+      "category": "wideBody"
+    },
+    "A310": {
+      "name": "Airbus A310",
+      "family": "A300",
+      "category": "wideBody"
+    },
+    "A332": {
+      "name": "Airbus A330-200",
+      "family": "A330",
+      "category": "wideBody"
+    },
+    "A333": {
+      "name": "Airbus A330-300",
+      "family": "A330",
+      "category": "wideBody"
+    },
+    "A338": {
+      "name": "Airbus A330-800",
+      "family": "A330",
+      "category": "wideBody"
+    },
+    "A339": {
+      "name": "Airbus A330-900",
+      "family": "A330",
+      "category": "wideBody"
+    },
+    "A342": {
+      "name": "Airbus A340-200",
+      "family": "A340",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "A343": {
+      "name": "Airbus A340-300",
+      "family": "A340",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "A345": {
+      "name": "Airbus A340-500",
+      "family": "A340",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "A346": {
+      "name": "Airbus A340-600",
+      "family": "A340",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "A359": {
+      "name": "Airbus A350-900",
+      "family": "A350",
+      "category": "wideBody"
+    },
+    "A35K": {
+      "name": "Airbus A350-1000",
+      "family": "A350",
+      "category": "wideBody"
+    },
+    "A388": {
+      "name": "Airbus A380-800",
+      "family": "A380",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "B733": {
+      "name": "Boeing 737-300",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B734": {
+      "name": "Boeing 737-400",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B735": {
+      "name": "Boeing 737-500",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B736": {
+      "name": "Boeing 737-600",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B737": {
+      "name": "Boeing 737-700",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B738": {
+      "name": "Boeing 737-800",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B739": {
+      "name": "Boeing 737-900",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B37M": {
+      "name": "Boeing 737 MAX 7",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B38M": {
+      "name": "Boeing 737 MAX 8",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B39M": {
+      "name": "Boeing 737 MAX 9",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B3XM": {
+      "name": "Boeing 737 MAX 10",
+      "family": "737",
+      "category": "narrowBody"
+    },
+    "B742": {
+      "name": "Boeing 747-200",
+      "family": "747",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "B744": {
+      "name": "Boeing 747-400",
+      "family": "747",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "B748": {
+      "name": "Boeing 747-8",
+      "family": "747",
+      "category": "wideBody",
+      "engines": 4
+    },
+    "B752": {
+      "name": "Boeing 757-200",
+      "family": "757",
+      "category": "narrowBody"
+    },
+    "B753": {
+      "name": "Boeing 757-300",
+      "family": "757",
+      "category": "narrowBody"
+    },
+    "B762": {
+      "name": "Boeing 767-200",
+      "family": "767",
+      "category": "wideBody"
+    },
+    "B763": {
+      "name": "Boeing 767-300",
+      "family": "767",
+      "category": "wideBody"
+    },
+    "B764": {
+      "name": "Boeing 767-400",
+      "family": "767",
+      "category": "wideBody"
+    },
+    "B772": {
+      "name": "Boeing 777-200",
+      "family": "777",
+      "category": "wideBody"
+    },
+    "B77L": {
+      "name": "Boeing 777-200LR",
+      "family": "777",
+      "category": "wideBody"
+    },
+    "B773": {
+      "name": "Boeing 777-300",
+      "family": "777",
+      "category": "wideBody"
+    },
+    "B77W": {
+      "name": "Boeing 777-300ER",
+      "family": "777",
+      "category": "wideBody"
+    },
+    "B779": {
+      "name": "Boeing 777-9",
+      "family": "777",
+      "category": "wideBody"
+    },
+    "B788": {
+      "name": "Boeing 787-8",
+      "family": "787",
+      "category": "wideBody"
+    },
+    "B789": {
+      "name": "Boeing 787-9",
+      "family": "787",
+      "category": "wideBody"
+    },
+    "B78X": {
+      "name": "Boeing 787-10",
+      "family": "787",
+      "category": "wideBody"
+    },
+    "E170": {
+      "name": "Embraer E170",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E75L": {
+      "name": "Embraer E175",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E75S": {
+      "name": "Embraer E175",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E190": {
+      "name": "Embraer E190",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E195": {
+      "name": "Embraer E195",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E290": {
+      "name": "Embraer E190-E2",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E295": {
+      "name": "Embraer E195-E2",
+      "family": "E-Jet",
+      "category": "regionalJet"
+    },
+    "E135": {
+      "name": "Embraer ERJ 135",
+      "family": "ERJ",
+      "category": "regionalJet"
+    },
+    "E145": {
+      "name": "Embraer ERJ 145",
+      "family": "ERJ",
+      "category": "regionalJet"
+    },
+    "CRJ2": {
+      "name": "Bombardier CRJ200",
+      "family": "CRJ",
+      "category": "regionalJet"
+    },
+    "CRJ7": {
+      "name": "Bombardier CRJ700",
+      "family": "CRJ",
+      "category": "regionalJet"
+    },
+    "CRJ9": {
+      "name": "Bombardier CRJ900",
+      "family": "CRJ",
+      "category": "regionalJet"
+    },
+    "CRJX": {
+      "name": "Bombardier CRJ1000",
+      "family": "CRJ",
+      "category": "regionalJet"
+    },
+    "AT43": {
+      "name": "ATR 42-300",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT45": {
+      "name": "ATR 42-500",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT46": {
+      "name": "ATR 42-600",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT72": {
+      "name": "ATR 72",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT73": {
+      "name": "ATR 72",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT75": {
+      "name": "ATR 72-500",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "AT76": {
+      "name": "ATR 72-600",
+      "family": "ATR",
+      "category": "turboprop"
+    },
+    "DH8A": {
+      "name": "De Havilland Canada Dash 8-100",
+      "family": "Dash 8",
+      "category": "turboprop"
+    },
+    "DH8B": {
+      "name": "De Havilland Canada Dash 8-200",
+      "family": "Dash 8",
+      "category": "turboprop"
+    },
+    "DH8C": {
+      "name": "De Havilland Canada Dash 8-300",
+      "family": "Dash 8",
+      "category": "turboprop"
+    },
+    "DH8D": {
+      "name": "De Havilland Canada Dash 8-400",
+      "family": "Dash 8",
+      "category": "turboprop"
+    },
+    "SF34": {
+      "name": "Saab 340",
+      "category": "turboprop"
+    },
+    "E120": {
+      "name": "Embraer EMB 120 Brasilia",
+      "category": "turboprop"
+    },
+    "B190": {
+      "name": "Beechcraft 1900",
+      "category": "turboprop"
+    },
+    "DHC6": {
+      "name": "De Havilland Canada Twin Otter",
+      "category": "turboprop"
+    },
+    "BE20": {
+      "name": "Beechcraft King Air 200",
+      "category": "turboprop"
+    },
+    "C208": {
+      "name": "Cessna 208 Caravan",
+      "category": "turboprop"
+    },
+    "PC12": {
+      "name": "Pilatus PC-12",
+      "category": "turboprop"
+    },
+    "C56X": {
+      "name": "Cessna Citation Excel",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C68A": {
+      "name": "Cessna Citation Latitude",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "CL35": {
+      "name": "Bombardier Challenger 350",
+      "category": "bizJet"
+    },
+    "GLEX": {
+      "name": "Bombardier Global Express",
+      "family": "Global",
+      "category": "bizJet"
+    },
+    "GL7T": {
+      "name": "Bombardier Global 7500",
+      "family": "Global",
+      "category": "bizJet"
+    },
+    "GLF5": {
+      "name": "Gulfstream G550",
+      "family": "Gulfstream",
+      "category": "bizJet"
+    },
+    "GLF6": {
+      "name": "Gulfstream G650",
+      "family": "Gulfstream",
+      "category": "bizJet"
+    },
+    "F2TH": {
+      "name": "Dassault Falcon 2000",
+      "family": "Falcon",
+      "category": "bizJet"
+    },
+    "FA7X": {
+      "name": "Dassault Falcon 7X",
+      "family": "Falcon",
+      "category": "bizJet"
+    },
+    "PC24": {
+      "name": "Pilatus PC-24",
+      "category": "bizJet"
+    },
+    "E55P": {
+      "name": "Embraer Phenom 300",
+      "category": "bizJet"
+    },
+    "LJ45": {
+      "name": "Learjet 45",
+      "category": "bizJet"
+    },
+    "H25B": {
+      "name": "Hawker 800",
+      "category": "bizJet"
+    },
+    "C150": {
+      "name": "Cessna 150",
+      "family": "Cessna 150",
+      "category": "light"
+    },
+    "C152": {
+      "name": "Cessna 152",
+      "family": "Cessna 150",
+      "category": "light"
+    },
+    "C172": {
+      "name": "Cessna 172 Skyhawk",
+      "category": "light"
+    },
+    "C182": {
+      "name": "Cessna 182 Skylane",
+      "category": "light"
+    },
+    "P28A": {
+      "name": "Piper PA-28 Cherokee",
+      "family": "PA-28",
+      "category": "light"
+    },
+    "P28R": {
+      "name": "Piper PA-28R Arrow",
+      "family": "PA-28",
+      "category": "light"
+    },
+    "PA34": {
+      "name": "Piper PA-34 Seneca",
+      "category": "light"
+    },
+    "PA18": {
+      "name": "Piper PA-18 Super Cub",
+      "family": "Cub",
+      "category": "light"
+    },
+    "J3": {
+      "name": "Piper J-3 Cub",
+      "family": "Cub",
+      "category": "light"
+    },
+    "DV20": {
+      "name": "Diamond DA20 Katana",
+      "family": "Diamond",
+      "category": "light"
+    },
+    "DA40": {
+      "name": "Diamond DA40 Star",
+      "family": "Diamond",
+      "category": "light"
+    },
+    "DA42": {
+      "name": "Diamond DA42 Twin Star",
+      "family": "Diamond",
+      "category": "light"
+    },
+    "SR20": {
+      "name": "Cirrus SR20",
+      "family": "Cirrus",
+      "category": "light"
+    },
+    "SR22": {
+      "name": "Cirrus SR22",
+      "family": "Cirrus",
+      "category": "light"
+    },
+    "BE35": {
+      "name": "Beechcraft Bonanza (V-tail)",
+      "family": "Bonanza",
+      "category": "light"
+    },
+    "BE36": {
+      "name": "Beechcraft Bonanza 36",
+      "family": "Bonanza",
+      "category": "light"
+    },
+    "M20P": {
+      "name": "Mooney M20",
+      "category": "light"
+    },
+    "DR40": {
+      "name": "Robin DR400",
+      "category": "light"
+    },
+    "TB20": {
+      "name": "Socata TB 20 Trinidad",
+      "category": "light"
+    },
+    "P208": {
+      "name": "Tecnam P2008",
+      "family": "Tecnam",
+      "category": "light"
+    },
+    "P210": {
+      "name": "Tecnam P2010",
+      "family": "Tecnam",
+      "category": "light"
+    },
+    "P06T": {
+      "name": "Tecnam P2006T",
+      "family": "Tecnam",
+      "category": "light"
+    },
+    "R22": {
+      "name": "Robinson R22",
+      "family": "Robinson",
+      "category": "helicopter"
+    },
+    "R44": {
+      "name": "Robinson R44",
+      "family": "Robinson",
+      "category": "helicopter"
+    },
+    "R66": {
+      "name": "Robinson R66",
+      "family": "Robinson",
+      "category": "helicopter"
+    },
+    "B06": {
+      "name": "Bell 206 JetRanger",
+      "category": "helicopter"
+    },
+    "B407": {
+      "name": "Bell 407",
+      "category": "helicopter"
+    },
+    "AS50": {
+      "name": "Airbus H125 (Écureuil)",
+      "category": "helicopter"
+    },
+    "EC30": {
+      "name": "Airbus H130",
+      "category": "helicopter"
+    },
+    "EC35": {
+      "name": "Airbus H135",
+      "category": "helicopter"
+    },
+    "EC45": {
+      "name": "Airbus H145",
+      "category": "helicopter"
+    },
+    "AS65": {
+      "name": "Airbus AS365 Dauphin",
+      "category": "helicopter"
+    },
+    "A109": {
+      "name": "Leonardo AW109",
+      "category": "helicopter"
+    },
+    "A139": {
+      "name": "Leonardo AW139",
+      "category": "helicopter"
+    },
+    "A169": {
+      "name": "Leonardo AW169",
+      "category": "helicopter"
+    },
+    "H60": {
+      "name": "Sikorsky S-70 Black Hawk",
+      "category": "helicopter"
+    },
+    "S76": {
+      "name": "Sikorsky S-76",
+      "category": "helicopter"
+    }
+  }
+}

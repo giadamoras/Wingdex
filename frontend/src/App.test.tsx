@@ -209,7 +209,7 @@ test('a live flight is looked up when tapped, and the card fills in', async () =
   await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   expect(screen.queryByText('Looking up route…')).toBeNull()
   expect(screen.getByText('LHR → CDG')).toBeTruthy()
-  expect(screen.getByText('B77W')).toBeTruthy() // the type, learned by the lookup
+  expect(screen.getByText('Boeing 777-300ER (B77W)')).toBeTruthy() // the type, learned by the lookup
   // The duration is an estimate, so it is marked with "~" and a dashed chip.
   const estimate = container.querySelector('.chip.estimate')
   expect(estimate?.textContent).toBe('~1h 35m')

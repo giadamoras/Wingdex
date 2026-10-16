@@ -1,51 +1,42 @@
-import { TURBOPROP, WIDE_BODY } from '../shared-lib/aircraftTypes'
+import { aircraftType } from '../shared-lib/aircraftTypes'
 
-// Recognizable-but-simple silhouettes by aircraft family, not one drawing per
-// ICAO type code: e.g. A319/A320/A321 barely differ externally, but a
-// turboprop, a regional jet and a quad-engine widebody clearly do.
-export type AircraftFamily =
+// Recognizable-but-simple silhouettes by shape, not one drawing per ICAO type
+// code: e.g. A319/A320/A321 barely differ externally, but a turboprop, a
+// regional jet and a quad-engine widebody clearly do.
+export type AircraftShape =
   | 'narrowBody'
   | 'regionalJet'
   | 'wideBodyTwin'
   | 'quadOrDoubleDeck'
   | 'turboprop'
 
-// Enough common codes to cover the mock data and a live feed, same spirit as
-// WIDE_BODY/TURBOPROP in aircraftTypes.ts.
-const REGIONAL_JET = new Set(['E170', 'E175', 'E190', 'E195'])
-const QUAD_OR_DOUBLE_DECK = new Set([
-  'A342',
-  'A343',
-  'A345',
-  'A346',
-  'A388',
-  'B742',
-  'B744',
-  'B748',
-])
-
-// Checked in this order: turboprop and regional jet are call-outs from the
-// narrow-body default, quad/double-deck is a call-out from WIDE_BODY, and
-// anything else wide-body falls back to the twin-jet shape. An unrecognized
-// code (future mock data, or a live feed) gets the narrow-body default.
-export function aircraftFamily(aircraftType: string | null): AircraftFamily {
-  if (aircraftType === null) return 'narrowBody'
-  if (TURBOPROP.has(aircraftType)) return 'turboprop'
-  if (REGIONAL_JET.has(aircraftType)) return 'regionalJet'
-  if (QUAD_OR_DOUBLE_DECK.has(aircraftType)) return 'quadOrDoubleDeck'
-  if (WIDE_BODY.has(aircraftType)) return 'wideBodyTwin'
-  return 'narrowBody'
+// The shape for a type, from its category in the catalog (aircraftTypes.ts).
+// A four-engine wide-body gets the quad shape. Business jets, light aircraft,
+// helicopters and unknown codes get the narrow-body default until they have
+// shapes of their own.
+export function aircraftShape(code: string | null): AircraftShape {
+  const type = aircraftType(code)
+  switch (type?.category) {
+    case 'turboprop':
+      return 'turboprop'
+    case 'regionalJet':
+      return 'regionalJet'
+    case 'wideBody':
+      return type.engines === 4 ? 'quadOrDoubleDeck' : 'wideBodyTwin'
+    default:
+      return 'narrowBody'
+  }
 }
 
 interface Silhouette {
-  body: string // SVG path `d`, nose pointing up, same 0-24 viewBox for all families
+  body: string // SVG path `d`, nose pointing up, same 0-24 viewBox for all shapes
   engines?: { cx: number; cy: number; r: number }[] // drawn on top of the body
 }
 
 // Every path is hand-built from the same nose/wing/tail recipe as the
 // narrow-body shape (mirrored left/right around x=12), just with different
-// proportions and engine call-outs per family.
-export const SILHOUETTES: Record<AircraftFamily, Silhouette> = {
+// proportions and engine call-outs per shape.
+export const SILHOUETTES: Record<AircraftShape, Silhouette> = {
   // The default shape, also used for an unknown type: no visible engines.
   narrowBody: {
     body: 'M12 2c1 0 1.6 1 1.6 2.4V9L22 13.6V16l-8.4-2.2V19l2.2 1.6V22L12 21l-3.8 1v-1.4l2.2-1.6v-5.2L2 16v-2.4L10.4 9V4.4C10.4 3 11 2 12 2z',

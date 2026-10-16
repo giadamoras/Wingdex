@@ -1,6 +1,8 @@
 import { expect, test } from 'vitest'
-import { getFact } from './facts'
+import { FACTS, getFact } from './facts'
+import { HAZARDS as ALL_HAZARDS } from '../data/types'
 import type { Hazard, WeatherArea } from '../data/types'
+import { AIRCRAFT_FAMILIES, AIRCRAFT_TYPES } from '../shared-lib/aircraftTypes'
 
 const flight = {
   id: 'f1',
@@ -54,17 +56,49 @@ test('an unknown type and callsign still get a fact from other attributes', () =
   expect(fact.length).toBeGreaterThan(0)
 })
 
-test('an aircraft type with facts can show one of its own', () => {
-  const texts = new Set(
-    Array.from({ length: 200 }, (_, i) =>
-      getFact({ ...flight, id: `f${i}`, aircraft_type: 'E190' }, noon),
+// Texts a flight with this type is shown, over 60 flight ids (the pick is a
+// fixed hash, so a passing sample keeps passing; more would be slow).
+const textsFor = (aircraft_type: string) =>
+  new Set(
+    Array.from({ length: 60 }, (_, i) =>
+      getFact({ ...flight, id: `f${i}`, aircraft_type }, noon),
     ),
   )
+
+test('an aircraft type with facts can show one of its own', () => {
   expect(
-    texts.has(
-      'The Embraer E190 seats passengers 2+2, so there is no middle seat.',
+    textsFor('A321').has(
+      'The A321 is an A320 stretched by about 7 metres to fit more passengers.',
     ),
   ).toBe(true)
+})
+
+test('a family fact reaches every type in that family', () => {
+  const eJets =
+    'Embraer E-Jets seat passengers 2+2, so there is no middle seat.'
+  expect(textsFor('E190').has(eJets)).toBe(true)
+  expect(textsFor('E75L').has(eJets)).toBe(true) // an E175, no fact of its own
+  expect(textsFor('A320').has(eJets)).toBe(false)
+})
+
+// The JSON is only cast to Fact, so check every entry against what it can
+// match: a tag that matches nothing would never be shown.
+test('every fact is well formed and can match a flight', () => {
+  const valid: Record<string, string[]> = {
+    type: Object.keys(AIRCRAFT_TYPES),
+    family: Object.keys(AIRCRAFT_FAMILIES),
+    altitude: ['low', 'mid', 'cruise', 'high'],
+    region: ['land', 'open-ocean', 'europe', 'north-atlantic'],
+    time: ['dawn', 'day', 'dusk', 'night'],
+    weather: [...ALL_HAZARDS],
+  }
+  for (const fact of FACTS) {
+    expect(fact.text.trim().length, fact.value).toBeGreaterThan(0)
+    if (fact.kind === 'airline') expect(fact.value).toMatch(/^[A-Z]{3}$/)
+    else expect(valid[fact.kind], fact.text).toContain(fact.value)
+  }
+  // No fact twice: the Journal's Facts tab lists them by text.
+  expect(new Set(FACTS.map((f) => f.text)).size).toBe(FACTS.length)
 })
 
 // A box over the flight's position (50N, 30W), valid at NOON, 0-40,000 ft.

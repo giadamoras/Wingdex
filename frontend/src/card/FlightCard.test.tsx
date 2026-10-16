@@ -107,3 +107,14 @@ test('a model that already names the maker is not repeated', () => {
   card(flight, { ...details, model: 'Boeing 737-800', manufacturer: 'Boeing' })
   expect(screen.getByText('Boeing 737-800 · EI-EJH')).toBeTruthy()
 })
+
+test('the type chip shows the full name, without repeating the code', () => {
+  card(flight, null)
+  expect(screen.getByText('Airbus A330-200 (A332)')).toBeTruthy()
+  cleanup()
+  card({ ...flight, aircraft_type: 'E190' }, null)
+  expect(screen.getByText('Embraer E190')).toBeTruthy()
+  cleanup()
+  card({ ...flight, aircraft_type: 'ZZZZ' }, null) // not in the catalog
+  expect(screen.getByText('ZZZZ')).toBeTruthy()
+})

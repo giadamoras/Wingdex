@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import type { Flight, FlightRoute } from '../data/types'
+import { aircraftType } from '../shared-lib/aircraftTypes'
 import { formatClimb, formatDuration } from '../shared-lib/format'
 import { springIn } from '../shared-lib/springIn'
 import { Stamp } from '../shared-ui/Stamp'
@@ -60,7 +61,7 @@ export function FlightCard({
       <header className="card-head">
         <h2>{flight.callsign}</h2>
         {flight.aircraft_type && (
-          <span className="chip">{flight.aircraft_type}</span>
+          <span className="chip">{typeLabel(flight.aircraft_type)}</span>
         )}
         <span className="chip">
           {flight.altitude_ft.toLocaleString('en-US')} ft
@@ -132,6 +133,15 @@ export function FlightCard({
       </div>
     </motion.section>
   )
+}
+
+// The type chip: the catalog's full name with the code ("Boeing 737-800
+// (B738)"), the name alone when it already says the code ("Airbus A320"), or
+// just the code when the catalog doesn't know it.
+function typeLabel(code: string): string {
+  const name = aircraftType(code)?.name
+  if (!name) return code
+  return name.includes(code) ? name : `${name} (${code})`
 }
 
 // The card's detail lines, only for what is known: the airline, the aircraft
