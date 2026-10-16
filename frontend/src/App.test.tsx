@@ -10,6 +10,7 @@ import { markOnboardingSeen } from './onboarding/onboardingSeen'
 import { QUEST_TEMPLATES } from './quest/quest'
 import type { WeatherArea } from './data/types'
 import { ROUTE_LOOKUP_DELAY_MS } from './card/useFlightRoute'
+import { cardField } from './testFlight'
 import { POLL_INTERVAL_MS, RETRY_FEEDBACK_MS } from './data/useFlights'
 import { WEATHER_POLL_MS, WEATHER_RETRY_MS } from './data/useWeather'
 
@@ -132,11 +133,11 @@ test('clicking a dot opens a card with details and a fact', async () => {
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   expect(screen.getByRole('heading', { name: 'TST1' })).toBeTruthy()
-  expect(screen.getByText(/36,000 ft/)).toBeTruthy()
+  expect(cardField('Altitude')).toBe('36,000 ft · 11.0 km')
   // Which fact shows depends on the flight and day, so only check there is one.
   expect(container.querySelector('.fact')?.textContent).toBeTruthy()
-  expect(screen.getByText('90°')).toBeTruthy() // rounded from 90.4
-  expect(screen.getByText('450 kt')).toBeTruthy()
+  expect(cardField('Heading')).toBe('East (90°)') // rounded from 90.4
+  expect(cardField('Speed')).toBe('450 kt · 833 km/h')
   expect(screen.getByText('LHR → CDG')).toBeTruthy()
 })
 
@@ -189,12 +190,14 @@ test('the card hides the route when the source does not know it', async () => {
   fireEvent.click(screen.getByTitle('TST1'))
   await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
   expect(screen.queryByText(/→/)).toBeNull()
-  expect(screen.getByText('Route unknown')).toBeTruthy()
-  // No route: no journey button, no route line, and no type or duration chip.
+  expect(screen.getByText('Unknown')).toBeTruthy() // where the route would be
+  // No route: no journey button, no route line, and no aircraft or flight
+  // time field; altitude, speed and heading are always there.
   expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
   expect(container.querySelector('.route-lines')).toBeNull()
-  expect(container.querySelector('.chip.estimate')).toBeNull()
-  expect(container.querySelectorAll('.card-head .chip')).toHaveLength(3) // ft, heading, kt
+  expect(cardField('Type')).toBeNull()
+  expect(cardField('Flight time')).toBeNull()
+  expect(cardField('Speed')).toBeTruthy()
 })
 
 test('a live flight is looked up when tapped, and the card fills in', async () => {
@@ -203,16 +206,15 @@ test('a live flight is looked up when tapped, and the card fills in', async () =
   const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
-  expect(screen.getByText('Looking up route…')).toBeTruthy()
+  expect(screen.getByText('Looking up…')).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'See the journey' })).toBeNull()
 
   await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
-  expect(screen.queryByText('Looking up route…')).toBeNull()
+  expect(screen.queryByText('Looking up…')).toBeNull()
   expect(screen.getByText('LHR → CDG')).toBeTruthy()
-  expect(screen.getByText('Boeing 777-300ER (B77W)')).toBeTruthy() // the type, learned by the lookup
-  // The duration is an estimate, so it is marked with "~" and a dashed chip.
-  const estimate = container.querySelector('.chip.estimate')
-  expect(estimate?.textContent).toBe('~1h 35m')
+  expect(cardField('Type')).toBe('Boeing 777-300ER (B77W)') // learned by the lookup
+  // The duration is an estimate, so it says "About".
+  expect(cardField('Flight time')).toBe('About 1h 35m')
   expect(screen.getByRole('button', { name: 'See the journey' })).toBeTruthy()
   expect(container.querySelector('.route-flown')).toBeTruthy()
   expect(String(fetchMock.mock.calls.at(-1)?.[0])).toMatch(
@@ -243,7 +245,7 @@ test('when the lookup service is down the card says the route is unknown', async
   await act(() => vi.advanceTimersByTimeAsync(0))
   fireEvent.click(screen.getByTitle('TST1'))
   await act(() => vi.advanceTimersByTimeAsync(ROUTE_LOOKUP_DELAY_MS))
-  expect(screen.getByText('Route unknown')).toBeTruthy()
+  expect(screen.getByText('Unknown')).toBeTruthy() // where the route would be
   // The rest of the card still works, including catching.
   expect(screen.getByRole('button', { name: 'Catch' })).toBeTruthy()
 })

@@ -44,13 +44,59 @@ export function formatAltitudeBand(minFt: number, maxFt: number): string {
   return minFt <= 0 ? `up to ${n(maxFt)} ft` : `${n(minFt)}–${n(maxFt)} ft`
 }
 
-// Climb or descent as a short label, e.g. "↗ 1,900 ft/min", or "level" when it
-// is under 300 ft/min either way (cruise wobble). null when unknown.
+// Climb or descent in plain words with the rate, e.g. "Climbing · 1,900
+// ft/min", or "Flying level" when it is under 300 ft/min either way (cruise
+// wobble). null when unknown.
 const LEVEL_FPM = 300 // below this either way counts as level
 const ROUND_FPM = 100 // rates are shown to the nearest 100
-export function formatClimb(fpm: number | null | undefined): string | null {
+
+// Which way the plane is going vertically, or null when unknown.
+export function climbDirection(
+  fpm: number | null | undefined,
+): 'up' | 'down' | 'level' | null {
   if (fpm === null || fpm === undefined) return null
   if (Math.abs(fpm) < LEVEL_FPM) return 'level'
+  return fpm > 0 ? 'up' : 'down'
+}
+
+export function formatClimb(fpm: number | null | undefined): string | null {
+  if (fpm === null || fpm === undefined) return null
+  if (climbDirection(fpm) === 'level') return 'Flying level'
   const rate = Math.round(Math.abs(fpm) / ROUND_FPM) * ROUND_FPM
-  return `${fpm > 0 ? '↗' : '↘'} ${rate.toLocaleString('en-US')} ft/min`
+  return `${fpm > 0 ? 'Climbing' : 'Descending'} · ${rate.toLocaleString('en-US')} ft/min`
+}
+
+// The card's values: the aviation unit first, then the everyday one, so the
+// player sees what it means and learns the unit.
+
+// "39,000 ft · 11.9 km", or metres under 1 km ("1,500 ft · 460 m").
+const M_PER_FT = 0.3048
+export function formatAltitude(ft: number): string {
+  const m = ft * M_PER_FT
+  const metric =
+    m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toFixed(1)} km`
+  return `${ft.toLocaleString('en-US')} ft · ${metric}`
+}
+
+// "419 kt · 776 km/h". A knot is one nautical mile (1.852 km) an hour.
+const KMH_PER_KT = 1.852
+export function formatSpeed(kt: number): string {
+  const kmh = Math.round(kt * KMH_PER_KT).toLocaleString('en-US')
+  return `${kt.toLocaleString('en-US')} kt · ${kmh} km/h`
+}
+
+// "Northwest (316°)": the nearest of 8 compass points, then the degrees.
+const COMPASS = [
+  'North',
+  'Northeast',
+  'East',
+  'Southeast',
+  'South',
+  'Southwest',
+  'West',
+  'Northwest',
+]
+export function formatHeading(degrees: number): string {
+  const rounded = Math.round(degrees) % 360
+  return `${COMPASS[Math.round(rounded / 45) % 8]} (${rounded}°)`
 }

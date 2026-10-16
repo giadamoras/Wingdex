@@ -2,6 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, expect, test } from 'vitest'
 import { FlightCard } from './FlightCard'
 import type { Flight, FlightRoute } from '../data/types'
+import { cardField } from '../testFlight'
 
 afterEach(cleanup)
 
@@ -70,21 +71,23 @@ function card(f: Flight, d: FlightRoute | null) {
 
 test('lists the airline, aircraft, owner and registration country', () => {
   card(flight, details)
-  expect(screen.getByText('Ryanair · Ireland')).toBeTruthy()
-  expect(screen.getByText('Airbus A330 202 · EI-EJH')).toBeTruthy()
-  expect(screen.getByText('Operated by Italia Trasporto Aereo')).toBeTruthy()
-  expect(screen.getByText('Registered in Ireland')).toBeTruthy()
+  expect(cardField('Name')).toBe('Ryanair · Ireland')
+  expect(cardField('Type')).toBe('Airbus A330-200 (A332)') // the catalog name
+  expect(cardField('Tail number')).toBe('EI-EJH')
+  expect(cardField('Owner')).toBe('Italia Trasporto Aereo')
+  expect(cardField('Registered in')).toBe('Ireland')
   expect(screen.getByText('London → Dublin')).toBeTruthy()
 })
 
-test('shows the climb rate, and "level" for a small one', () => {
+test('says climbing or descending with the rate', () => {
   card(flight, details)
-  expect(screen.getByText('↗ 1,900 ft/min')).toBeTruthy()
+  expect(cardField('Climb rate')).toBe('Climbing · 1,900 ft/min')
+  expect(cardField('Altitude')).toBe('36,000 ft · 11.0 km') // on its own
 })
 
 test('an owner that is the airline is not repeated', () => {
   card(flight, { ...details, operator: 'ryanair' })
-  expect(screen.queryByText(/operated by/i)).toBeNull()
+  expect(cardField('Owner')).toBeNull()
 })
 
 test('shows only what is known, and nothing without a lookup', () => {
@@ -97,24 +100,29 @@ test('shows only what is known, and nothing without a lookup', () => {
   }
   card(bare, null)
   expect(screen.queryByRole('link')).toBeNull()
-  expect(document.querySelector('.details')).toBeNull()
   expect(document.querySelector('.cities')).toBeNull()
-  // "level" is anchored: the daily "Did you know?" fact can contain the word "level".
-  expect(screen.queryByText(/ft\/min|^level$/)).toBeNull()
+  expect(document.querySelector('.card-route')).toBeNull() // no lookup ran
+  for (const label of ['Name', 'Tail number', 'Registered in', 'Owner'])
+    expect(cardField(label), label).toBeNull()
+  expect(cardField('Climb rate')).toBeNull() // the rate is unknown
+})
+
+test('the catalog name, else the lookup model, else the bare code', () => {
+  card(flight, null)
+  expect(cardField('Type')).toBe('Airbus A330-200 (A332)')
+  cleanup()
+  card({ ...flight, aircraft_type: 'E190' }, null)
+  expect(cardField('Type')).toBe('Embraer E190') // the name says the code
+  cleanup()
+  card({ ...flight, aircraft_type: 'ZZZZ' }, details) // not in the catalog
+  expect(cardField('Type')).toBe('Airbus A330 202')
+  cleanup()
+  card({ ...flight, aircraft_type: 'ZZZZ' }, null)
+  expect(cardField('Type')).toBe('ZZZZ')
 })
 
 test('a model that already names the maker is not repeated', () => {
-  card(flight, { ...details, model: 'Boeing 737-800', manufacturer: 'Boeing' })
-  expect(screen.getByText('Boeing 737-800 · EI-EJH')).toBeTruthy()
-})
-
-test('the type chip shows the full name, without repeating the code', () => {
-  card(flight, null)
-  expect(screen.getByText('Airbus A330-200 (A332)')).toBeTruthy()
-  cleanup()
-  card({ ...flight, aircraft_type: 'E190' }, null)
-  expect(screen.getByText('Embraer E190')).toBeTruthy()
-  cleanup()
-  card({ ...flight, aircraft_type: 'ZZZZ' }, null) // not in the catalog
-  expect(screen.getByText('ZZZZ')).toBeTruthy()
+  const unknown = { ...flight, aircraft_type: null }
+  card(unknown, { ...details, model: 'Boeing 737-800', manufacturer: 'Boeing' })
+  expect(cardField('Type')).toBe('Boeing 737-800')
 })

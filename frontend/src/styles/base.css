@@ -44,6 +44,13 @@
   outline-offset: 2px;
 }
 
+/* Keep text at the sizes set here: Safari on iPhone otherwise enlarges long
+   paragraphs (the card's fact) when the phone is turned sideways. */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: var(--paper);

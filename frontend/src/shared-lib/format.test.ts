@@ -1,9 +1,12 @@
 import { expect, test } from 'vitest'
 import {
+  formatAltitude,
   formatAltitudeBand,
   formatCaughtAt,
   formatClimb,
   formatDuration,
+  formatHeading,
+  formatSpeed,
   formatStampDate,
 } from './format'
 
@@ -42,14 +45,33 @@ test('shows an altitude band with both bounds', () => {
   expect(formatAltitudeBand(20000, 38000)).toBe('20,000–38,000 ft')
 })
 
-test('formatClimb shows the direction and a rounded rate', () => {
-  expect(formatClimb(1850)).toBe('↗ 1,900 ft/min')
-  expect(formatClimb(-2210)).toBe('↘ 2,200 ft/min')
+test('formatClimb says climbing or descending, with a rounded rate', () => {
+  expect(formatClimb(1850)).toBe('Climbing · 1,900 ft/min')
+  expect(formatClimb(-2210)).toBe('Descending · 2,200 ft/min')
 })
 
 test('formatClimb calls a small rate level and an unknown one nothing', () => {
-  expect(formatClimb(0)).toBe('level')
-  expect(formatClimb(-299)).toBe('level')
+  expect(formatClimb(0)).toBe('Flying level')
+  expect(formatClimb(-299)).toBe('Flying level')
   expect(formatClimb(null)).toBeNull()
   expect(formatClimb(undefined)).toBeNull()
+})
+
+test('formatAltitude adds km, or metres under 1 km', () => {
+  expect(formatAltitude(39000)).toBe('39,000 ft · 11.9 km')
+  expect(formatAltitude(1500)).toBe('1,500 ft · 460 m')
+  expect(formatAltitude(0)).toBe('0 ft · 0 m')
+})
+
+test('formatSpeed adds km/h', () => {
+  expect(formatSpeed(419)).toBe('419 kt · 776 km/h')
+  expect(formatSpeed(90)).toBe('90 kt · 167 km/h')
+})
+
+test('formatHeading names the nearest compass point', () => {
+  expect(formatHeading(316)).toBe('Northwest (316°)')
+  expect(formatHeading(90.4)).toBe('East (90°)')
+  expect(formatHeading(22)).toBe('North (22°)')
+  expect(formatHeading(23)).toBe('Northeast (23°)')
+  expect(formatHeading(359.6)).toBe('North (0°)') // rounds to 360, which is 0
 })

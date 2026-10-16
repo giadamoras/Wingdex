@@ -34,26 +34,127 @@
   text-align: center;
 }
 
+/* Flight and route side by side, the route on the right; the cities line
+   under both. The labels line up at the top, and the route's line box is as
+   tall as the callsign's, so both values sit on one line too. */
 .card-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 4px 16px;
   padding-bottom: 10px;
   border-bottom: 2px dashed var(--ink);
 }
 
 .card h2 {
-  margin-right: auto;
   font-size: 1.6rem;
+  line-height: 1.2;
 }
 
-.chip {
-  padding: 2px 12px;
+.card-route {
+  text-align: right;
+}
+
+/* A passport field's small uppercase label, above its value. */
+.field-label {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+/* Boarding-pass sections: a thin band with the section's name, square like
+   the print on a pass (the only colour), then the rows. */
+.pass-section {
+  margin: 12px 0 0;
+}
+
+/* Wider screens (and phones held sideways): two columns, "In flight" on the
+   left and the other sections stacked on the right; alone, it takes both. */
+@media (min-width: 700px) {
+  .pass {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 24px;
+    align-items: start;
+  }
+
+  .pass-section.flight {
+    grid-row: span 2;
+  }
+
+  .pass-section.flight:only-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.pass-band {
+  margin: 0;
+  padding: 2px 8px;
+  border-left: 4px solid var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+/* Band colours by section (Section in FlightCard.tsx). */
+.pass-section.flight .pass-band {
   background: var(--highlight);
-  border: 2px solid var(--ink);
-  border-radius: 999px;
+}
+
+.pass-section.aircraft .pass-band {
+  background: var(--mint);
+}
+
+.pass-section.airline .pass-band {
+  background: var(--sea);
+}
+
+/* Plain paper under the rows, so the page's ruled lines don't double up
+   with the dotted rules. */
+.pass-section dl {
+  margin: 0;
+  background: var(--paper-light);
+}
+
+/* One field per row: label left, value right, a dotted rule between rows. */
+.pass-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 8px;
+  border-bottom: 1px dotted var(--ink-35);
+}
+
+.pass-row .field-label {
+  flex-shrink: 0;
+}
+
+/* The arrow before a value (climb, heading), in ink like the text. */
+.pass-icon {
+  width: 0.9em;
+  height: 0.9em;
+  margin-right: 6px;
+  vertical-align: -0.05em;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pass-row dd {
+  min-width: 0; /* lets a long value wrap */
+  margin: 0;
   font-weight: 700;
+  text-align: right;
+  overflow-wrap: break-word; /* a last resort for a word wider than the row */
 }
 
 /* Fact in a speech-bubble block. */
@@ -74,39 +175,36 @@
   }
 }
 
-/* Route line under the card header, e.g. "LHR → JFK". */
+/* The route's airport codes, e.g. "LHR → JFK". */
 .route {
-  margin: 10px 0 0;
+  margin: 0;
+  line-height: calc(1.6rem * 1.2); /* the callsign's line height */
   font-family: var(--font-display);
   font-size: 1.2rem;
   letter-spacing: 0.05em;
 }
 
-/* The cities behind the route's codes, and the extra detail from the lookup. */
+/* The cities behind the route's codes, a full row under flight and route. */
 .cities {
-  margin: 2px 0 0;
+  flex-basis: 100%;
+  margin: 0;
   font-size: 0.9rem;
+  text-align: right;
   opacity: 0.75;
 }
 
-.details {
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
-  font-size: 0.9rem;
-  line-height: 1.5;
-}
-
-.lost,
-.route-note {
+.lost {
   margin: 10px 0 0;
   font-style: italic;
   opacity: 0.7;
 }
 
-/* A duration worked out from the route, not a scheduled one: dashed outline. */
-.chip.estimate {
-  border-style: dashed;
+/* "Looking up…" or "Unknown" where the route would be. */
+.route-note {
+  margin: 0;
+  line-height: calc(1.6rem * 1.2); /* like .route */
+  font-style: italic;
+  opacity: 0.7;
 }
 
 /* Where the data comes from, under the map. */

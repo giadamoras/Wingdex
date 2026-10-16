@@ -1,18 +1,27 @@
 import { motion } from 'framer-motion'
+import type { ReactNode } from 'react'
 import type { Flight, FlightRoute } from '../data/types'
 import { aircraftType } from '../shared-lib/aircraftTypes'
-import { formatClimb, formatDuration } from '../shared-lib/format'
+import {
+  climbDirection,
+  formatAltitude,
+  formatClimb,
+  formatDuration,
+  formatHeading,
+  formatSpeed,
+} from '../shared-lib/format'
 import { springIn } from '../shared-lib/springIn'
 import { Stamp } from '../shared-ui/Stamp'
 import type { RouteStatus } from './useFlightRoute'
 
-// Passport-page card for the selected flight. `lost` means it dropped out
+// Passport-page card for the selected flight: labelled fields in plain words,
+// each with its aviation unit (see describe below). `lost` means it dropped out
 // of the feed and is shown at its last known position. The journey button
 // replays the route on the map (only when the route is known). Type,
 // duration and route are shown only when known: a live flight gets them from
 // a lookup (`routeStatus`), so while it runs the card says so, and if it
 // finds nothing the fields stay hidden. `details` is what that lookup also
-// learned (airline, tail number, ...), listed under the route when present.
+// learned (airline, tail number, ...), shown as more fields when present.
 export function FlightCard({
   flight,
   fact,
@@ -49,8 +58,7 @@ export function FlightCard({
     flight.origin?.city && flight.destination?.city
       ? `${flight.origin.city} → ${flight.destination.city}`
       : null
-  const climb = formatClimb(flight.vertical_rate_fpm)
-  const detailLines = describe(flight, details)
+  const sections = describe(flight, details)
 
   return (
     <motion.section
@@ -58,56 +66,53 @@ export function FlightCard({
       {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
     >
       <p className="passport-strip">Wingdex · Flight Passport</p>
+      {/* Flight and route side by side, each with its passport label. */}
       <header className="card-head">
-        <h2>{flight.callsign}</h2>
-        {flight.aircraft_type && (
-          <span className="chip">{typeLabel(flight.aircraft_type)}</span>
+        <div>
+          <p className="field-label">Flight</p>
+          <h2>{flight.callsign}</h2>
+        </div>
+        {/* The route when known (the feed has it, or the lookup found it),
+            else the lookup's progress; nothing when there is no lookup. */}
+        {(hasRoute ||
+          routeStatus === 'loading' ||
+          routeStatus === 'unknown') && (
+          <div className="card-route">
+            <p className="field-label">Route</p>
+            {flight.origin && flight.destination ? (
+              <p className="route">
+                {flight.origin.iata} → {flight.destination.iata}
+              </p>
+            ) : (
+              <p className="route-note">
+                {routeStatus === 'loading' ? 'Looking up…' : 'Unknown'}
+              </p>
+            )}
+          </div>
         )}
-        <span className="chip">
-          {flight.altitude_ft.toLocaleString('en-US')} ft
-        </span>
-        <span className="chip">{Math.round(flight.heading)}°</span>
-        <span className="chip">{flight.speed_kt} kt</span>
-        {climb && (
-          <span className="chip" title="Climb or descent rate">
-            {climb}
-          </span>
-        )}
-        {flight.duration_min !== null && (
-          <span
-            className={flight.duration_estimated ? 'chip estimate' : 'chip'}
-            title={
-              flight.duration_estimated
-                ? 'Estimated from the distance, not a scheduled time'
-                : undefined
-            }
-          >
-            {flight.duration_estimated && '~'}
-            {formatDuration(flight.duration_min)}
-          </span>
-        )}
+        {cities && <p className="cities">{cities}</p>}
       </header>
-      {/* Route only when known: the feed has it, or the lookup found it. */}
-      {flight.origin && flight.destination ? (
-        <p
-          className="route"
-          title={`${flight.origin.name} → ${flight.destination.name}`}
-        >
-          {flight.origin.iata} → {flight.destination.iata}
-        </p>
-      ) : routeStatus === 'loading' ? (
-        <p className="route-note">Looking up route…</p>
-      ) : routeStatus === 'unknown' ? (
-        <p className="route-note">Route unknown</p>
-      ) : null}
-      {cities && <p className="cities">{cities}</p>}
-      {detailLines.length > 0 && (
-        <ul className="details">
-          {detailLines.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      )}
+      {/* Boarding-pass small print: a thin coloured band per section, then
+          one field per row, label left and value right. Two columns on wider
+          screens (see .pass in card.css). */}
+      <div className="pass">
+        {sections.map(({ title, group, fields }) => (
+          <section key={title} className={`pass-section ${group}`}>
+            <h3 className="pass-band">{title}</h3>
+            <dl>
+              {fields.map(({ label, value, icon }) => (
+                <div key={label} className="pass-row">
+                  <dt className="field-label">{label}</dt>
+                  <dd>
+                    {icon}
+                    {gluedUnits(value)}
+                  </dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ))}
+      </div>
       {lost && (
         <p className="lost">Signal lost - showing last known position.</p>
       )}
@@ -135,39 +140,115 @@ export function FlightCard({
   )
 }
 
-// The type chip: the catalog's full name with the code ("Boeing 737-800
-// (B738)"), the name alone when it already says the code ("Airbus A320"), or
-// just the code when the catalog doesn't know it.
-function typeLabel(code: string): string {
-  const name = aircraftType(code)?.name
-  if (!name) return code
-  return name.includes(code) ? name : `${name} (${code})`
+interface Field {
+  label: string
+  value: string
+  icon?: ReactNode // a small symbol before the value, for skimming
 }
 
-// The card's detail lines, only for what is known: the airline, the aircraft
-// with its tail number, the owner when it isn't the airline, and where the
-// plane is registered.
-function describe(flight: Flight, details: FlightRoute | null): string[] {
-  const lines: string[] = []
+// One drawn arrow for skimming, turned clockwise from pointing up (north on
+// the map). Decorative: the value says the same in words. Drawn, not a text
+// arrow, because the fonts have none and the fallback ones look uneven.
+function Arrow({ degrees }: { degrees: number }) {
+  return (
+    <svg
+      className="pass-icon"
+      viewBox="0 0 16 16"
+      aria-hidden="true"
+      style={{ rotate: `${degrees}deg` }}
+    >
+      <path d="M8 14V2M3 7l5-5 5 5" />
+    </svg>
+  )
+}
+
+// The climb arrow's turn: up-right, down-right, or flat to the right.
+const CLIMB_DEGREES = { up: 45, down: 135, level: 90 }
+
+// One section of the card; `group` picks its band colour.
+interface Section {
+  title: string
+  group: 'flight' | 'aircraft' | 'airline'
+  fields: Field[]
+}
+
+// The card's sections and fields, only for what is known; a section with no
+// known field is left out. The owner is left out when it is the airline.
+function describe(flight: Flight, details: FlightRoute | null): Section[] {
+  const inFlight: Field[] = [
+    { label: 'Altitude', value: formatAltitude(flight.altitude_ft) },
+    { label: 'Speed', value: formatSpeed(flight.speed_kt) },
+    {
+      label: 'Heading',
+      value: formatHeading(flight.heading),
+      // An up arrow turned to the heading: north is up, as on the map.
+      icon: <Arrow degrees={Math.round(flight.heading)} />,
+    },
+  ]
+  const climb = formatClimb(flight.vertical_rate_fpm)
+  const direction = climbDirection(flight.vertical_rate_fpm)
+  if (climb && direction)
+    inFlight.push({
+      label: 'Climb rate',
+      value: climb,
+      icon: <Arrow degrees={CLIMB_DEGREES[direction]} />,
+    })
+  if (flight.duration_min !== null)
+    inFlight.push({
+      label: 'Flight time',
+      // An estimate is worked out from the distance, not a scheduled time.
+      value: `${flight.duration_estimated ? 'About ' : ''}${formatDuration(flight.duration_min)}`,
+    })
+
+  const aircraft: Field[] = []
+  const type = aircraftValue(flight.aircraft_type, details)
+  if (type) aircraft.push({ label: 'Type', value: type })
+  if (details?.registration)
+    aircraft.push({ label: 'Tail number', value: details.registration })
+  if (flight.registered_country)
+    aircraft.push({ label: 'Registered in', value: flight.registered_country })
+
+  const airline: Field[] = []
   if (details?.airline)
-    lines.push(
-      details.airline_country
+    airline.push({
+      label: 'Name', // under the "Airline" band
+      value: details.airline_country
         ? `${details.airline} · ${details.airline_country}`
         : details.airline,
-    )
+    })
+  if (
+    details?.operator &&
+    details.operator.toLowerCase() !== details.airline?.toLowerCase()
+  )
+    airline.push({ label: 'Owner', value: details.operator })
+
+  const sections: Section[] = [
+    { title: 'In flight', group: 'flight', fields: inFlight },
+    { title: 'Aircraft', group: 'aircraft', fields: aircraft },
+    { title: 'Airline', group: 'airline', fields: airline },
+  ]
+  return sections.filter((section) => section.fields.length > 0)
+}
+
+// A narrow row may wrap a value at any space except between a number and
+// its unit: "7.9 km" or "1,900 ft/min" never splits, "Airbus A320neo (A20N)"
+// can.
+const gluedUnits = (value: string) =>
+  value.replace(/(\d) (?=[a-z°])/gi, '$1\u00a0') // a no-break space
+
+// "Boeing 777-300ER (B77W)", the name alone when it already says the code
+// ("Embraer E190"); the lookup's model when the catalog lacks the code; the
+// bare code when nothing else is known.
+function aircraftValue(
+  code: string | null,
+  details: FlightRoute | null,
+): string | null {
+  const name = aircraftType(code)?.name
+  if (name && code) return name.includes(code) ? name : `${name} (${code})`
   const model = details?.model
   const make =
     details?.manufacturer && model && !model.startsWith(details.manufacturer)
       ? `${details.manufacturer} ${model}`
       : (model ?? details?.manufacturer)
-  const aircraft = [make, details?.registration].filter(Boolean).join(' · ')
-  if (aircraft) lines.push(aircraft)
-  if (
-    details?.operator &&
-    details.operator.toLowerCase() !== details.airline?.toLowerCase()
-  )
-    lines.push(`Operated by ${details.operator}`)
-  if (flight.registered_country)
-    lines.push(`Registered in ${flight.registered_country}`)
-  return lines
+  return make ?? code
 }
