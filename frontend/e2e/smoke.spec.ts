@@ -23,12 +23,12 @@ test('catch a plane and find it in the Journal', async ({ page }) => {
   await page.getByRole('button', { name: /Collection/ }).click()
   const journal = page.locator('.collection')
   await expect(
-    journal.getByRole('heading', { name: 'Journal (1)' }),
+    journal.locator('.count-row', { hasText: '1 catch' }),
   ).toBeVisible()
   await expect(journal.getByText(callsign!)).toBeVisible()
 
-  // The Journal is saved in the browser, so it survives a reload.
+  // The Journal is saved in the browser, so it survives a reload, which also
+  // stays on the Collection (its place is in the URL).
   await page.reload()
-  await page.getByRole('button', { name: /Collection/ }).click()
-  await expect(page.getByRole('heading', { name: 'Journal (1)' })).toBeVisible()
+  await expect(page.locator('.count-row', { hasText: '1 catch' })).toBeVisible()
 })

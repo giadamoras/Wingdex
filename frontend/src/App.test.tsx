@@ -528,7 +528,7 @@ test('catches appear in the Journal, newest first', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
 
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
-  expect(screen.getByRole('heading', { name: 'Journal (2)' })).toBeTruthy()
+  expect(document.querySelector('.count-row')?.textContent).toBe('✈️ 2 catches')
   const items = screen.getAllByRole('listitem')
   expect(items).toHaveLength(2)
   expect(items[0].textContent).toContain('TST3')
@@ -753,12 +753,14 @@ test('the Badges tab reflects unlocked and locked badges', async () => {
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
   fireEvent.click(screen.getByRole('button', { name: 'Badges' }))
 
-  expect(screen.getByText('First Catch').closest('li')?.className).toContain(
-    'unlocked',
-  )
-  expect(screen.getByText('Ocean Crosser').closest('li')?.className).toContain(
-    'locked',
-  )
+  // A locked medal says so to screen readers too.
+  expect(
+    screen.getByRole('button', { name: /^First Catch$/ }).className,
+  ).toContain('unlocked')
+  expect(
+    screen.getByRole('button', { name: /^Ocean Crosser.*\(locked\)$/ })
+      .className,
+  ).toContain('locked')
 })
 
 test('the Journal saves the fact the card showed', async () => {
@@ -807,7 +809,7 @@ test('the Facts tab shows each learned fact once, even from repeat catches', asy
   fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
   fireEvent.click(screen.getByRole('button', { name: 'Facts' }))
 
-  expect(screen.getByRole('heading', { name: 'Facts (1)' })).toBeTruthy()
+  expect(document.querySelector('.count-row')?.textContent).toBe('💡 1 fact')
   expect(screen.getAllByText('Repeated fact.')).toHaveLength(1)
 })
 

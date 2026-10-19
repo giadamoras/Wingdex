@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { unlockedBadgeIds } from './badges'
+import { BADGES, unlockedBadgeIds } from './badges'
 import type { Flight, JournalEntry } from '../data/types'
 
 const baseFlight: Flight = {
@@ -83,4 +83,79 @@ test('ocean-crossing needs a catch actually over open ocean', () => {
     flight: { ...baseFlight, latitude: 45, longitude: -40 },
   })
   expect(unlockedBadgeIds([overOcean])).toContain('ocean-crossing')
+})
+
+const unlocks = (journal: JournalEntry[], id: string) =>
+  unlockedBadgeIds(journal).includes(id)
+const withFlight = (over: Partial<Flight>, more: Partial<JournalEntry> = {}) =>
+  entry({ flight: { ...baseFlight, ...over }, ...more })
+
+test('every badge has a unique id and an icon', () => {
+  expect(new Set(BADGES.map((b) => b.id)).size).toBe(BADGES.length)
+  for (const badge of BADGES) expect(badge.icon).not.toBe('')
+})
+
+test('polar needs a catch past a polar circle, north or south', () => {
+  expect(unlocks([withFlight({ latitude: 60 })], 'polar')).toBe(false)
+  expect(unlocks([withFlight({ latitude: 70 })], 'polar')).toBe(true)
+  expect(unlocks([withFlight({ latitude: -68 })], 'polar')).toBe(true)
+})
+
+test('night-owl judges night where the plane was at catch time', () => {
+  // 12:00 UTC is midday at longitude 0 and midnight at longitude 180.
+  expect(unlocks([withFlight({ longitude: 0 })], 'night-owl')).toBe(false)
+  expect(unlocks([withFlight({ longitude: 180 })], 'night-owl')).toBe(true)
+})
+
+test('storm-chaser counts saved hazards and the thunderstorm quest', () => {
+  expect(unlocks([entry({ hazards: ['icing'] })], 'storm-chaser')).toBe(false)
+  expect(unlocks([entry({ hazards: ['thunderstorm'] })], 'storm-chaser')).toBe(
+    true,
+  )
+  expect(
+    unlocks([entry({ questId: 'weather-thunderstorm' })], 'storm-chaser'),
+  ).toBe(true)
+})
+
+test('the first-of-a-kind badges read the type catalog', () => {
+  expect(unlocks([withFlight({ aircraft_type: 'B744' })], 'four-engines')).toBe(
+    true,
+  )
+  expect(unlocks([withFlight({ aircraft_type: 'B77W' })], 'four-engines')).toBe(
+    false,
+  )
+  expect(unlocks([withFlight({ aircraft_type: 'R44' })], 'helicopter')).toBe(
+    true,
+  )
+  expect(unlocks([entry()], 'helicopter')).toBe(false)
+})
+
+test('streak badges need days in a row, not just days', () => {
+  const quest = (day: number) =>
+    entry({
+      questId: 'high',
+      caughtAt: new Date(2026, 8, day, 12).toISOString(),
+    })
+  expect(unlocks([quest(20), quest(22), quest(24)], 'streak-3')).toBe(false)
+  expect(unlocks([quest(20), quest(21), quest(22)], 'streak-3')).toBe(true)
+})
+
+test('globetrotter needs 10 destination countries', () => {
+  const to = (icao: string) =>
+    withFlight({
+      destination: { icao, iata: 'XXX', name: icao, latitude: 0, longitude: 0 },
+    })
+  const nine = [
+    'EGLL',
+    'LFPG',
+    'EDDF',
+    'EHAM',
+    'LEMD',
+    'LPPT',
+    'LIRF',
+    'LOWW',
+    'LGAV',
+  ].map(to)
+  expect(unlocks(nine, 'ten-countries')).toBe(false)
+  expect(unlocks([...nine, to('KJFK')], 'ten-countries')).toBe(true)
 })

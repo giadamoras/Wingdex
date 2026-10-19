@@ -34,3 +34,15 @@ test('the same flight can be caught again the next day', () => {
   act(() => result.current.addCatch(flight('f1'), 'A fact.'))
   expect(result.current.journal).toHaveLength(2)
 })
+
+test('hazards are saved on the entry only when there are some', () => {
+  const { result } = renderJournal()
+  act(() => result.current.addCatch(flight('f1'), 'A fact.'))
+  act(() =>
+    result.current.addCatch(flight('f2'), 'A fact.', undefined, [
+      'thunderstorm',
+    ]),
+  )
+  expect(result.current.journal[0]).not.toHaveProperty('hazards')
+  expect(result.current.journal[1].hazards).toEqual(['thunderstorm'])
+})

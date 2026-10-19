@@ -61,6 +61,9 @@ export interface JournalEntry {
   // Set only when this catch completed that day's quest (entries saved
   // before Milestone 4 lack it, same as speed_kt above).
   questId?: string
+  // The weather hazards the plane was in at catch time; missing when none, and
+  // in entries saved before the Dex (badges then fall back on questId).
+  hazards?: Hazard[]
 }
 
 export interface LatLon {

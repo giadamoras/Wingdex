@@ -3,7 +3,9 @@ import { useState } from 'react'
 import { BadgePopup } from './collection/BadgePopup'
 import { Collection } from './collection/Collection'
 import { creditLine } from './data/credits'
+import { weatherAt } from './shared-lib/attributes'
 import { isToday } from './shared-lib/dates'
+import { navigate, pick, useFullPath, usePath } from './shared-lib/usePath'
 import { FlightCard } from './card/FlightCard'
 import { FlightMap } from './map/FlightMap'
 import { Onboarding } from './onboarding/Onboarding'
@@ -52,9 +54,11 @@ function App() {
   const { popupBadge, dismiss: dismissBadge } = useBadgeUnlocks(journal)
   const onboarding = useOnboarding(flights, journal.length)
 
-  // 'map' vs the Collection screen (Journal, Badges and Facts tabs): a plain
-  // view state, no router.
-  const [view, setView] = useState<'map' | 'collection'>('map')
+  // 'map' vs the Collection screen (Journal, Dex, Badges and Facts tabs), from
+  // the URL so a reload stays put (see usePath). An unknown path is the map.
+  const path = usePath()
+  const view = pick(path, 0, ['map', 'collection'] as const)
+  useFullPath(path, view === 'map' ? [] : path)
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.
   const [selected, setSelected] = useState<Flight | null>(null)
@@ -106,14 +110,17 @@ function App() {
   // strip and its "Done!" stamp are, so it's noticed while reading the card.
   const catchFlight = () => {
     if (!current || fact === null) return
+    const now = new Date()
     const questId = questIdForCatch(
       quest,
       questDone,
       current,
-      new Date(),
+      now,
       weatherAreas,
     )
-    addCatch(current, fact, questId)
+    // The weather it was caught in, for the weather badges (see badges.ts).
+    const hazards = weatherAt(current, weatherAreas, now)
+    addCatch(current, fact, questId, hazards)
     if (questId !== undefined) scrollToTop()
   }
 
@@ -146,13 +153,15 @@ function App() {
         </h1>
         <button
           className={`collection-btn${onboarding.step === 'done' ? ' nudge' : ''}`}
-          onClick={() => setView(view === 'map' ? 'collection' : 'map')}
+          onClick={() =>
+            navigate(view === 'map' ? ['collection', 'journal'] : [])
+          }
         >
           {view === 'map' ? '📘 Collection' : '🗺 Map'}
         </button>
       </div>
       {view === 'collection' ? (
-        <Collection />
+        <Collection path={path} />
       ) : (
         <>
           <QuestBanner

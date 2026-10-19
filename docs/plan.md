@@ -4,7 +4,7 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, and more silhouettes. All of it is summarised in `docs/history.md`.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, and the collection dex, streak and badges. All of it is summarised in `docs/history.md`.
 - **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
@@ -25,7 +25,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 3. **Featured flights**, a few ringed on the map each session, so there is always something worth catching.
 4. **Catch** a flight: its card shows labelled boarding-pass details and **one** fact, picked from tagged pools by the flight's own attributes: aircraft type, family and category, airline, altitude band, flight phase, region, time of day and weather. Aircraft and airline facts are preferred about 2 times in 3. There are no airport facts; airports appear only as the route's ends.
 5. **Journal.** Catches are saved in it. Completing the daily quest brings a bigger celebration and a fact that explains the underlying concept, not just trivia.
-6. **Collection**, reached from the map, with three tabs: Journal, Badges (4 so far) and Facts. A badge unlock shows as a small popup on the map. Progress stays on the player's device: no accounts or cloud sync.
+6. **Collection**, reached from the map, with four tabs: Journal, Dex (types, families, airlines and destination countries caught out of the catalogs, plus the daily quest streak), Badges (16) and Facts (grouped by subject). Where the player is (map, tab, Dex section and filter) is kept in the URL path (`/collection/dex/airlines/lowCost`, always spelled out in full), so a reload or the back button lands in the same place. A badge unlock shows as a small popup on the map. Progress stays on the player's device: no accounts or cloud sync.
 7. **Weather** on the map as round hazard stickers (live: AWC SIGMETs), both for atmosphere and as a quest and fact condition.
 
 ### Differentiation from flight-tracker dashboards (e.g. FlightRadar24)
@@ -45,7 +45,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
   - Richer models are deferred until a feature needs them.
 - **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract.
 - **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific.
-- **Content:** static JSON bundled into the frontend, in `frontend/src/content/`: `facts.json` (130 facts), the type catalog `aircraft-types.json` (178 ICAO types in 35 families, with category and engine count) and the airline catalog `airlines.json` (80 airlines with radio callsign and kind). Every entry is checked by tests, since the JSON is only cast to its type. Content grows by hand when a gap shows, and every new fact is checked, with a source for anything that isn't standard teaching.
+- **Content:** static JSON bundled into the frontend, in `frontend/src/content/`: `facts.json` (130 facts), the type catalog `aircraft-types.json` (178 ICAO types in 35 families, with category and engine count) the airline catalog `airlines.json` (80 airlines with radio callsign and kind) and `icao-prefixes.json` (ICAO code prefix to country, for the Dex's destination stamps). Every entry is checked by tests, since the JSON is only cast to its type. Content grows by hand when a gap shows, and every new fact is checked, with a source for anything that isn't standard teaching.
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
 - **Tooling:** the frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; the backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. CI runs all of them. Commands are in the root `README.md`.
 - **Animation:** Framer Motion for the bouncy, springy interactions. GSAP was considered and deferred.
@@ -70,10 +70,9 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **Collection dex, streak and more badges (S/M).** Types and families seen out of those in the catalog, countries and airlines; a streak counter for daily quests; badges derived from the Journal (night owl, storm chaser, polar, many countries, first helicopter…). Frontend only, a strong collect-them-all feel; built on the type and airline catalogs.
-2. **Destination forecast (M).** The destination's TAF, the airport forecast pilots read before every flight, on the card in plain words ("light rain after 15:00, wind 15 kt") with the raw code shown small underneath, so players learn to read one. From AWC, like the SIGMETs: backend only, cached, no credits. Decoding the change groups (BECMG, TEMPO, PROB30) needs care; mock flights get none unless the mock invents them; only airports that issue TAFs have one.
-3. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
-4. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+1. **Destination forecast (M).** The destination's TAF, the airport forecast pilots read before every flight, on the card in plain words ("light rain after 15:00, wind 15 kt") with the raw code shown small underneath, so players learn to read one. From AWC, like the SIGMETs: backend only, cached, no credits. Decoding the change groups (BECMG, TEMPO, PROB30) needs care; mock flights get none unless the mock invents them; only airports that issue TAFs have one.
+2. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
+3. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 
@@ -85,7 +84,7 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 - find another flight source (its terms are unchecked);
 - a public demo on mock data only, which could need no backend at all if the mock flights were generated in the browser, so a free static host would do.
 
-Hosting (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend if one is needed) is decided then. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend (see `backend/.env.example`).
+Hosting (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend if one is needed) is decided then. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend (see `backend/.env.example`). The host must answer every path with `index.html` (a single-page-app rewrite: `_redirects` on Netlify, `rewrites` on Vercel, a copied `404.html` on GitHub Pages), since the view is in the URL path; the Vite dev and preview servers already do.
 
 Once deployed:
 

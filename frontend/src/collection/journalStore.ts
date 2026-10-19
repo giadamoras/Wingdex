@@ -1,11 +1,16 @@
 import { createContext } from 'react'
-import type { Flight, JournalEntry } from '../data/types'
+import type { Flight, Hazard, JournalEntry } from '../data/types'
 
 export interface JournalContextValue {
   journal: JournalEntry[]
   // `fact` is the one the card showed. questId is set only when this catch
-  // completes that day's quest.
-  addCatch(flight: Flight, fact: string, questId?: string): void
+  // completes that day's quest; hazards is the weather the plane was in.
+  addCatch(
+    flight: Flight,
+    fact: string,
+    questId?: string,
+    hazards?: Hazard[],
+  ): void
 }
 
 // No default value: components must render under JournalProvider (App.tsx

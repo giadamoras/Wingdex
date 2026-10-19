@@ -111,6 +111,7 @@ test('a Journal entry with only what every entry has is kept', () => {
   // Older entries lack speed, route, heading, altitude and questId.
   expect(isJournalEntry(entry)).toBe(true)
   expect(isJournalEntry({ ...entry, questId: 'ocean' })).toBe(true)
+  expect(isJournalEntry({ ...entry, hazards: ['icing'] })).toBe(true)
   expect(
     isJournalEntry({
       ...entry,
@@ -133,6 +134,7 @@ test.each([
   ['no catch time', { ...entry, caughtAt: undefined }],
   ['a catch time that is not a date', { ...entry, caughtAt: 'yesterday-ish' }],
   ['a numeric quest id', { ...entry, questId: 3 }],
+  ['hazards that are not a list', { ...entry, hazards: 'icing' }],
   ['not an object', 'entry'],
 ])('a Journal entry with %s is rejected', (_name, row) => {
   expect(isJournalEntry(row)).toBe(false)

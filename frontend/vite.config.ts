@@ -7,6 +7,7 @@ export default defineConfig({
   // e2e/ holds the Playwright smoke test (npm run test:e2e), not Vitest tests.
   test: {
     environment: 'jsdom',
+    setupFiles: ['src/testSetup.ts'],
     exclude: [...configDefaults.exclude, 'e2e/**'],
   },
 })

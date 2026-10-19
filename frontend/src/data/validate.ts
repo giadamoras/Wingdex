@@ -92,7 +92,8 @@ export function isJournalEntry(v: unknown): v is JournalEntry {
     isString(v.fact) &&
     isString(v.caughtAt) &&
     !Number.isNaN(Date.parse(v.caughtAt)) &&
-    (v.questId === undefined || isString(v.questId))
+    (v.questId === undefined || isString(v.questId)) &&
+    (v.hazards === undefined || Array.isArray(v.hazards))
   )
 }
 

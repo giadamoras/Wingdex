@@ -8,13 +8,14 @@ import type { JournalEntry } from '../data/types'
 export function EntryStamp({ entry }: { entry: JournalEntry }) {
   const code = entry.flight.destination?.iata ?? entry.flight.callsign
   return (
-    <div className="entry-stamp">
+    // A span, not a div: it sits inside the Journal's button.
+    <span className="entry-stamp">
       <span className="entry-stamp-label">✈ Entry Stamp</span>
       <span className="entry-stamp-code">{code}</span>
       <span className="entry-stamp-date">
         {formatStampDate(entry.caughtAt)}
       </span>
       <span className="entry-stamp-callsign">{entry.flight.callsign}</span>
-    </div>
+    </span>
   )
 }

@@ -1,13 +1,4 @@
-/* Journal: a page of stamps below the map. */
-.journal {
-  margin-top: 28px;
-}
-
-.journal h2 {
-  margin-bottom: 12px;
-  font-size: 1.4rem;
-}
-
+/* Journal tab: a count pill, then a page of stamps. */
 .journal-empty {
   font-style: italic;
   opacity: 0.7;
@@ -24,6 +15,23 @@
 
 .journal-entry {
   animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* The stamp is the button: no button chrome, a little lift on hover. */
+.journal-stamp {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.journal-stamp:hover {
+  transform: scale(1.05);
 }
 
 /* Ink stamp for a catch: multi-line (label, destination, date, callsign),
@@ -65,72 +73,300 @@
   opacity: 0.85;
 }
 
-/* Collection screen: Journal, Badges and Facts tabs. */
+/* Collection screen: Journal, Dex, Badges and Facts tabs, as plain words on
+   a ruled line with a coral underline under the open one, so they read as the
+   page's top level and don't compete with the Dex's switch and chips. */
 .collection-tabs {
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
+  flex-wrap: wrap; /* four tabs can be wider than a narrow phone */
+  gap: 0 24px;
+  margin-bottom: 18px;
+  border-bottom: 2px solid var(--ink-20);
 }
 
 .tab {
-  padding: 8px 20px;
-  background: var(--paper);
+  margin-bottom: -2px; /* the underline sits on the ruled line */
+  padding: 6px 2px 8px;
+  background: none;
   color: var(--ink);
-  border: 2px solid var(--ink);
-  border-radius: 999px 999px 0 0;
+  border: none;
+  border-bottom: 4px solid transparent;
   font-family: var(--font-display);
-  font-size: 1rem;
+  font-size: 1.1rem;
+  opacity: 0.6;
   cursor: pointer;
 }
 
-.tab.active {
-  background: var(--highlight);
-  box-shadow: 2px 2px 0 var(--ink);
+.tab:hover {
+  opacity: 0.85;
 }
 
-.badge-list {
+.tab.active {
+  border-bottom-color: var(--accent);
+  opacity: 1;
+}
+
+/* A small icon-and-number pill: the Journal's and Facts' counts, the Dex's
+   streak and best. The counts sit on the right, where the Dex has its pills. */
+.count-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
+}
+
+.pill {
+  display: inline-block;
+  margin: 0;
+  padding: 3px 12px;
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.pill.streak {
+  background: var(--highlight);
+}
+
+/* Badges tab: a grid of medallions, icon and name only; the description is
+   in the pop-up a tap opens (DetailDialog). */
+.badge-grid {
   display: grid;
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: 22px 12px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.badge {
+.medal {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
+  gap: 8px;
+  width: 100%;
+  padding: 4px;
+  background: none;
+  border: none;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.medal-disc {
+  position: relative;
+}
+
+/* A small lock on the rim of a locked medal, outside the greyed disc. */
+.medal-lock {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
   background: var(--paper-light);
   border: 2px solid var(--ink);
-  border-radius: 12px;
-  box-shadow: 3px 3px 0 var(--ink-20);
+  border-radius: 50%;
+  font-size: 0.9rem;
 }
 
-.badge.locked {
-  opacity: 0.55;
+.medal-icon {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  background: var(--paper-light);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 4px 4px 0 var(--ink-25);
+  font-size: 2.8rem;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.badge-icon {
-  font-size: 1.6rem;
+.medal:hover .medal-icon {
+  transform: scale(1.06) rotate(-4deg);
 }
 
-.badge p {
-  margin: 2px 0 0;
-  opacity: 0.8;
+/* Locked: the badge's own icon, greyed, on a dashed rim with no shadow. */
+.medal.locked .medal-icon {
+  border-style: dashed;
+  border-color: var(--ink-35);
+  box-shadow: none;
+  filter: grayscale(1);
 }
 
-/* Facts tab: each distinct fact learned, in a speech-bubble block like the
-   card's own fact (.fact), stacked below the map. */
+.medal.locked .medal-icon,
+.medal.locked .medal-name {
+  opacity: 0.5;
+}
+
+.medal-name {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+/* The pop-up a badge or aircraft tile opens (DetailDialog): a paper card in
+   the middle of a dimmed page. The body fills the dialog edge to edge, so a
+   click on the dialog element itself is a click on the backdrop. */
+.detail-dialog {
+  width: min(360px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px); /* scrolls only if it really can't fit */
+  padding: 0;
+  background: var(--paper-light);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  box-shadow: 6px 6px 0 var(--ink-35);
+}
+
+.detail-dialog[open] {
+  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.detail-dialog::backdrop {
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+
+.detail-dialog-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 22px 22px 18px;
+  text-align: center;
+}
+
+.detail-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 80px;
+  height: 80px;
+  font-size: 2.6rem;
+}
+
+.detail-dialog-icon .plane-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.detail-dialog h2 {
+  font-size: 1.3rem;
+}
+
+.detail-dialog p {
+  margin: 0;
+}
+
+.detail-dialog-status {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+/* Left-aligned in the centred card, with a column for the ticks so every
+   name starts at the same place. */
+.detail-dialog-list {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  line-height: 1.7;
+  text-align: left;
+}
+
+.detail-dialog-list li {
+  display: grid;
+  grid-template-columns: 1.4em 1fr;
+}
+
+.detail-dialog-mark {
+  color: var(--accent);
+}
+
+.detail-dialog-list li:not(.seen) {
+  opacity: 0.5;
+}
+
+.detail-dialog-list li.seen {
+  font-weight: 700;
+}
+
+/* The Catch button's coral pill. */
+.detail-dialog-ok {
+  margin-top: 8px;
+  padding: 8px 32px;
+  background: var(--accent);
+  color: var(--on-accent);
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+/* A catch's pop-up (CatchDetails): the radio callsign, then boarding-pass
+   rows (label left, value right, dotted rules). */
+.catch-radio {
+  font-style: italic;
+  opacity: 0.75;
+}
+
+.catch-rows {
+  align-self: stretch;
+  margin: 6px 0 0;
+  text-align: left;
+}
+
+.catch-rows > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 0;
+  border-bottom: 2px dotted var(--ink-20);
+}
+
+.catch-rows dt {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.65;
+}
+
+.catch-rows dd {
+  margin: 0;
+  text-align: right;
+}
+
+/* Facts tab: a count pill, then one headed group per subject, each fact in a
+   speech-bubble block like the card's own fact (.fact). */
 .facts-empty {
   font-style: italic;
   opacity: 0.7;
 }
 
+.facts-heading {
+  margin: 10px 0 8px;
+  font-size: 1.1rem;
+}
+
+.facts-count {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+
 .facts ul {
   display: grid;
   gap: 10px;
-  margin: 0;
+  margin: 0 0 18px;
   padding: 0;
   list-style: none;
 }
@@ -143,10 +379,344 @@
   line-height: 1.4;
 }
 
-/* Phones: the same smaller fact text as the card's, and smaller Journal stamps. */
+/* Dex tab: a segmented switch with the streak pills beside it, one progress
+   line, filter chips, then that group's tiles: caught in colour, the rest as
+   shadows. */
+.dex-top {
+  display: flex;
+  flex-wrap: wrap-reverse; /* on a phone the pills wrap above the switch */
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.dex-pills {
+  display: flex;
+  gap: 8px;
+}
+
+.dex-pills .pill {
+  margin: 0;
+}
+
+/* One bar split in three: unmistakably a switch. Rounded like the tiles. */
+.dex-switch {
+  display: flex;
+  flex: 1 1 320px;
+  max-width: 480px;
+  overflow: hidden;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink-20);
+}
+
+.dex-switch button {
+  flex: 1;
+  padding: 8px 6px;
+  background: var(--paper-light);
+  color: var(--ink);
+  border: none;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.dex-switch button + button {
+  border-left: 2px solid var(--ink);
+}
+
+.dex-switch button.active {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.dex-progress {
+  margin: 16px 0 12px;
+}
+
+.dex-progress p {
+  margin: 0 0 6px;
+}
+
+.dex-progress strong {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+
+.dex-bar {
+  display: block;
+  height: 10px;
+  overflow: hidden;
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+}
+
+.dex-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+/* Filter chips: lighter than the switch, so the two levels don't compete. */
+.dex-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.dex-chip {
+  padding: 4px 12px;
+  background: none;
+  color: var(--ink);
+  border: 2px solid var(--ink-35);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.dex-chip.active {
+  background: var(--highlight);
+  border-color: var(--ink);
+}
+
+.dex-chip-count {
+  opacity: 0.65;
+  font-size: 0.9em;
+}
+
+.dex-note {
+  margin: 12px 0 0;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.dex-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A family tile (a button) and an airline or country card share one shape. */
+.dex-tile,
+.dex-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 12px 8px 10px;
+  background: var(--paper-light);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink-20);
+  font: inherit;
+}
+
+.dex-tile {
+  cursor: pointer;
+}
+
+.dex-tile:not(.seen),
+.dex-card.missing {
+  border: 2px dashed var(--ink-35);
+  box-shadow: none;
+}
+
+.dex-tile .plane-icon {
+  width: 44px;
+  height: 44px;
+}
+
+/* The helicopter's rotor turns on the map only: in the Collection it would be
+   the one moving icon among still ones (tiles and pop-ups alike; a pop-up
+   is inside .collection in the page, even though it is drawn on top). */
+.collection .plane-icon .rotor {
+  animation: none;
+}
+
+/* Unseen: the shape as a faint ink outline with no fill, like an unseen dex
+   entry. An outline rather than a filled shadow, which lost the engines and
+   wings that tell one shape from another; solid, since dashes broke the
+   small shapes into scattered dots. */
+.dex-tile:not(.seen) .plane-icon {
+  fill: none;
+  stroke: var(--ink-35);
+  stroke-width: 1.3;
+  filter: none;
+}
+
+.dex-tile-name {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.dex-tile:not(.seen) .dex-tile-name,
+.dex-tile:not(.seen) .dex-tile-count,
+.dex-card.missing .dex-tile-name {
+  opacity: 0.55;
+}
+
+.dex-tile-count {
+  font-size: 0.75rem;
+}
+
+.dex-dots {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 3px;
+}
+
+.dex-dots > span {
+  width: 7px;
+  height: 7px;
+  border: 1.5px solid var(--ink-35);
+  border-radius: 50%;
+}
+
+.dex-dots > .on {
+  background: var(--accent);
+  border-color: var(--ink);
+}
+
+/* An airline's tail fin: coral livery with an ink outline and its code. */
+.tail-fin {
+  width: 60px;
+  height: 55px;
+}
+
+.tail-fin path {
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.tail-fin-fin {
+  fill: var(--accent);
+}
+
+.tail-fin-body {
+  fill: var(--paper);
+}
+
+.tail-fin text {
+  fill: var(--on-accent);
+  font-family: var(--font-display);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.tail-fin.missing path {
+  fill: var(--ink);
+  stroke: none;
+  opacity: 0.18;
+}
+
+.tail-fin.missing text {
+  fill: var(--ink);
+  opacity: 0.5;
+  font-size: 13px;
+}
+
+/* A country's flag, at the tail fin's size so the grids match. Until the
+   file has loaded, its frame shows a faint paper fill and a small spinning
+   ring, and the image itself is hidden (Flag.tsx). */
+.flag-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 60px;
+  height: 45px;
+  overflow: hidden;
+  background: var(--ink-6);
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+}
+
+.flag {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.flag-frame.loading .flag {
+  position: absolute;
+  opacity: 0;
+}
+
+.flag-frame.loading::after {
+  content: '';
+  width: 14px;
+  height: 14px;
+  border: 2.5px solid var(--ink-20);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.flag-missing {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  width: 60px;
+  height: 45px;
+  background: var(--ink-6);
+  border: 2px dashed var(--ink-35);
+  border-radius: 4px;
+  font-family: var(--font-display);
+  opacity: 0.6;
+}
+
+/* Phones: the same smaller fact text as the card's, smaller badges and
+   Journal stamps. */
 @media (max-width: 600px), (orientation: landscape) and (max-height: 500px) {
   .fact-entry {
     font-size: 0.9rem;
+  }
+
+  .collection-tabs {
+    gap: 0 18px;
+  }
+
+  .tab {
+    font-size: 1rem;
+  }
+
+  .badge-grid {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+    gap: 16px 8px;
+  }
+
+  .medal-lock {
+    width: 24px;
+    height: 24px;
+    font-size: 0.75rem;
+  }
+
+  .medal-icon {
+    width: 68px;
+    height: 68px;
+    font-size: 2rem;
+  }
+
+  .medal-name {
+    font-size: 0.85rem;
+  }
+
+  .dex-tiles {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
   }
 
   /* Equal columns that together span the full width, so a full row lines up

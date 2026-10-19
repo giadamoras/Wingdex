@@ -34,7 +34,7 @@ export function BadgePopup({
       )}
     >
       <span className="badge-popup-icon" aria-hidden="true">
-        🏅
+        {badge.icon}
       </span>
       <div>
         <strong>Badge unlocked!</strong>

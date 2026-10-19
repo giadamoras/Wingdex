@@ -48,3 +48,10 @@
     opacity: 0;
   }
 }
+
+/* A loading ring: the flag placeholder (collection.css). */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
