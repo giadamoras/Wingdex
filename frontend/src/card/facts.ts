@@ -7,6 +7,7 @@ import {
 } from '../shared-lib/attributes'
 import { aircraftType } from '../shared-lib/aircraftTypes'
 import { dayKey } from '../shared-lib/dates'
+import { climbDirection } from '../shared-lib/format'
 import { hashString } from '../shared-lib/hash'
 import type { Flight, Hazard, WeatherArea } from '../data/types'
 import factsData from '../content/facts.json'
@@ -14,7 +15,15 @@ import factsData from '../content/facts.json'
 // One fact, tagged with the single flight attribute it is about. A flight
 // gets every fact whose tag matches one of its own attributes.
 export type FactKind =
-  'type' | 'family' | 'airline' | 'altitude' | 'region' | 'time' | 'weather'
+  | 'type'
+  | 'family'
+  | 'category'
+  | 'airline'
+  | 'altitude'
+  | 'phase'
+  | 'region'
+  | 'time'
+  | 'weather'
 export interface Fact {
   kind: FactKind
   value: string
@@ -22,11 +31,29 @@ export interface Fact {
 }
 
 // The pool lives in content/facts.json. Values: type is the ICAO aircraft
-// code and family a family key, both from the catalog (aircraftTypes.ts);
-// airline is the 3-letter callsign prefix; altitude/region/time are the labels
-// from attributes.ts; weather is a hazard name (see Hazard in types.ts). The
+// code, family a family key and category an AircraftCategory, all from the
+// type catalog (aircraftTypes.ts); airline is a key of the airline catalog
+// (airlines.ts); altitude/region/time are the labels from attributes.ts;
+// phase is climbing, descending or level (from the climb rate, so only live
+// flights have one); weather is a hazard name (see Hazard in types.ts). The
 // JSON is typed loosely, so facts.test.ts checks every entry.
 export const FACTS = factsData as Fact[]
+
+// The phase label for each climb direction (none when the rate is unknown).
+const PHASES = {
+  up: 'climbing',
+  down: 'descending',
+  level: 'level',
+  unknown: null,
+} as const
+
+// Facts about this aircraft or airline, not about where or when it flies.
+const SPECIFIC_KINDS = new Set<FactKind>([
+  'type',
+  'family',
+  'category',
+  'airline',
+])
 
 const FALLBACK_FACT = "Every flight has a story. This one's on you to uncover!"
 
@@ -52,10 +79,13 @@ export function getFact(
 
   // A type's family comes from the catalog, so one family fact reaches every
   // member (an A20N gets the A320 family's facts).
-  const family = aircraftType(flight.aircraft_type)?.family
+  const type = aircraftType(flight.aircraft_type)
+  const phase = PHASES[climbDirection(flight.vertical_rate_fpm) ?? 'unknown']
   const tags = new Set([
     ...(flight.aircraft_type ? [`type:${flight.aircraft_type}`] : []),
-    ...(family ? [`family:${family}`] : []),
+    ...(type?.family ? [`family:${type.family}`] : []),
+    ...(type ? [`category:${type.category}`] : []),
+    ...(phase ? [`phase:${phase}`] : []),
     `airline:${airlineOf(flight.callsign)}`,
     `altitude:${altitudeBand(flight.altitude_ft)}`,
     ...regionsOf(flight.latitude, flight.longitude).map((r) => `region:${r}`),
@@ -63,5 +93,13 @@ export function getFact(
   ])
   const matches = FACTS.filter((f) => tags.has(`${f.kind}:${f.value}`))
   if (matches.length === 0) return FALLBACK_FACT
-  return pick(matches)
+  // Prefer what is special about this flight: with both kinds on offer, about
+  // 2 flights in 3 get an aircraft or airline fact, the rest a general one
+  // (still fixed per flight and day). A second hash picks the pool, so it
+  // doesn't follow the pick within it.
+  const specific = matches.filter((f) => SPECIFIC_KINDS.has(f.kind))
+  const general = matches.filter((f) => !SPECIFIC_KINDS.has(f.kind))
+  if (specific.length === 0 || general.length === 0) return pick(matches)
+  const generalDay = hashString(`${flight.id}${dayKey(now)}:pool`) % 3 === 0
+  return pick(generalDay ? general : specific)
 }

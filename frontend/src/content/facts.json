@@ -65,6 +65,226 @@
     "text": "Embraer E-Jets seat passengers 2+2, so there is no middle seat."
   },
   {
+    "kind": "category",
+    "value": "light",
+    "text": "Most light aircraft have piston engines, much like a car's, and many still burn leaded fuel called avgas, one of the last leaded fuels in everyday use."
+  },
+  {
+    "kind": "category",
+    "value": "light",
+    "text": "Most light aircraft have no pressurised cabin, so they usually fly below about 10,000 ft, where the air still has enough oxygen to think clearly."
+  },
+  {
+    "kind": "category",
+    "value": "light",
+    "text": "Many light aircraft fly under visual flight rules (VFR): the pilot navigates by looking outside and must stay clear of cloud, with enough visibility to see and avoid other planes."
+  },
+  {
+    "kind": "category",
+    "value": "helicopter",
+    "text": "A helicopter's main rotor is a spinning wing. Tilting it tilts the lift, which is how a helicopter moves forwards, backwards or sideways."
+  },
+  {
+    "kind": "category",
+    "value": "helicopter",
+    "text": "On a helicopter with a single main rotor, the small tail rotor stops the body from spinning the opposite way to the main rotor. Some designs, such as the twin-rotor Chinook, don't need one."
+  },
+  {
+    "kind": "category",
+    "value": "helicopter",
+    "text": "If the engine stops, a helicopter can still land. In autorotation, air flowing up through the rotor keeps it turning, a bit like a falling sycamore seed."
+  },
+  {
+    "kind": "category",
+    "value": "bizJet",
+    "text": "Business jets can fly higher than most airliners, above most traffic and weather. A Gulfstream G650 is certified up to 51,000 ft and often cruises around 41,000 ft."
+  },
+  {
+    "kind": "category",
+    "value": "bizJet",
+    "text": "Many business jets carry their engines at the back of the fuselage, which keeps the wing clean and lets the plane sit low to the ground."
+  },
+  {
+    "kind": "category",
+    "value": "bizJet",
+    "text": "Business jets can use small airports that airliners can't, so passengers can land closer to where they are going."
+  },
+  {
+    "kind": "category",
+    "value": "turboprop",
+    "text": "Turboprops fly lower and slower than jets. An ATR 72 is certified up to 25,000 ft and cruises at about 275 knots, around 510 km/h."
+  },
+  {
+    "kind": "category",
+    "value": "turboprop",
+    "text": "A turboprop can change the angle of its propeller blades, and after landing many can turn them to push air forwards, which helps the plane slow down."
+  },
+  {
+    "kind": "category",
+    "value": "regionalJet",
+    "text": "Regional jets carry about 50 to 100 passengers and link smaller cities to big hubs, where travellers change to longer flights."
+  },
+  {
+    "kind": "category",
+    "value": "regionalJet",
+    "text": "Many regional jets fly in a big airline's colours but are run by a smaller partner. Italy's Air Dolomiti, for example, flies Embraer jets for Lufthansa."
+  },
+  {
+    "kind": "category",
+    "value": "narrowBody",
+    "text": "A narrow-body has a single aisle, usually with six seats per row. It is the workhorse of short and medium flights."
+  },
+  {
+    "kind": "category",
+    "value": "narrowBody",
+    "text": "A short-haul jet can make several flights a day, so its structure is inspected by the number of take-offs and landings (called cycles), not just by hours flown."
+  },
+  {
+    "kind": "category",
+    "value": "narrowBody",
+    "text": "Some single-aisle jets can now cross the Atlantic. The Airbus A321LR, a long-range version of the A321neo, has a range of about 7,400 km."
+  },
+  {
+    "kind": "category",
+    "value": "wideBody",
+    "text": "A wide-body has two aisles, usually with seven to ten seats per row."
+  },
+  {
+    "kind": "category",
+    "value": "wideBody",
+    "text": "On long flights extra pilots come along and take turns resting in a hidden bunk room, often above or below the cabin."
+  },
+  {
+    "kind": "category",
+    "value": "wideBody",
+    "text": "Big twin-engine jets have replaced most four-engine ones. Two very large engines burn less fuel and need less maintenance than four smaller ones."
+  },
+  {
+    "kind": "family",
+    "value": "A320",
+    "text": "Airbus builds A320-family jets on four final assembly lines: Toulouse in France, Hamburg in Germany, Tianjin in China and Mobile in the United States."
+  },
+  {
+    "kind": "type",
+    "value": "A20N",
+    "text": "\"Neo\" stands for \"new engine option\". New engines and wingtip devices called sharklets cut fuel burn by about 15% or more compared with the older A320."
+  },
+  {
+    "kind": "family",
+    "value": "737",
+    "text": "The 737 first flew in 1967 and is still being built, one of the longest-running airliner programmes in history."
+  },
+  {
+    "kind": "family",
+    "value": "737",
+    "text": "A 737's fuselage is built in Wichita, Kansas, and travels by train to Boeing's factory near Seattle, where the wings and engines are fitted."
+  },
+  {
+    "kind": "type",
+    "value": "B38M",
+    "text": "The 737 MAX's engine covers have sawtooth edges at the back, called chevrons, which make the engines quieter."
+  },
+  {
+    "kind": "family",
+    "value": "747",
+    "text": "The 747's cockpit sits on an upper deck, the famous hump, so that freighter versions could open their whole nose as a cargo door."
+  },
+  {
+    "kind": "family",
+    "value": "757",
+    "text": "The 757 has a lot of engine power for its size, so it can take off from short runways and climb steeply."
+  },
+  {
+    "kind": "family",
+    "value": "767",
+    "text": "In 1985 the 767 became one of the first twin-engine airliners allowed to fly routes far from any airport, which opened the North Atlantic to two-engine jets."
+  },
+  {
+    "kind": "family",
+    "value": "777",
+    "text": "The 777 was the first Boeing airliner designed entirely on computer, without needing to build a full-size mock-up first."
+  },
+  {
+    "kind": "family",
+    "value": "787",
+    "text": "The 787's cabin is pressurised to feel like about 6,000 ft instead of the usual 8,000, so passengers may feel less tired after a long flight."
+  },
+  {
+    "kind": "family",
+    "value": "A220",
+    "text": "The A220 was designed in Canada by Bombardier, as the CSeries, and became an Airbus in 2018."
+  },
+  {
+    "kind": "family",
+    "value": "CRJ",
+    "text": "The CRJ grew out of a business jet: Bombardier stretched its Challenger into an airliner for about 50 passengers."
+  },
+  {
+    "kind": "family",
+    "value": "ERJ",
+    "text": "The ERJ 145 seats about 50 passengers in rows of three: one seat on one side of the aisle and two on the other."
+  },
+  {
+    "kind": "family",
+    "value": "Dash 8",
+    "text": "The Dash 8-400 can cruise at up to 360 knots (about 667 km/h), close to many regional jets and very fast for a propeller plane."
+  },
+  {
+    "kind": "family",
+    "value": "ATR",
+    "text": "ATR is a French-Italian company owned by Airbus and Leonardo. Its planes are assembled in Toulouse, with fuselages built near Naples."
+  },
+  {
+    "kind": "type",
+    "value": "C172",
+    "text": "More Cessna 172s have been built than any other aircraft in history: over 44,000 since it first flew in 1955."
+  },
+  {
+    "kind": "family",
+    "value": "Cessna 150",
+    "text": "The Cessna 150 and 152 are two-seat trainers on which generations of pilots learned to fly."
+  },
+  {
+    "kind": "family",
+    "value": "PA-28",
+    "text": "The PA-28 is a classic trainer with a low wing, while the Cessna 172 has a high wing. Student pilots love to argue about which is nicer to learn on."
+  },
+  {
+    "kind": "family",
+    "value": "Diamond",
+    "text": "Diamond aircraft are built mostly from composite materials, and some, like the twin-engine DA42, run on jet fuel or diesel instead of avgas."
+  },
+  {
+    "kind": "family",
+    "value": "Cirrus",
+    "text": "Cirrus planes carry a parachute for the whole aircraft: in an emergency the pilot pulls a handle and the plane descends to the ground."
+  },
+  {
+    "kind": "family",
+    "value": "Tecnam",
+    "text": "Tecnam builds its planes in Capua, near Naples, and its P2008 and P2010 are used by flying schools to train new pilots."
+  },
+  {
+    "kind": "family",
+    "value": "Robinson",
+    "text": "The Robinson R44 has been the world's best-selling general aviation helicopter every year for over two decades."
+  },
+  {
+    "kind": "type",
+    "value": "BE35",
+    "text": "The V-tail Bonanza is easy to spot: instead of the usual three tail surfaces, it has two set in a V."
+  },
+  {
+    "kind": "family",
+    "value": "King Air",
+    "text": "The King Air is a twin turboprop that has been built since the 1960s, longer than almost any other business aircraft."
+  },
+  {
+    "kind": "family",
+    "value": "Van's RV",
+    "text": "Many Van's RV planes are built at home: owners assemble them from kits, often in their garage, and then fly them."
+  },
+  {
     "kind": "airline",
     "value": "BAW",
     "text": "British Airways pilots call themselves \"Speedbird\" on the radio, a name inherited from the logo of its predecessor, Imperial Airways."
@@ -112,12 +332,107 @@
   {
     "kind": "airline",
     "value": "EZY",
-    "text": "easyJet flights are simply called \"Easy\" on the radio, followed by their flight number."
+    "text": "easyJet's UK flights use the callsign \"Easy\" on the radio, and its European arm uses \"Alpine\", each followed by a short code."
   },
   {
     "kind": "airline",
     "value": "ICE",
     "text": "Icelandair uses Keflavik as a stopover hub, linking Europe and North America through Iceland."
+  },
+  {
+    "kind": "airline",
+    "value": "ITY",
+    "text": "ITA Airways started flying in October 2021, the day after Alitalia's last flight, and took over many of its planes. Lufthansa bought 41% of it in 2025 and is raising that to 90%."
+  },
+  {
+    "kind": "airline",
+    "value": "DLA",
+    "text": "Air Dolomiti, based near Verona, is a Lufthansa airline that flies Embraer jets between Italian cities and Lufthansa's hubs in Munich and Frankfurt."
+  },
+  {
+    "kind": "airline",
+    "value": "NOS",
+    "text": "Neos, from Milan Malpensa, flies holidaymakers to beaches and cities around the world, with Boeing 787s on its longest routes. On the radio it is \"Moonflower\"."
+  },
+  {
+    "kind": "airline",
+    "value": "WZZ",
+    "text": "Wizz Air flies only Airbus A320-family jets, and fits 239 seats in its A321neos, more than most airlines put in the same plane."
+  },
+  {
+    "kind": "airline",
+    "value": "VLG",
+    "text": "Vueling, based in Barcelona, belongs to the same group as British Airways and Iberia, called IAG."
+  },
+  {
+    "kind": "airline",
+    "value": "SWR",
+    "text": "Swiss, the airline of Switzerland, is part of the Lufthansa Group and has its hub in Zurich."
+  },
+  {
+    "kind": "airline",
+    "value": "LOT",
+    "text": "LOT was founded in 1929, which makes it one of the oldest airlines still flying."
+  },
+  {
+    "kind": "airline",
+    "value": "QFA",
+    "text": "Qantas began in 1920 in outback Queensland. Its name comes from Queensland and Northern Territory Aerial Services."
+  },
+  {
+    "kind": "airline",
+    "value": "SIA",
+    "text": "Singapore Airlines flies the longest scheduled flight in the world: New York to Singapore, about 15,300 km and nearly 19 hours, on an Airbus A350."
+  },
+  {
+    "kind": "airline",
+    "value": "CPA",
+    "text": "Cathay Pacific's home airport in Hong Kong was built on a flattened island. It replaced Kai Tak, famous for its low turn between apartment blocks just before landing."
+  },
+  {
+    "kind": "airline",
+    "value": "JAL",
+    "text": "Japan Airlines' logo is a red crane, the tsurumaru, a symbol of long life and good luck in Japan."
+  },
+  {
+    "kind": "airline",
+    "value": "ETH",
+    "text": "Ethiopian Airlines is the largest airline in Africa, with its hub in Addis Ababa linking the continent to the rest of the world."
+  },
+  {
+    "kind": "airline",
+    "value": "AAL",
+    "text": "American Airlines has one of the largest fleets of any airline in the world, with more than a thousand mainline jets."
+  },
+  {
+    "kind": "airline",
+    "value": "DAL",
+    "text": "Delta's main hub is Atlanta, for years the busiest airport in the world by number of passengers."
+  },
+  {
+    "kind": "airline",
+    "value": "FDX",
+    "text": "FedEx runs one of the biggest cargo fleets in the world. Its main hub in Memphis sorts packages through the night, so they can be delivered the next day."
+  },
+  {
+    "kind": "airline",
+    "value": "UPS",
+    "text": "UPS's main air hub, Worldport in Louisville, can sort about 416,000 packages an hour."
+  },
+  {
+    "kind": "airline",
+    "value": "CLX",
+    "text": "Cargolux, from Luxembourg, is one of the largest all-cargo airlines in the world and currently flies only Boeing 747 freighters."
+  },
+  {
+    "kind": "airline",
+    "value": "GTI",
+    "text": "Atlas Air flies cargo planes, including Boeing 747 freighters, on behalf of other companies, so its planes may carry cargo for DHL or Amazon. On the radio it is \"Giant\"."
+  },
+  {
+    "kind": "airline",
+    "value": "BCS",
+    "text": "European Air Transport flies for DHL from Leipzig, DHL's biggest hub, where cargo planes land and leave all through the night. Its radio callsign is \"Postman\"."
   },
   {
     "kind": "altitude",
@@ -188,6 +503,91 @@
     "kind": "time",
     "value": "day",
     "text": "A contrail forms when hot, moist engine exhaust meets very cold air and freezes into ice crystals. In dry air it vanishes quickly, and in humid air it can last for hours."
+  },
+  {
+    "kind": "phase",
+    "value": "climbing",
+    "text": "After take-off, airliners usually climb at reduced thrust rather than full power. It saves fuel and makes the engines last longer."
+  },
+  {
+    "kind": "phase",
+    "value": "climbing",
+    "text": "The air gets thinner as a plane climbs, so its engines make less thrust and the climb slows down as it nears cruising altitude."
+  },
+  {
+    "kind": "phase",
+    "value": "descending",
+    "text": "Pilots plan the descent with a rule of thumb: about 3 nautical miles of distance for every 1,000 ft to lose. From 36,000 ft, that means starting around 100 nautical miles out."
+  },
+  {
+    "kind": "phase",
+    "value": "descending",
+    "text": "On the way down the engines are often close to idle: the plane trades height for distance and glides much of the descent."
+  },
+  {
+    "kind": "phase",
+    "value": "level",
+    "text": "Under the standard ICAO rule, planes on an eastbound magnetic track (000° to 179°) cruise at odd levels, like 35,000 ft, and westbound ones (180° to 359°) at even levels, like 36,000 ft. Some countries use their own variations. Traffic flying in opposite directions is kept apart in height."
+  },
+  {
+    "kind": "phase",
+    "value": "level",
+    "text": "Since 1997 over the North Atlantic, and since 2002 over Europe, airliners cruising between 29,000 and 41,000 ft can be stacked just 1,000 ft apart, a system called RVSM. Before, they needed 2,000 ft, and it took very precise altimeters to halve it."
+  },
+  {
+    "kind": "altitude",
+    "value": "low",
+    "text": "Planes with a transponder send a four-digit code that controllers see on radar. In Europe a VFR pilot not talking to a controller sets 7000. 7700 means emergency, 7600 radio failure and 7500 hijacking."
+  },
+  {
+    "kind": "altitude",
+    "value": "low",
+    "text": "Below 10,000 ft many airline crews follow a \"sterile cockpit\" rule: only talk about the flight, nothing else. In the US it is the law; elsewhere airlines set it in their own procedures."
+  },
+  {
+    "kind": "altitude",
+    "value": "mid",
+    "text": "In Europe, pilots switch their altimeter to the standard 1013 hPa at a \"transition altitude\" that is often just a few thousand feet and differs from country to country, unlike the single 18,000 ft used in the US."
+  },
+  {
+    "kind": "altitude",
+    "value": "cruise",
+    "text": "At cruising altitude the air outside is usually somewhere between -45 °C and -60 °C, even on a summer day."
+  },
+  {
+    "kind": "altitude",
+    "value": "high",
+    "text": "At 41,000 ft the air pressure is less than a fifth of what it is at sea level."
+  },
+  {
+    "kind": "region",
+    "value": "europe",
+    "text": "EUROCONTROL, in Brussels, coordinates traffic flows across Europe so busy sectors don't overload, while each country's controllers handle the planes."
+  },
+  {
+    "kind": "region",
+    "value": "open-ocean",
+    "text": "Out of range of ground stations, for example over the North Atlantic, pilots use 123.45 MHz to talk plane to plane, and keep 121.5 MHz, the emergency frequency, for real trouble."
+  },
+  {
+    "kind": "region",
+    "value": "land",
+    "text": "Most airports have a four-letter ICAO code. Italian ones start with LI: LIRF is Rome Fiumicino and LIMC is Milan Malpensa."
+  },
+  {
+    "kind": "time",
+    "value": "night",
+    "text": "At night pilots dim the cockpit lights so their eyes can adapt to the dark. Full night vision takes about 30 minutes."
+  },
+  {
+    "kind": "category",
+    "value": "glider",
+    "text": "Most gliders have no engine. They are towed or winched into the air, then stay up by circling in rising air called thermals."
+  },
+  {
+    "kind": "category",
+    "value": "glider",
+    "text": "Skilled glider pilots can fly hundreds of kilometres in a day without an engine, hopping from one thermal to the next."
   },
   {
     "kind": "weather",

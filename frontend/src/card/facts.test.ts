@@ -3,6 +3,7 @@ import { FACTS, getFact } from './facts'
 import { HAZARDS as ALL_HAZARDS } from '../data/types'
 import type { Hazard, WeatherArea } from '../data/types'
 import { AIRCRAFT_FAMILIES, AIRCRAFT_TYPES } from '../shared-lib/aircraftTypes'
+import { AIRLINES } from '../shared-lib/airlines'
 
 const flight = {
   id: 'f1',
@@ -81,6 +82,28 @@ test('a family fact reaches every type in that family', () => {
   expect(textsFor('A320').has(eJets)).toBe(false)
 })
 
+test('a category fact reaches types with no fact of their own', () => {
+  const values = new Map(FACTS.map((f) => [f.text, f.value]))
+  // A Robinson R44 has no type or family fact, only helicopter ones.
+  const r44 = [...textsFor('R44')].map((t) => values.get(t))
+  expect(r44).toContain('helicopter')
+})
+
+test('about 2 flights in 3 get an aircraft or airline fact', () => {
+  const specific = new Set(
+    FACTS.filter((f) =>
+      ['type', 'family', 'category', 'airline'].includes(f.kind),
+    ).map((f) => f.text),
+  )
+  const n = 150
+  let hits = 0
+  for (let i = 0; i < n; i++)
+    if (specific.has(getFact({ ...flight, id: `f${i}` }, noon))) hits++
+  // 2/3 is 100 of 150; the hash makes it close, not exact.
+  expect(hits / n).toBeGreaterThan(0.55)
+  expect(hits / n).toBeLessThan(0.78)
+})
+
 // The JSON is only cast to Fact, so check every entry against what it can
 // match: a tag that matches nothing would never be shown.
 test('every fact is well formed and can match a flight', () => {
@@ -91,11 +114,15 @@ test('every fact is well formed and can match a flight', () => {
     region: ['land', 'open-ocean', 'europe', 'north-atlantic'],
     time: ['dawn', 'day', 'dusk', 'night'],
     weather: [...ALL_HAZARDS],
+    airline: Object.keys(AIRLINES),
+    category: [
+      ...new Set(Object.values(AIRCRAFT_TYPES).map((t) => t.category)),
+    ],
+    phase: ['climbing', 'descending', 'level'],
   }
   for (const fact of FACTS) {
     expect(fact.text.trim().length, fact.value).toBeGreaterThan(0)
-    if (fact.kind === 'airline') expect(fact.value).toMatch(/^[A-Z]{3}$/)
-    else expect(valid[fact.kind], fact.text).toContain(fact.value)
+    expect(valid[fact.kind], fact.text).toContain(fact.value)
   }
   // No fact twice: the Journal's Facts tab lists them by text.
   expect(new Set(FACTS.map((f) => f.text)).size).toBe(FACTS.length)
