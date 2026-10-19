@@ -67,6 +67,10 @@ _WORLD_AIRPORTS = [
     ("YVR", "CYVR", "Vancouver", 49.195, -123.184),
     ("MEX", "MMMX", "Mexico City", 19.436, -99.072),
     ("HNL", "PHNL", "Honolulu", 21.319, -157.922),
+    ("MEM", "KMEM", "Memphis", 35.042, -89.977),  # FedEx's hub
+    # Europe: cargo hubs (the passenger airports are in AIRPORTS above)
+    ("LUX", "ELLX", "Luxembourg", 49.626, 6.212),
+    ("LEJ", "EDDP", "Leipzig/Halle", 51.424, 12.236),
     # South America
     ("GRU", "SBGR", "Sao Paulo Guarulhos", -23.435, -46.473),
     ("EZE", "SAEZ", "Buenos Aires Ezeiza", -34.822, -58.536),
@@ -128,7 +132,9 @@ class MockFlight(NamedTuple):
 
 
 # Airlines the generator picks from: callsign prefix, home airports and a weight (Europe is
-# the busiest, as in the real feed). The airline quests match on these callsign prefixes.
+# the busiest, as in the real feed). The airline quests match on these callsign prefixes, and
+# the airline-kind quests on their kind in the frontend's airline catalog (airlines.json), so
+# a few cargo and holiday airlines are here for the cargo and holiday quests.
 AIRLINES: list[tuple[str, list[str], int]] = [
     ("BAW", ["LHR"], 4),
     ("DLH", ["FRA", "MUC"], 4),
@@ -171,6 +177,13 @@ AIRLINES: list[tuple[str, list[str], int]] = [
     ("GIA", ["CGK"], 1),
     ("QFA", ["SYD", "MEL", "BNE", "PER"], 2),
     ("ANZ", ["AKL"], 1),
+    # Cargo
+    ("FDX", ["MEM"], 1),
+    ("CLX", ["LUX"], 1),
+    ("BCS", ["LEJ"], 1),
+    # Holiday
+    ("CFG", ["FRA"], 1),
+    ("NOS", ["MXP"], 1),
 ]
 
 # Route length classes in nautical miles. Long-haul is over ~6 hours gate to gate.

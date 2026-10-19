@@ -257,3 +257,18 @@ test('airline quest titles use "an" before a vowel', () => {
   expect(quest('airline-RYR').title).toBe('Catch a Ryanair flight')
   expect(quest('airline-KLM').title).toBe('Catch a KLM flight')
 })
+
+test('an airline-kind quest matches any airline of that kind', () => {
+  const cargo = quest('airline-kind-cargo')
+  expect(cargo.title).toBe('Catch a cargo flight')
+  expect(cargo.matches({ ...flight, callsign: 'FDX1203' })).toBe(true)
+  expect(cargo.matches({ ...flight, callsign: 'CLX7741' })).toBe(true)
+  expect(cargo.matches({ ...flight, callsign: 'BAW117' })).toBe(false)
+  expect(cargo.matches({ ...flight, callsign: 'N123AB' })).toBe(false)
+  expect(
+    quest('airline-kind-lowCost').matches({ ...flight, callsign: 'RYR4KM' }),
+  ).toBe(true)
+  expect(
+    quest('airline-kind-leisure').matches({ ...flight, callsign: 'NOS102' }),
+  ).toBe(true)
+})

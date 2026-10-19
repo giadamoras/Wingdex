@@ -7,6 +7,7 @@ import {
   weatherAt,
 } from '../shared-lib/attributes'
 import { isTurboprop, isWideBody } from '../shared-lib/aircraftTypes'
+import { airlineFor, type AirlineKind } from '../shared-lib/airlines'
 import { hashString } from '../shared-lib/hash'
 import type { Flight, Hazard, JournalEntry, WeatherArea } from '../data/types'
 
@@ -100,6 +101,34 @@ const AIRLINE_QUESTS: { code: string; name: string; conceptFact: string }[] = [
   },
 ]
 
+// Airline-kind quests, matched on the airline catalog's kind (airlines.ts), so
+// one lesson covers every airline of that kind. Cargo and holiday airlines are
+// rarer; pickQuest skips a kind with no flight in the feed.
+const AIRLINE_KIND_QUESTS: {
+  kind: AirlineKind
+  title: string
+  conceptFact: string
+}[] = [
+  {
+    kind: 'cargo',
+    title: 'Catch a cargo flight',
+    conceptFact:
+      "Not every plane carries people. Freighters fly parcels and goods, often at night, so packages ordered today can arrive across the world tomorrow. Freight also rides in the hold under passengers' feet, so many passenger flights are part-cargo flights too. Big freight hubs sort the packages in the middle of the night: UPS's Worldport in Louisville can sort up to about 416,000 an hour.",
+  },
+  {
+    kind: 'lowCost',
+    title: 'Catch a low-cost flight',
+    conceptFact:
+      'Low-cost airlines usually fly just one aircraft family, so pilots, mechanics and spare parts work across the whole fleet. They fit more seats in, fly each plane many times a day and sell everything else separately: bags, seats, snacks. The model was popularised by Southwest in the US in the 1970s and reached Europe in the 1990s.',
+  },
+  {
+    kind: 'leisure',
+    title: 'Catch a holiday flight',
+    conceptFact:
+      'Holiday airlines fly people to the sun and the snow, so their timetables follow the seasons: more flights to beaches in summer and to ski resorts in winter. Many sell seats through tour operators as part of a package holiday, and some fly charters booked by a single tour company.',
+  },
+]
+
 export const QUEST_TEMPLATES: Quest[] = [
   {
     id: 'high',
@@ -178,6 +207,12 @@ export const QUEST_TEMPLATES: Quest[] = [
     title: `Catch ${/^[AEIOU]/.test(name) ? 'an' : 'a'} ${name} flight`,
     conceptFact,
     matches: (f) => airlineOf(f.callsign) === code,
+  })),
+  ...AIRLINE_KIND_QUESTS.map(({ kind, title, conceptFact }): Quest => ({
+    id: `airline-kind-${kind}`,
+    title,
+    conceptFact,
+    matches: (f) => airlineFor(f.callsign)?.kind === kind,
   })),
   ...WEATHER_QUESTS.map(({ hazard, title, conceptFact }): Quest => ({
     id: `weather-${hazard}`,
