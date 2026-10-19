@@ -854,6 +854,22 @@ test('onboarding greets, prompts a catch, celebrates it, then is remembered', as
   expect(screen.queryByText(/Welcome aboard/)).toBeNull()
 })
 
+// The greeting itself says to tap a plane, and with a card open the mascot
+// says "Hit Catch", so a catch before "Got it!" must count too.
+test('onboarding celebrates a catch made before "Got it!"', async () => {
+  reducedMotion()
+  localStorage.clear()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(
+    screen.getByText('Nice catch! Peek at your Collection to see it.'),
+  ).toBeTruthy()
+})
+
 test('onboarding can be skipped at any point, and stays skipped', async () => {
   reducedMotion()
   localStorage.clear()

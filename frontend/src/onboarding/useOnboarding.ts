@@ -10,22 +10,23 @@ const DONE_DISPLAY_MS = 5000 // long enough to notice the Collection nudge
 // Runs once ever per device (gated by onboardingSeen.ts): a greeting, then a
 // "try catching a plane" prompt, then a brief congratulation. Non-blocking -
 // the map stays fully usable the whole time, and it can be skipped at any
-// step. Completes on *any* catch during the "catch" step, not specifically
-// the highlighted flight, so it stays forgiving.
+// step. Completes on *any* catch, not specifically the highlighted flight, so
+// it stays forgiving - including one made during the greeting, which itself
+// says to tap a plane (the "catch" step is then skipped).
 export function useOnboarding(flights: Flight[] | null, journalLength: number) {
   const [step, setStep] = useState<OnboardingStep | null>(() =>
     hasSeenOnboarding() ? null : 'greeting',
   )
-  // Journal length when "catch" started, so a catch already in the Journal
-  // from a past session doesn't instantly finish this step.
-  const catchStartLength = useRef(journalLength)
+  // Journal length when onboarding started, so a catch already in the
+  // Journal from a past session doesn't count as the first one.
+  const startLength = useRef(journalLength)
   // The highlighted flight, pinned once picked: planes move every poll, so
   // re-picking "nearest to the centre" each render would make the ring hop.
   const [pinnedId, setPinnedId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (step === 'catch' && journalLength > catchStartLength.current)
-      setStep('done')
+    const caught = journalLength > startLength.current
+    if ((step === 'greeting' || step === 'catch') && caught) setStep('done')
   }, [step, journalLength])
 
   useEffect(() => {
@@ -48,10 +49,7 @@ export function useOnboarding(flights: Flight[] | null, journalLength: number) {
   return {
     step,
     targetId: step === 'catch' && stillThere ? pinnedId : pickedId,
-    advance: () => {
-      catchStartLength.current = journalLength
-      setStep('catch')
-    },
+    advance: () => setStep('catch'),
     dismiss: () => {
       markOnboardingSeen()
       setStep(null)
