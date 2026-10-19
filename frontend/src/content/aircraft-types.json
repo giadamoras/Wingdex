@@ -503,11 +503,13 @@
     },
     "C208": {
       "name": "Cessna 208 Caravan",
-      "category": "turboprop"
+      "category": "turboprop",
+      "engines": 1
     },
     "PC12": {
       "name": "Pilatus PC-12",
-      "category": "turboprop"
+      "category": "turboprop",
+      "engines": 1
     },
     "C56X": {
       "name": "Cessna Citation Excel",
@@ -601,7 +603,8 @@
     },
     "PA34": {
       "name": "Piper PA-34 Seneca",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "PA18": {
       "name": "Piper PA-18 Super Cub",
@@ -626,7 +629,8 @@
     "DA42": {
       "name": "Diamond DA42 Twin Star",
       "family": "Diamond",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "SR20": {
       "name": "Cirrus SR20",
@@ -673,7 +677,8 @@
     "P06T": {
       "name": "Tecnam P2006T",
       "family": "Tecnam",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "R22": {
       "name": "Robinson R22",
@@ -842,12 +847,14 @@
     },
     "TBM7": {
       "name": "Daher TBM 700",
-      "category": "turboprop"
+      "category": "turboprop",
+      "engines": 1
     },
     "P46T": {
       "name": "Piper PA-46 Meridian",
       "family": "PA-46",
-      "category": "turboprop"
+      "category": "turboprop",
+      "engines": 1
     },
     "S22T": {
       "name": "Cirrus SR22T",
@@ -868,11 +875,13 @@
     },
     "C402": {
       "name": "Cessna 402",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "PA23": {
       "name": "Piper PA-23 Aztec",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "PA32": {
       "name": "Piper PA-32 Cherokee Six",
@@ -884,7 +893,8 @@
     },
     "PA44": {
       "name": "Piper PA-44 Seminole",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "PA46": {
       "name": "Piper PA-46 Malibu",
@@ -898,11 +908,13 @@
     },
     "BE58": {
       "name": "Beechcraft Baron 58",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "BE95": {
       "name": "Beechcraft Travel Air",
-      "category": "light"
+      "category": "light",
+      "engines": 2
     },
     "AA5": {
       "name": "Grumman AA-5 Traveler",

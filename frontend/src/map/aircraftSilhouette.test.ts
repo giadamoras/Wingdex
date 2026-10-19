@@ -35,10 +35,28 @@ test('the old regional-jet and quad codes keep their shape', () => {
     expect(aircraftShape(code), code).toBe('quadOrDoubleDeck')
 })
 
-test('categories without a shape of their own use the narrow-body default', () => {
-  expect(aircraftShape('GLF6')).toBe('narrowBody') // business jet
-  expect(aircraftShape('C172')).toBe('narrowBody') // light aircraft
-  expect(aircraftShape('R44')).toBe('narrowBody') // helicopter
+test('general aviation and business jets get shapes of their own', () => {
+  expect(aircraftShape('GLF6')).toBe('bizJet')
+  expect(aircraftShape('C172')).toBe('lightSingle')
+  expect(aircraftShape('R44')).toBe('helicopter')
+  expect(aircraftShape('GLID')).toBe('glider')
+})
+
+test('the engine count picks the light twin and the one-propeller turboprop', () => {
+  expect(aircraftShape('PA34')).toBe('lightTwin') // Seneca: two engines
+  expect(aircraftShape('DA42')).toBe('lightTwin')
+  // A Caravan is a turboprop with one nose propeller: drawn like a light plane.
+  expect(aircraftShape('C208')).toBe('lightSingle')
+  expect(aircraftShape('BE20')).toBe('turboprop') // King Air: two propellers
+})
+
+test('only general aviation is drawn small (and mint)', () => {
+  const small = Object.entries(SILHOUETTES)
+    .filter(([, s]) => s.small)
+    .map(([shape]) => shape)
+  expect(small.sort()).toEqual(
+    ['glider', 'helicopter', 'lightSingle', 'lightTwin'].sort(),
+  )
 })
 
 test('an unrecognized type code falls back to the narrow-body default', () => {

@@ -4,7 +4,7 @@
 
 **Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
 
-- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data), then four backlog items (the smoke test, the content files with the type catalog, the card in plain words, and larger facts and quests with the airline catalog). They are summarised in `docs/history.md`, and the backlog below lists only what is left.
+- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data), then five backlog items (the smoke test, the content files with the type catalog, the card in plain words, larger facts and quests with the airline catalog, and more silhouettes). They are summarised in `docs/history.md`, and the backlog below lists only what is left.
 - **Postponed.** Deployment (see "Deployment" below). After the MVP, a backlog in priority order is under "Implementation roadmap".
 
 ## Context
@@ -113,14 +113,12 @@ Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is
 
 Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked up on its own, after the user names it.
 
-1. **More silhouettes (M).** Light aircraft and helicopters look nothing like airliners, yet are drawn with the narrow-body shape. Add at least a light-aircraft shape and a helicopter (its rotor could turn, but not under reduced motion), likely a business jet, and maybe a glider or balloon later. Light aircraft and helicopters can be drawn smaller. The catalog's categories already tell them apart (`light`, `glider`, `helicopter`, `bizJet`), so this only maps categories to new shapes in `aircraftSilhouette.ts`.
-2. **Collection dex, streak and more badges (S/M).** Types and families seen out of those that exist, countries and airlines; a streak counter; badges derived from the Journal (night owl, storm chaser, polar, many countries). Cheap, frontend only, a strong collect-them-all feel; built on the type and airline catalogs.
-3. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
-4. **GPS "above you" mode (M).** Use the browser's location to find the plane overhead ("look up, that's above you"). High delight; needs HTTPS (so after deployment) and a permission prompt, and works best on a phone.
-5. **Track history foundation (M).** Flight tracking, pattern events, drawing a flight's real flown route and crediting a weather quest to a plane that passed through all need past positions. Mind the quota: continuous global polling would use almost the whole 4,000 credits/day (a global request costs 4 credits, every 90 s is about 3,800 a day), so start with an in-memory buffer of recent snapshots and measure its size. **Decide the database once, here** (hosting limits the choice: a file database on an ephemeral free host loses its data); user progress stays local either way.
-6. **Flight tracking and pattern events (M, built on item 5).** The original Milestone 8, now after the MVP: "Track a specific flight in real time. Search or enter a flight number (callsign) and follow that plane live, even when it is not among the planes drawn. Specifics are undecided: how the flight is found (search box, URL, or from the flight card), whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in OpenSky credits, and how it interacts with the density logic, the daily catch rule and the journal." A search box risks looking like a tracker dashboard; "follow this flight" from its card or Journal entry fits the product better. Pattern-based events (holding patterns, diversions, weather reroutes) need the track history.
-7. **Learning path and encyclopedia (L).** A Duolingo-style PPL / aviation path and an aviation encyclopedia, hung off the type catalog; content may move to the database chosen in item 5. User progress stays local.
-8. **3D aircraft models (L).** In the encyclopedia, not per flight, and matched by ICAO type code (not by name, which is fuzzy: "A320 214" vs "A320-200"). Lazy-loaded; check the models' licences.
+1. **Collection dex, streak and more badges (S/M).** Types and families seen out of those that exist, countries and airlines; a streak counter; badges derived from the Journal (night owl, storm chaser, polar, many countries). Cheap, frontend only, a strong collect-them-all feel; built on the type and airline catalogs.
+2. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
+3. **GPS "above you" mode (M).** Use the browser's location to find the plane overhead ("look up, that's above you"). High delight; needs HTTPS (so after deployment) and a permission prompt, and works best on a phone.
+4. **Track history foundation (M).** Flight tracking, pattern events, drawing a flight's real flown route and crediting a weather quest to a plane that passed through all need past positions. Mind the quota: continuous global polling would use almost the whole 4,000 credits/day (a global request costs 4 credits, every 90 s is about 3,800 a day), so start with an in-memory buffer of recent snapshots and measure its size. **Decide the database once, here** (hosting limits the choice: a file database on an ephemeral free host loses its data); user progress stays local either way.
+5. **Flight tracking and pattern events (M, built on item 4).** The original Milestone 8, now after the MVP: "Track a specific flight in real time. Search or enter a flight number (callsign) and follow that plane live, even when it is not among the planes drawn. Specifics are undecided: how the flight is found (search box, URL, or from the flight card), whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in OpenSky credits, and how it interacts with the density logic, the daily catch rule and the journal." A search box risks looking like a tracker dashboard; "follow this flight" from its card or Journal entry fits the product better. Pattern-based events (holding patterns, diversions, weather reroutes) need the track history.
+6. **3D aircraft models (L).** In a type gallery, not per flight, and matched by ICAO type code (not by name, which is fuzzy: "A320 214" vs "A320-200"). Lazy-loaded; check the models' licences.
 
 **Learning extras (alongside, one at a time).** Short mini lessons on small aviation topics, written together with the user (the user learns while we write them), kept in `docs/lessons/` as Markdown with a PDF export and linked from the related fact or quest later. `docs/aviation-weather-products.md` is the first. No deadline, and no code until a few exist.
 
@@ -128,7 +126,7 @@ Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked 
 
 **Still out:** accounts, social features and rankings; weather forecasting or simulation.
 
-**Idea: move content (facts, quests) to a database.** Not a milestone; recorded so the trade-offs are written down. Backlog item 5 touches it.
+**Idea: move content (facts, quests) to a database.** Not a milestone; recorded so the trade-offs are written down. Backlog item 4 touches it.
 
 - **Why.** Edit facts and quests without redeploying, handle a pool too large for a code file, and the portfolio value of a real data layer.
 - **Fit.** Facts are already rows (kind, value, text), and the Journal stores the fact text it showed, so editing the pool never rewrites history. Quests are only partly data: the title and concept fact are text, but `matches()` is code.

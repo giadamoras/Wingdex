@@ -82,6 +82,30 @@
   filter: drop-shadow(1px 2px 0 var(--ink-35));
 }
 
+/* General aviation (light aircraft, helicopters, gliders) in mint, so small
+   traffic stands apart from the coral airliners at a glance. */
+.plane-icon.small {
+  fill: var(--mint);
+}
+
+/* The helicopter's main rotor: thin ink lines turning slowly around the
+   cabin's centre (12, 9.5 in the icon's 24-unit box). Reduced motion stops it
+   (reduced-motion.css). */
+.plane-icon .rotor {
+  fill: none;
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  transform-box: view-box;
+  transform-origin: 12px 9.5px;
+  animation: rotor-spin 1.2s linear infinite;
+}
+
+@keyframes rotor-spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
 /* Featured flight: a dashed ink ring that gently pulses. (Ink, not paper: a
    paper ring vanished against the cream land.) Sits before the selected rule
    so a selected featured plane shows the solid mustard ring. */
