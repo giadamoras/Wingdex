@@ -198,7 +198,7 @@ The finished work, moved out of `docs/plan.md` unchanged: Milestones 1-6 and Mil
 
 **After the MVP: backlog items.** Named rather than numbered, because finished items leave the backlog in `docs/plan.md` and the rest is renumbered.
 
-**Smoke test (done 2026-10-16).** The installable PWA that was part of this item was dropped until deployment (the reason is under "Deployment" in `docs/plan.md`).
+**Smoke test (done 2026-10-16).** The installable PWA that was part of this item was dropped until deployment (the reason is under "Only if deployed" in `docs/plan.md`).
 
 - **What it covers.** `frontend/e2e/smoke.spec.ts` plays the core loop in Chromium: the map loads, "Got it!" moves onboarding to the catch step, the ringed plane is tapped and caught, the card shows "Caught today ✓", the Collection's Journal shows one entry with that callsign, and the entry is still there after a reload.
 - **How it runs.** `npm run test:e2e` from `frontend/`. `playwright.config.ts` starts the real backend on mock flights and weather (port 8765, whatever the local `.env` says) and a production build served by `vite preview` (port 4173, built into `dist-e2e/` so it never replaces `dist/`). Its own ports mean a dev server on 8000/5173, which could be on live OpenSky data, is never reused. The browser runs with reduced motion, so planes hop instead of gliding and hold still for a click. It uses the backend's virtualenv Python when there is one, else `python`. A new `e2e` job in `.github/workflows/ci.yml` runs it and uploads the HTML report with a trace when it fails.

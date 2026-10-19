@@ -4,7 +4,7 @@ Read `docs/plan.md` before making significant changes. It is the source of truth
 
 ## Current scope
 
-Milestones 1–6 and Milestone 7 (live data) are complete; their history is in `docs/history.md`. Deployment is postponed because of OpenSky's terms and hosting cost (see `docs/plan.md`). These are big topics, so we handle them one step at a time rather than all at once: work only on the step the user names, and do not start deployment or anything in the post-MVP backlog unless explicitly asked. The open items and the backlog order are in `docs/plan.md`.
+History is in `docs/history.md`. The roadmap in `docs/plan.md` has three lists: "Now", "Only if deployed" (deployment is postponed because of OpenSky's terms and hosting cost) and "Not doing". These are big topics, so we handle them one step at a time rather than all at once: work only on the item the user names, and do not start deployment, anything that needs it, or anything under "Not doing" unless explicitly asked.
 
 ## Development principles
 

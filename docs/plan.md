@@ -1,147 +1,117 @@
 # Wingdex — Product & Technical Plan
 
-**Name.** Renamed from "Airspace Explorer" on 2026-10-14: a NATS flight-tracking app already has that name. "Wingdex" is the collect-them-all dex plus earning your wings (the learning path). The browser storage keys keep the old `airspace-explorer:` prefix on purpose: renaming them would empty every existing Journal.
+**Name.** Renamed from "Airspace Explorer" on 2026-10-14: a NATS flight-tracking app already has that name. "Wingdex" is the collect-them-all dex plus earning your wings as you learn about aviation. The browser storage keys keep the old `airspace-explorer:` prefix on purpose: renaming them would empty every existing Journal.
 
-**Status:** Product concept, MVP scope, visual/interaction direction, and technical direction are all settled.
+**Status.**
 
-- **Done.** Milestones 1-6 and Milestone 7 steps 1-6 (OpenSky provider, live aircraft type and route, density, real weather, quests, world-wide mock data), then five backlog items (the smoke test, the content files with the type catalog, the card in plain words, larger facts and quests with the airline catalog, and more silhouettes). They are summarised in `docs/history.md`, and the backlog below lists only what is left.
-- **Postponed.** Deployment (see "Deployment" below). After the MVP, a backlog in priority order is under "Implementation roadmap".
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, and more silhouettes. All of it is summarised in `docs/history.md`.
+- **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
+- **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
 ## Context
 
-This is a first serious AI-assisted coding project and first portfolio piece. The goal is to explore and learn about aviation — ahead of starting a PPL — while building something technically and visually interesting. The project deliberately avoids becoming a FlightRadar-style dashboard; it's a playful, kawaii "spot & collect" exploration experience instead.
+A first serious AI-assisted coding project and a portfolio piece. The goal is to explore and learn about aviation, ahead of starting a PPL, while building something technically and visually interesting. It deliberately avoids becoming a FlightRadar-style dashboard: it is a playful, "spot & collect" experience instead.
 
 ## Product concept
 
-**One-line pitch:** A kawaii, live-data-powered "spot & collect" exploration experience built on real flight traffic — users hunt for real, live aviation moments (not just track blips on a dashboard), collect them into a personal journal, and pick up bite-size aviation knowledge along the way, while deliberately avoiding the look and feel of a flight-tracking dashboard like FlightRadar24.
+**One-line pitch:** a "spot & collect" game on real flight traffic. Players hunt for real aviation moments (not blips on a dashboard), collect them in a personal Journal, and pick up bite-size aviation knowledge along the way.
 
-### Target user
-
-Aviation-curious people without deep aviation background — including the creator, who is preparing for a PPL — who want a playful, low-pressure way to build intuition about aviation. Secondary audience: casual users who enjoy cozy collection/spotting games and might discover an interest in aviation through play.
+**Target user.** Aviation-curious people without a deep aviation background, the creator included. Secondary: casual players who enjoy cozy collection games and might discover aviation through play.
 
 ### Core loop
 
-1. Explore a 2D map of flying aircraft (pan/zoom, Google Maps-style interaction). The game was built on mock data modelled on a real flight source's attributes, and the source is swappable (OpenSky is the live one, see Milestone 7).
-2. Each day — a **personal** day, resetting on the user's own local calendar day, not a globally shared challenge — the app surfaces **one** active quest, e.g. "spot something above 30,000 ft," "catch a flight heading over open ocean," "spot a flight flying through a storm system." Quests are built from a small set of parameterized _quest templates_ (altitude, aircraft category, region, weather condition, time-of-day, duration) rather than hand-authored one by one, which is what makes "one per day" sustainable content-wise.
-3. Outside the daily quest, a small set of "featured" flights are highlighted on the map each session, so there's always something worth catching — this keeps the experience from being an open, blank search/filter dashboard.
-4. The user taps/catches a flight — from the daily quest, a featured pick or free exploration. A card appears showing the flight and **one** fact, pulled from small tagged fact-pools keyed to that catch's real attributes (aircraft type, airline, altitude band, destination/region, time-of-day, weather). The same fact system covers aircraft, specific flights, _and_ airports — airports are never a separately catchable thing; airport facts surface through the destination/region tag attached to a caught flight.
-5. Caught flights are saved into a **Journal**. Completing the daily quest triggers a bigger celebration plus a fact that explains the underlying _concept_ (why planes cruise at that altitude, why routes avoid storms, etc.), not just trivia about the aircraft.
-6. Badge/achievement unlocks are signaled with a lightweight popup on the map view, but live in their own space — Journal and Badges are two tabs/sections inside one shared **Collection** screen, reached from the main map. Collection/progress persists locally on the user's device — no accounts or cloud sync.
-7. Weather is shown on the map with icons for atmosphere ("imagine being on this flight"), and is also a functional attribute — it can define quest conditions and influence which facts get selected, tying back to real aviation concepts (turbulence, why routes avoid storms, etc.).
+1. **Explore** a 2D world map of flying aircraft with Google Maps-style pan and zoom. The flight source is swappable: mock data (100 world-wide flights) or OpenSky live.
+2. **One daily quest**, on the player's own local day (not a shared global challenge), picked from 23 parameterized templates: altitude ("above 36,000 ft"), aircraft category, region, weather, time of day, flight length, climb or descent, speed, single airlines and airline kinds (cargo, low-cost, holiday). A quest that no current flight can match is skipped.
+3. **Featured flights**, a few ringed on the map each session, so there is always something worth catching.
+4. **Catch** a flight: its card shows labelled boarding-pass details and **one** fact, picked from tagged pools by the flight's own attributes: aircraft type, family and category, airline, altitude band, flight phase, region, time of day and weather. Aircraft and airline facts are preferred about 2 times in 3. There are no airport facts; airports appear only as the route's ends.
+5. **Journal.** Catches are saved in it. Completing the daily quest brings a bigger celebration and a fact that explains the underlying concept, not just trivia.
+6. **Collection**, reached from the map, with three tabs: Journal, Badges (4 so far) and Facts. A badge unlock shows as a small popup on the map. Progress stays on the player's device: no accounts or cloud sync.
+7. **Weather** on the map as round hazard stickers (live: AWC SIGMETs), both for atmosphere and as a quest and fact condition.
 
 ### Differentiation from flight-tracker dashboards (e.g. FlightRadar24)
 
-- Framed as a curated discovery/collection experience, not a raw search-and-filter utility.
-- Success is measured by "moments caught" and facts learned, not by exhaustive data density.
-- Visual identity is playful/kawaii throughout — not a technical/utilitarian dashboard look.
-- The app proactively suggests what's interesting rather than requiring the user to already know what to search for.
-
-## MVP scope
-
-**Essential:**
-
-- Pannable/zoomable 2D map with multiple moving flight icons.
-- Tap-to-catch interaction: a card showing one fact pulled from tagged fact-pools.
-- The catch action plus a satisfying catch animation.
-- One active **personal** daily quest built from parameterized templates, shown prominently, with a bigger completion celebration and a concept-level fact.
-- A small set of "featured" flights highlighted on the map.
-- A **Collection** screen with Journal (caught flights) and Badges, reached from the map; the map itself only shows a lightweight popup when a badge unlocks.
-- Local persistence of Journal/Collection progress across sessions (no accounts or cloud sync).
-- Ambient + functional weather: icons on the map, and weather as an attribute that quests and facts can use.
-- A short onboarding moment (mascot greeting + one easy first catch).
-- Kawaii-first visual style applied to the map, icons, and cards.
-
-**Nice-to-have (loop survives without it at launch):**
-
-- A streak counter for daily quests.
-- A richer mascot personality/dialogue beyond onboarding.
-- Larger fact pools / more attribute categories over time.
-
-**Out (explicitly deferred, not MVP; most are now ordered in the post-MVP backlog under "Implementation roadmap"):**
-
-- GPS/location-based "look up, that's above you" mode.
-- Pattern-based live event detection that needs historical track analysis (holding patterns, diversions, weather reroutes) — these need continuous polling and track history, unlike the snapshot-derivable quests, and are a reasonable fast-follow.
-- A full illustrated aircraft/airport/aviation encyclopedia beyond per-catch facts.
-- 3D aircraft models in the flight card.
-- Weather forecasting/simulation — only current (or mock) snapshot conditions.
-- Accounts, social features, rankings.
-
-## Open items for future planning passes
-
-- **Hosting** (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend) is not decided. It is settled when deployment resumes.
-- **Content** (130 facts, 178 aircraft types, 80 airlines, 23 quests) grows by hand when a gap shows; every new fact is checked, with a source for anything not standard teaching (see "Larger facts and quests" in `docs/history.md`).
-- **Ideas, not scheduled:** see "Smaller ideas" in the roadmap. Flight photos wait for a public project URL (see "Photos" in `docs/history.md`, Milestone 7 step 2).
+- A curated discovery and collection experience, not a search-and-filter utility.
+- Success is moments caught and facts learned, not data density.
+- Playful and visually pretty throughout, not a utilitarian dashboard look.
+- The app suggests what is interesting instead of expecting the player to know what to search for.
 
 ## Technical direction
 
-- **Architecture: two-part monorepo** — `frontend/` (React + TypeScript + Vite) and `backend/` (Python + FastAPI) in one repository. The backend exists for concrete needs: OpenSky's OAuth2 client secret must never reach the browser, and pooling/caching requests against OpenSky's shared daily quota needs a server-side layer.
-- **Backend responsibility boundary:** the backend owns _world/flight data_ only — serving it (mock or live) through a stable domain model. It never owns user-specific data. The frontend owns everything user-scoped — Journal, Badges, active quest state — consistent with local-only persistence.
+- **Architecture: two-part monorepo**: `frontend/` (React + TypeScript + Vite) and `backend/` (Python + FastAPI). The backend exists for concrete needs: OpenSky's OAuth2 client secret must never reach the browser, and requests against OpenSky's shared daily quota must be pooled and cached on a server.
+- **Backend responsibility boundary:** the backend owns _world/flight data_ only, serving it (mock or live) through a stable domain model. The frontend owns everything user-scoped (Journal, badges, quest state), consistent with local-only persistence.
 - **Backend data model** (pydantic, `models.py`):
   - `Flight`: `id`, `callsign`, `latitude`/`longitude` (degrees), `altitude_ft`, `heading` (0-360), `speed_kt`, and optional `aircraft_type`, `duration_min` (with `duration_estimated`), `origin`/`destination` (`Airport`: `icao`, `iata`, `name`, `latitude`, `longitude`, optional `city` and `country`), `vertical_rate_fpm` and `registered_country`. The optional fields are null when a source does not know them. OpenSky reports metres and m/s, so the provider converts to these units.
-  - `WeatherArea` (Milestone 6) and `FlightRoute` (the `/route` response, Milestone 7).
+  - `WeatherArea` and `FlightRoute` (the `/route` response).
   - Richer models are deferred until a feature needs them.
-- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract (the frontend only needed to learn the new hazard and labels once, in step 4).
-- **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific. Content is static JSON bundled into the frontend (`frontend/src/content/`: `facts.json`, the type catalog `aircraft-types.json` and the airline catalog `airlines.json`), not an endpoint. (The "move content to a database" idea below would revisit this.)
+- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract.
+- **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific.
+- **Content:** static JSON bundled into the frontend, in `frontend/src/content/`: `facts.json` (130 facts), the type catalog `aircraft-types.json` (178 ICAO types in 35 families, with category and engine count) and the airline catalog `airlines.json` (80 airlines with radio callsign and kind). Every entry is checked by tests, since the JSON is only cast to its type. Content grows by hand when a gap shows, and every new fact is checked, with a source for anything that isn't standard teaching.
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
-- **Tooling:** frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. Commands are in the root `README.md`.
+- **Tooling:** the frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; the backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. CI runs all of them. Commands are in the root `README.md`.
 - **Animation:** Framer Motion for the bouncy, springy interactions. GSAP was considered and deferred.
 - **State & persistence:** React Context/hooks + browser localStorage.
-- **Quest logic:** a small list of parameterized quest templates in `quest.ts`, each with a title, a concept fact and a `matches()` test. One is picked per local day and saved (see Milestone 3 in `docs/history.md`). There is no template engine beyond that list.
-
-## Implementation roadmap
-
-Finished work (Milestones 1-6 and Milestone 7 steps 1-6) is in `docs/history.md`, with the measurements and lessons behind it. The rules from it that still shape the code are under "Standing rules" below.
+- **Quest logic:** a list of parameterized quest templates in `quest.ts`, each with a title, a concept fact and a `matches()` test. One is picked per local day and saved. There is no template engine beyond that list.
 
 ### Standing rules
 
 - **Catching.** A flight can be caught once per local day. Quest completion is derived from _today's_ Journal, judging each catch at its own `caughtAt` time (the "personal day" rule). Only `{day, questId}` is saved for the quest; a weather quest counts as done when the saved `questId` matches or the quest still matches.
 - **Live flights.** One shared snapshot is refreshed on demand (90 s, never faster than 60 s) behind a credit guard, so no visitors means no credits spent; never run live mode with `--reload` (`docs/opensky-credit-guard.md`). The whole world is served, with a uniform hash-of-id sample only above a 15,000 safety ceiling; a random pick each refresh was rejected because planes would flicker.
-- **Drawing.** At most 800 planes in view (`VIEW_CAP`), thinned by a stable id hash. Selected, featured and onboarding-target planes are always drawn, and quest picks use the full feed. The densest-view limit is rendering cost, not data.
-- **Unknown fields.** `aircraft_type`, `duration_min` and the route are null when a source does not know them; the long-haul quest can only match mock data.
+- **Drawing.** At most 800 planes in view (`VIEW_CAP`, 300 on touch screens), thinned by a stable id hash. Selected, featured and onboarding-target planes are always drawn, and quest picks use the full feed. The densest-view limit is rendering cost, not data.
+- **Unknown fields.** `aircraft_type`, `duration_min` and the route are null when a source does not know them; the long-haul quest can only match mock data, and the phase facts only live data (mock flights have no climb rate).
 - **adsbdb route data.** Kept in memory only, never written to disk (its terms restrict copying). The route is checked against the plane's position on every lookup, because a callsign can be flown on another leg later in the day. The cache holds 2,000 entries and drops the one closest to expiring when full; after a failed lookup new requests pause for 15 s; at most 8 requests run at once. The frontend waits 250 ms after a tap, reuses an answer for 30 minutes and cancels a lookup when the plane is deselected.
 - **AWC weather.** The request is `?format=json` and nothing else (undocumented parameters are an error), with a custom User-Agent, cached at least 60 s. Only the backend calls it (no cross-origin access). Recount the raw JSON, not a summary.
 - **Motion in the zoomed layer.** Anything that moves continuously inside it uses `transform: translate(...)`, not `left/top` percentages, which browsers round before the zoom is applied.
 - **Layering.** Planes sit above weather icons; the weather label sits above planes (`z-index: 4`).
 - **Testing gotchas.** Under Vitest fake timers a `motion` exit can fail to complete; mock `matchMedia` to report reduced motion (the `reducedMotion()` helper in `App.test.tsx`). The journey-replay tests need `prefersReducedMotion()` to read `false`.
-- **Backend boundary.** The backend owns world data only; the frontend owns everything user-specific (Journal, badges, quest state).
 
-### Deployment (postponed 2026-10-07)
+## Roadmap
 
-Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward: ask OpenSky for a licence; deploy on mock data only; or find another flight source (its terms are unchecked). Items that need a public URL (the share card, the GPS mode, Planespotters photos, an installable PWA) wait with it. The PWA was dropped from the smoke-test backlog item on 2026-10-16 for this reason: installing only matters on a phone, which needs the app hosted on HTTPS, and while Wingdex is a portfolio piece a service worker would add caching risk (players stuck on an old version) for no user. When it is picked up: a hand-written manifest, icons made from `favicon.svg`, and a small service worker that caches the app's files, tries the network first for the page and never caches `/flights`, `/weather` or `/route`. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend when it resumes (see `backend/.env.example`).
+Three lists: what to do now (works locally and adds to the app as a portfolio piece), what only makes sense once Wingdex is deployed, and what is not being done. Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked up on its own, after the user names it; finished items leave this list and are recorded in `docs/history.md`.
 
-### After the MVP: backlog in priority order
+### Now
 
-Sizes are rough: S under a day, M a few days, L open-ended. Each item is picked up on its own, after the user names it.
+1. **Collection dex, streak and more badges (S/M).** Types and families seen out of those in the catalog, countries and airlines; a streak counter for daily quests; badges derived from the Journal (night owl, storm chaser, polar, many countries, first helicopter…). Frontend only, a strong collect-them-all feel; built on the type and airline catalogs.
+2. **Aircraft pictures (M).** One picture per aircraft _type_, not per flight: the lead image of the type's Wikipedia article, shown on the card ("What it looks like") and later in the dex. Fetched once by a script, reviewed like the content (some lead images show a cockpit or a prototype), and only the approved image link and its attribution stored in the type catalog. Every picture shows its author and licence. Loaded lazily from Wikimedia when a card opens, so no picture offline; a rounded postcard-style frame softens photo against the illustrated style. Unlike per-flight photos (Planespotters), this needs no public URL.
+3. **Destination forecast (M).** The destination's TAF, the airport forecast pilots read before every flight, on the card in plain words ("light rain after 15:00, wind 15 kt") with the raw code shown small underneath, so players learn to read one. From AWC, like the SIGMETs: backend only, cached, no credits. Decoding the change groups (BECMG, TEMPO, PROB30) needs care; mock flights get none unless the mock invents them; only airports that issue TAFs have one.
+4. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
+5. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
-1. **Collection dex, streak and more badges (S/M).** Types and families seen out of those that exist, countries and airlines; a streak counter; badges derived from the Journal (night owl, storm chaser, polar, many countries). Cheap, frontend only, a strong collect-them-all feel; built on the type and airline catalogs.
-2. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
-3. **GPS "above you" mode (M).** Use the browser's location to find the plane overhead ("look up, that's above you"). High delight; needs HTTPS (so after deployment) and a permission prompt, and works best on a phone.
-4. **Track history foundation (M).** Flight tracking, pattern events, drawing a flight's real flown route and crediting a weather quest to a plane that passed through all need past positions. Mind the quota: continuous global polling would use almost the whole 4,000 credits/day (a global request costs 4 credits, every 90 s is about 3,800 a day), so start with an in-memory buffer of recent snapshots and measure its size. **Decide the database once, here** (hosting limits the choice: a file database on an ephemeral free host loses its data); user progress stays local either way.
-5. **Flight tracking and pattern events (M, built on item 4).** The original Milestone 8, now after the MVP: "Track a specific flight in real time. Search or enter a flight number (callsign) and follow that plane live, even when it is not among the planes drawn. Specifics are undecided: how the flight is found (search box, URL, or from the flight card), whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in OpenSky credits, and how it interacts with the density logic, the daily catch rule and the journal." A search box risks looking like a tracker dashboard; "follow this flight" from its card or Journal entry fits the product better. Pattern-based events (holding patterns, diversions, weather reroutes) need the track history.
-6. **3D aircraft models (L).** In a type gallery, not per flight, and matched by ICAO type code (not by name, which is fuzzy: "A320 214" vs "A320-200"). Lazy-loaded; check the models' licences.
+**Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 
-**Learning extras (alongside, one at a time).** Short mini lessons on small aviation topics, written together with the user (the user learns while we write them), kept in `docs/lessons/` as Markdown with a PDF export and linked from the related fact or quest later. `docs/aviation-weather-products.md` is the first. No deadline, and no code until a few exist.
+### Only if deployed
 
-**Smaller ideas, not scheduled.** Richer mascot dialogue; a "most interesting first" ranking for the draw cap (rare types, extremes, weather); clustering or count badges in dense areas; cheaper rendering (canvas or SVG) if phones struggle; pausing the flight poll while the browser tab is hidden (and fetching at once when it returns) to save phone data and battery; sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); a per-view server request (`/flights?bbox=`) if the whole-world feed proves too heavy; region and weather palette shifts; the airport-style "recently left the feed" state for mock planes.
+**Deployment itself (postponed 2026-10-07).** Not started, for two reasons. (1) OpenSky's terms (read 2026-10-07): the data is licensed only for non-profit research and education, the REST API "is provided for non-profit research and educational use only", operational use in a live product, service or automated system needs a written licence, and the data may not be made available to others, so a public site on live OpenSky data is not allowed without one. (2) Cost: a backend host that is always on is rarely free, and the user does not want to pay for now. The ways forward:
 
-**Still out:** accounts, social features and rankings; weather forecasting or simulation.
+- ask OpenSky for a licence;
+- find another flight source (its terms are unchecked);
+- a public demo on mock data only, which could need no backend at all if the mock flights were generated in the browser, so a free static host would do.
 
-**Idea: move content (facts, quests) to a database.** Not a milestone; recorded so the trade-offs are written down. Backlog item 4 touches it.
+Hosting (a free static host such as Vercel, Netlify or GitHub Pages, plus somewhere to run the FastAPI backend if one is needed) is decided then. Set `CORS_ORIGINS` on the backend and `VITE_API_URL` on the frontend (see `backend/.env.example`).
 
-- **Why.** Edit facts and quests without redeploying, handle a pool too large for a code file, and the portfolio value of a real data layer.
-- **Fit.** Facts are already rows (kind, value, text), and the Journal stores the fact text it showed, so editing the pool never rewrites history. Quests are only partly data: the title and concept fact are text, but `matches()` is code.
-- **Scope, undecided.** (a) Facts only. (b) Facts plus each quest's title and concept fact, with the matching rule kept in code. (c) Full quest definitions, which needs a rule format and reverses "no template engine beyond that list".
-- **Costs.** New infrastructure and a network dependency for content that works offline today; the fact pick is a hash over the matching pool, so editing the pool changes which fact a flight shows (the pool would be fetched once and held for the session); hosting limits the database choice (a file database on an ephemeral free host would lose its data); and the backend would own content, not only world data.
-- **Staged path.** (1) Move the facts out of `facts.ts` into a plain data file in the repo (done: `frontend/src/content/facts.json`). (2) Serve content read-only from the backend once editing without redeploying or the pool's size is really needed. (3) An editor page, only if someone other than the developer will edit content. Pick it up after Milestone 7 settles hosting.
+Once deployed:
+
+1. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
+2. **GPS "above you" mode (M).** Use the browser's location to find the plane overhead ("look up, that's above you"). High delight; needs HTTPS and a permission prompt, and works best on a phone.
+3. **Installable PWA (S/M).** Dropped from the smoke-test item on 2026-10-16: installing only matters on a phone, which needs the app hosted on HTTPS, and until then a service worker adds caching risk (players stuck on an old version) for no user. When picked up: a hand-written manifest, icons made from `favicon.svg`, and a small service worker that caches the app's files, tries the network first for the page and never caches `/flights`, `/weather` or `/route`.
+4. **Flight photos (S/M).** Planespotters photos of the exact plane, by its transponder address, so live flights only. Their API wants a User-Agent with a contact URL or email, a photographer credit and a link back; the terms are unchecked (see "Photos" in `docs/history.md`, Milestone 7 step 2). Kept here rather than in "Now" because the aircraft pictures cover the wish until then.
+5. **Track history foundation (M).** Flight tracking, pattern events, drawing a flight's real flown route and crediting a weather quest to a plane that passed through all need past positions, so a server polling all day. Mind the quota: continuous global polling would use almost the whole 4,000 credits/day (a global request costs 4 credits, every 90 s is about 3,800 a day), so start with an in-memory buffer of recent snapshots and measure its size. If a database is needed, choose it here (a file database on an ephemeral free host loses its data); user progress stays local either way.
+6. **Flight tracking and pattern events (M, built on item 5).** Follow one flight live, even when it is not among the planes drawn. "Follow this flight" from its card or Journal entry fits the product better than a search box, which risks looking like a tracker dashboard. Open questions: whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in credits, and how it interacts with the density logic, the daily catch rule and the Journal. Pattern events (holding patterns, diversions, weather reroutes) need the track history.
+
+### Not doing
+
+- **3D aircraft models.** No consistent, freely licensed set (each model would need its own licence check), 1-10 MB per model plus three.js, a clash with the flat poster style, and a large effort for something seen once per type. Aircraft pictures ("Now") cover the same wish.
+- **Content in a database.** Facts are already data files, and the Journal stores the fact text it showed, so editing the pool never rewrites history. A database would only pay off if someone other than the developer edited content; it would add infrastructure, a network dependency for content that works offline, and make the backend own content.
+- **Accounts, social features and rankings.** Progress stays local.
+- **Weather simulation or our own forecasting.** Only official reports and forecasts (SIGMETs today, TAFs in "Now").
+- **A learning path or encyclopedia.** Outside Wingdex's scope; facts and quest lessons stay the way it teaches.
+- **Canvas rendering, per-view server requests (`/flights?bbox=`).** Only if phones or the whole-world feed ever prove too slow.
 
 ## Visual & interaction direction
 
-A small visual foundation slice was pulled ahead of Milestone 1 (see `docs/ui-foundation.md`). The full visual pass was done in Milestone 5.
+A small visual foundation slice was pulled ahead of Milestone 1 and the full visual pass was done in Milestone 5; `docs/ui-foundation.md` records the decisions.
 
-- **Overall style: retro travel-poster kawaii** — vintage mid-century aviation travel-poster palettes and shapes combined with cuteness, rather than generic cartoon cuteness.
+- **Overall style: retro travel-poster**: vintage mid-century aviation travel-poster palettes and shapes combined with cuteness, rather than generic cartoon cuteness.
 - **Mascot:** a chibi cat pilot in the same poster style, carrying onboarding and quest prompts.
-- **Aircraft fidelity:** recognizable, proportionate silhouettes rather than generic shapes, which doubles as passive aircraft-type-recognition learning.
+- **Aircraft fidelity:** recognizable, proportionate silhouettes by shape rather than generic icons, which doubles as passive aircraft-recognition learning. Airliners are coral and general aviation mint.
 - **Motion personality:** bouncy, springy animation, deliberately contrasting the flat vintage look with toy-like energy.
-- **Palette strategy:** shifts by context (region, time-of-day, weather). Time of day is built. The weather shift was tried as a local tint and dropped, and a region shift is still deferred.
-
-Settled in Milestone 5: palette values, the mascot, aircraft silhouettes, badge iconography and screen layout. Settled in Milestone 6: weather iconography (round hazard stickers).
+- **Palette strategy:** shifts by context. Time of day is built. A weather shift was tried as a local tint and dropped, and a region shift is a small idea.
