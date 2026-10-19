@@ -79,6 +79,18 @@ test('lists the airline, aircraft, owner and registration country', () => {
   expect(screen.getByText('London → Dublin')).toBeTruthy()
 })
 
+test('the airline catalog fills the Airline section without a lookup', () => {
+  card({ ...flight, callsign: 'BAW117' }, null)
+  expect(cardField('Name')).toBe('British Airways · United Kingdom')
+  expect(cardField('Radio callsign')).toBe('Speedbird 117')
+})
+
+test('an airline the catalog lacks comes from the lookup', () => {
+  card({ ...flight, callsign: 'ZZZ12' }, details)
+  expect(cardField('Name')).toBe('Ryanair · Ireland') // the lookup's answer
+  expect(cardField('Radio callsign')).toBeNull()
+})
+
 test('says climbing or descending with the rate', () => {
   card(flight, details)
   expect(cardField('Climb rate')).toBe('Climbing · 1,900 ft/min')
@@ -93,6 +105,7 @@ test('an owner that is the airline is not repeated', () => {
 test('shows only what is known, and nothing without a lookup', () => {
   const bare: Flight = {
     ...flight,
+    callsign: 'N123AB', // a private plane: no airline in the catalog
     vertical_rate_fpm: null,
     registered_country: null,
     origin: null,

@@ -1,0 +1,489 @@
+{
+  "AFR": {
+    "name": "Air France",
+    "country": "France",
+    "radio": "Airfrans",
+    "kind": "fullService"
+  },
+  "BAW": {
+    "name": "British Airways",
+    "country": "United Kingdom",
+    "radio": "Speedbird",
+    "kind": "fullService"
+  },
+  "DLH": {
+    "name": "Lufthansa",
+    "country": "Germany",
+    "radio": "Lufthansa",
+    "kind": "fullService"
+  },
+  "KLM": {
+    "name": "KLM",
+    "country": "Netherlands",
+    "radio": "KLM",
+    "kind": "fullService"
+  },
+  "IBE": {
+    "name": "Iberia",
+    "country": "Spain",
+    "radio": "Iberia",
+    "kind": "fullService"
+  },
+  "TAP": {
+    "name": "TAP Air Portugal",
+    "country": "Portugal",
+    "radio": "Air Portugal",
+    "kind": "fullService"
+  },
+  "ITY": {
+    "name": "ITA Airways",
+    "country": "Italy",
+    "radio": "Itarrow",
+    "kind": "fullService"
+  },
+  "SWR": {
+    "name": "Swiss",
+    "country": "Switzerland",
+    "radio": "Swiss",
+    "kind": "fullService"
+  },
+  "AUA": {
+    "name": "Austrian Airlines",
+    "country": "Austria",
+    "radio": "Austrian",
+    "kind": "fullService"
+  },
+  "BEL": {
+    "name": "Brussels Airlines",
+    "country": "Belgium",
+    "radio": "Bee-Line",
+    "kind": "fullService"
+  },
+  "SAS": {
+    "name": "SAS Scandinavian Airlines",
+    "country": "Denmark, Norway and Sweden",
+    "radio": "Scandinavian",
+    "kind": "fullService"
+  },
+  "FIN": {
+    "name": "Finnair",
+    "country": "Finland",
+    "radio": "Finnair",
+    "kind": "fullService"
+  },
+  "ICE": {
+    "name": "Icelandair",
+    "country": "Iceland",
+    "radio": "Iceair",
+    "kind": "fullService"
+  },
+  "EIN": {
+    "name": "Aer Lingus",
+    "country": "Ireland",
+    "radio": "Shamrock",
+    "kind": "fullService"
+  },
+  "LOT": {
+    "name": "LOT Polish Airlines",
+    "country": "Poland",
+    "radio": "LOT",
+    "kind": "fullService"
+  },
+  "AEE": {
+    "name": "Aegean Airlines",
+    "country": "Greece",
+    "radio": "Aegean",
+    "kind": "fullService"
+  },
+  "AEA": {
+    "name": "Air Europa",
+    "country": "Spain",
+    "radio": "Europa",
+    "kind": "fullService"
+  },
+  "THY": {
+    "name": "Turkish Airlines",
+    "country": "Turkey",
+    "radio": "Turkish",
+    "kind": "fullService"
+  },
+  "DLA": {
+    "name": "Air Dolomiti",
+    "country": "Italy",
+    "radio": "Dolomiti",
+    "kind": "regional"
+  },
+
+  "RYR": {
+    "name": "Ryanair",
+    "country": "Ireland",
+    "radio": "Ryanair",
+    "kind": "lowCost"
+  },
+  "EZY": {
+    "name": "easyJet",
+    "country": "United Kingdom",
+    "radio": "Easy",
+    "kind": "lowCost"
+  },
+  "EJU": {
+    "name": "easyJet Europe",
+    "country": "Austria",
+    "radio": "Alpine",
+    "kind": "lowCost"
+  },
+  "EZS": {
+    "name": "easyJet Switzerland",
+    "country": "Switzerland",
+    "radio": "Topswiss",
+    "kind": "lowCost"
+  },
+  "WZZ": {
+    "name": "Wizz Air",
+    "country": "Hungary",
+    "radio": "Wizz Air",
+    "kind": "lowCost"
+  },
+  "WUK": {
+    "name": "Wizz Air UK",
+    "country": "United Kingdom",
+    "radio": "Wizz Go",
+    "kind": "lowCost"
+  },
+  "WMT": {
+    "name": "Wizz Air Malta",
+    "country": "Malta",
+    "radio": "Wizz Malta",
+    "kind": "lowCost"
+  },
+  "VLG": {
+    "name": "Vueling",
+    "country": "Spain",
+    "radio": "Vueling",
+    "kind": "lowCost"
+  },
+  "VOE": {
+    "name": "Volotea",
+    "country": "Spain",
+    "radio": "Volotea",
+    "kind": "lowCost"
+  },
+  "NOZ": {
+    "name": "Norwegian",
+    "country": "Norway",
+    "radio": "Nordic",
+    "kind": "lowCost"
+  },
+  "NSZ": {
+    "name": "Norwegian Air Sweden",
+    "country": "Sweden",
+    "radio": "Rednose",
+    "kind": "lowCost"
+  },
+  "TRA": {
+    "name": "Transavia",
+    "country": "Netherlands",
+    "radio": "Transavia",
+    "kind": "lowCost"
+  },
+  "EWG": {
+    "name": "Eurowings",
+    "country": "Germany",
+    "radio": "Eurowings",
+    "kind": "lowCost"
+  },
+  "PGT": {
+    "name": "Pegasus Airlines",
+    "country": "Turkey",
+    "radio": "Sunturk",
+    "kind": "lowCost"
+  },
+
+  "CFG": {
+    "name": "Condor",
+    "country": "Germany",
+    "radio": "Condor",
+    "kind": "leisure"
+  },
+  "NOS": {
+    "name": "Neos",
+    "country": "Italy",
+    "radio": "Moonflower",
+    "kind": "leisure"
+  },
+  "SXS": {
+    "name": "SunExpress",
+    "country": "Turkey",
+    "radio": "SunExpress",
+    "kind": "leisure"
+  },
+
+  "UAE": {
+    "name": "Emirates",
+    "country": "United Arab Emirates",
+    "radio": "Emirates",
+    "kind": "fullService"
+  },
+  "QTR": {
+    "name": "Qatar Airways",
+    "country": "Qatar",
+    "radio": "Qatari",
+    "kind": "fullService"
+  },
+  "ETD": {
+    "name": "Etihad Airways",
+    "country": "United Arab Emirates",
+    "radio": "Etihad",
+    "kind": "fullService"
+  },
+  "FDB": {
+    "name": "flydubai",
+    "country": "United Arab Emirates",
+    "radio": "Skydubai",
+    "kind": "lowCost"
+  },
+  "SVA": {
+    "name": "Saudia",
+    "country": "Saudi Arabia",
+    "radio": "Saudia",
+    "kind": "fullService"
+  },
+  "ELY": {
+    "name": "El Al",
+    "country": "Israel",
+    "radio": "Elal",
+    "kind": "fullService"
+  },
+
+  "AAL": {
+    "name": "American Airlines",
+    "country": "United States",
+    "radio": "American",
+    "kind": "fullService"
+  },
+  "UAL": {
+    "name": "United Airlines",
+    "country": "United States",
+    "radio": "United",
+    "kind": "fullService"
+  },
+  "DAL": {
+    "name": "Delta Air Lines",
+    "country": "United States",
+    "radio": "Delta",
+    "kind": "fullService"
+  },
+  "SWA": {
+    "name": "Southwest Airlines",
+    "country": "United States",
+    "radio": "Southwest",
+    "kind": "lowCost"
+  },
+  "JBU": {
+    "name": "JetBlue",
+    "country": "United States",
+    "radio": "JetBlue",
+    "kind": "lowCost"
+  },
+  "ASA": {
+    "name": "Alaska Airlines",
+    "country": "United States",
+    "radio": "Alaska",
+    "kind": "fullService"
+  },
+  "ACA": {
+    "name": "Air Canada",
+    "country": "Canada",
+    "radio": "Air Canada",
+    "kind": "fullService"
+  },
+  "AMX": {
+    "name": "Aeroméxico",
+    "country": "Mexico",
+    "radio": "Aeromexico",
+    "kind": "fullService"
+  },
+  "LAN": {
+    "name": "LATAM Chile",
+    "country": "Chile",
+    "radio": "Lan Chile",
+    "kind": "fullService"
+  },
+  "AVA": {
+    "name": "Avianca",
+    "country": "Colombia",
+    "radio": "Avianca",
+    "kind": "fullService"
+  },
+
+  "SAA": {
+    "name": "South African Airways",
+    "country": "South Africa",
+    "radio": "Springbok",
+    "kind": "fullService"
+  },
+  "ETH": {
+    "name": "Ethiopian Airlines",
+    "country": "Ethiopia",
+    "radio": "Ethiopian",
+    "kind": "fullService"
+  },
+  "MSR": {
+    "name": "EgyptAir",
+    "country": "Egypt",
+    "radio": "Egyptair",
+    "kind": "fullService"
+  },
+  "RAM": {
+    "name": "Royal Air Maroc",
+    "country": "Morocco",
+    "radio": "Royal Air Maroc",
+    "kind": "fullService"
+  },
+  "KQA": {
+    "name": "Kenya Airways",
+    "country": "Kenya",
+    "radio": "Kenya",
+    "kind": "fullService"
+  },
+
+  "SIA": {
+    "name": "Singapore Airlines",
+    "country": "Singapore",
+    "radio": "Singapore",
+    "kind": "fullService"
+  },
+  "CPA": {
+    "name": "Cathay Pacific",
+    "country": "Hong Kong",
+    "radio": "Cathay",
+    "kind": "fullService"
+  },
+  "CCA": {
+    "name": "Air China",
+    "country": "China",
+    "radio": "Air China",
+    "kind": "fullService"
+  },
+  "CES": {
+    "name": "China Eastern Airlines",
+    "country": "China",
+    "radio": "China Eastern",
+    "kind": "fullService"
+  },
+  "CSN": {
+    "name": "China Southern Airlines",
+    "country": "China",
+    "radio": "China Southern",
+    "kind": "fullService"
+  },
+  "AIC": {
+    "name": "Air India",
+    "country": "India",
+    "radio": "Airindia",
+    "kind": "fullService"
+  },
+  "AXB": {
+    "name": "Air India Express",
+    "country": "India",
+    "radio": "Express India",
+    "kind": "lowCost"
+  },
+  "IGO": {
+    "name": "IndiGo",
+    "country": "India",
+    "radio": "Ifly",
+    "kind": "lowCost"
+  },
+  "JAL": {
+    "name": "Japan Airlines",
+    "country": "Japan",
+    "radio": "Japanair",
+    "kind": "fullService"
+  },
+  "ANA": {
+    "name": "All Nippon Airways",
+    "country": "Japan",
+    "radio": "All Nippon",
+    "kind": "fullService"
+  },
+  "KAL": {
+    "name": "Korean Air",
+    "country": "South Korea",
+    "radio": "Koreanair",
+    "kind": "fullService"
+  },
+  "THA": {
+    "name": "Thai Airways",
+    "country": "Thailand",
+    "radio": "Thai",
+    "kind": "fullService"
+  },
+  "MAS": {
+    "name": "Malaysia Airlines",
+    "country": "Malaysia",
+    "radio": "Malaysian",
+    "kind": "fullService"
+  },
+  "GIA": {
+    "name": "Garuda Indonesia",
+    "country": "Indonesia",
+    "radio": "Indonesia",
+    "kind": "fullService"
+  },
+  "QFA": {
+    "name": "Qantas",
+    "country": "Australia",
+    "radio": "Qantas",
+    "kind": "fullService"
+  },
+  "ANZ": {
+    "name": "Air New Zealand",
+    "country": "New Zealand",
+    "radio": "New Zealand",
+    "kind": "fullService"
+  },
+
+  "FDX": {
+    "name": "FedEx Express",
+    "country": "United States",
+    "radio": "FedEx",
+    "kind": "cargo"
+  },
+  "UPS": {
+    "name": "UPS Airlines",
+    "country": "United States",
+    "radio": "UPS",
+    "kind": "cargo"
+  },
+  "GTI": {
+    "name": "Atlas Air",
+    "country": "United States",
+    "radio": "Giant",
+    "kind": "cargo"
+  },
+  "CLX": {
+    "name": "Cargolux",
+    "country": "Luxembourg",
+    "radio": "Cargolux",
+    "kind": "cargo"
+  },
+  "BOX": {
+    "name": "AeroLogic",
+    "country": "Germany",
+    "radio": "German Cargo",
+    "kind": "cargo"
+  },
+  "BCS": {
+    "name": "European Air Transport (DHL)",
+    "country": "Germany",
+    "radio": "Postman",
+    "kind": "cargo"
+  },
+  "DHK": {
+    "name": "DHL Air UK",
+    "country": "United Kingdom",
+    "radio": "World Express",
+    "kind": "cargo"
+  }
+}

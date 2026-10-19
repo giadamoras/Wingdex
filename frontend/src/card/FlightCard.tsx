@@ -2,6 +2,7 @@ import { motion } from 'framer-motion'
 import type { ReactNode } from 'react'
 import type { Flight, FlightRoute } from '../data/types'
 import { aircraftType } from '../shared-lib/aircraftTypes'
+import { airlineFor, radioCallsign } from '../shared-lib/airlines'
 import {
   climbDirection,
   formatAltitude,
@@ -208,19 +209,24 @@ function describe(flight: Flight, details: FlightRoute | null): Section[] {
   if (flight.registered_country)
     aircraft.push({ label: 'Registered in', value: flight.registered_country })
 
+  // The airline catalog first, so mock flights get it too; the lookup's
+  // answer for an airline the catalog lacks.
   const airline: Field[] = []
-  if (details?.airline)
+  const known = airlineFor(flight.callsign)
+  const name = known?.name ?? details?.airline
+  const country = known?.country ?? details?.airline_country
+  if (name)
     airline.push({
       label: 'Name', // under the "Airline" band
-      value: details.airline_country
-        ? `${details.airline} · ${details.airline_country}`
-        : details.airline,
+      value: country ? `${name} · ${country}` : name,
     })
-  if (
-    details?.operator &&
-    details.operator.toLowerCase() !== details.airline?.toLowerCase()
-  )
-    airline.push({ label: 'Owner', value: details.operator })
+  const radio = radioCallsign(flight.callsign)
+  if (radio) airline.push({ label: 'Radio callsign', value: radio })
+  const owner = details?.operator
+  const sameAsAirline = (other: string | null | undefined) =>
+    other?.toLowerCase() === owner?.toLowerCase()
+  if (owner && !sameAsAirline(name) && !sameAsAirline(details?.airline))
+    airline.push({ label: 'Owner', value: owner })
 
   const sections: Section[] = [
     { title: 'In flight', group: 'flight', fields: inFlight },
