@@ -14,7 +14,8 @@ export type AircraftCategory =
   | 'wideBody'
   | 'turboprop'
   | 'bizJet'
-  | 'light' // piston aeroplanes
+  | 'light' // piston aeroplanes and ultralights
+  | 'glider'
   | 'helicopter'
 
 export interface AircraftType {

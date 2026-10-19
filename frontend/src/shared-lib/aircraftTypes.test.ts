@@ -14,6 +14,7 @@ const CATEGORIES = [
   'turboprop',
   'bizJet',
   'light',
+  'glider',
   'helicopter',
 ]
 

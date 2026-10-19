@@ -89,6 +89,21 @@
     },
     "Robinson": {
       "name": "Robinson"
+    },
+    "Challenger": {
+      "name": "Bombardier Challenger"
+    },
+    "King Air": {
+      "name": "Beechcraft King Air"
+    },
+    "Learjet": {
+      "name": "Learjet"
+    },
+    "Van's RV": {
+      "name": "Van's RV"
+    },
+    "PA-46": {
+      "name": "Piper PA-46"
     }
   },
   "types": {
@@ -483,7 +498,8 @@
     },
     "BE20": {
       "name": "Beechcraft King Air 200",
-      "category": "turboprop"
+      "category": "turboprop",
+      "family": "King Air"
     },
     "C208": {
       "name": "Cessna 208 Caravan",
@@ -505,7 +521,8 @@
     },
     "CL35": {
       "name": "Bombardier Challenger 350",
-      "category": "bizJet"
+      "category": "bizJet",
+      "family": "Challenger"
     },
     "GLEX": {
       "name": "Bombardier Global Express",
@@ -547,7 +564,8 @@
     },
     "LJ45": {
       "name": "Learjet 45",
-      "category": "bizJet"
+      "category": "bizJet",
+      "family": "Learjet"
     },
     "H25B": {
       "name": "Hawker 800",
@@ -719,6 +737,224 @@
     "S76": {
       "name": "Sikorsky S-76",
       "category": "helicopter"
+    },
+    "B712": {
+      "name": "Boeing 717",
+      "category": "narrowBody"
+    },
+    "C25A": {
+      "name": "Cessna Citation CJ2",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C25B": {
+      "name": "Cessna Citation CJ3",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C25C": {
+      "name": "Cessna Citation CJ4",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C550": {
+      "name": "Cessna Citation II",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C560": {
+      "name": "Cessna Citation V",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C680": {
+      "name": "Cessna Citation Sovereign",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C700": {
+      "name": "Cessna Citation Longitude",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "C750": {
+      "name": "Cessna Citation X",
+      "family": "Citation",
+      "category": "bizJet"
+    },
+    "CL30": {
+      "name": "Bombardier Challenger 300",
+      "family": "Challenger",
+      "category": "bizJet"
+    },
+    "CL60": {
+      "name": "Bombardier Challenger 600",
+      "family": "Challenger",
+      "category": "bizJet"
+    },
+    "GLF4": {
+      "name": "Gulfstream IV",
+      "family": "Gulfstream",
+      "category": "bizJet"
+    },
+    "F900": {
+      "name": "Dassault Falcon 900",
+      "family": "Falcon",
+      "category": "bizJet"
+    },
+    "FA50": {
+      "name": "Dassault Falcon 50",
+      "family": "Falcon",
+      "category": "bizJet"
+    },
+    "LJ60": {
+      "name": "Learjet 60",
+      "family": "Learjet",
+      "category": "bizJet"
+    },
+    "BE40": {
+      "name": "Beechjet 400",
+      "category": "bizJet"
+    },
+    "E35L": {
+      "name": "Embraer Legacy 600",
+      "category": "bizJet"
+    },
+    "SF50": {
+      "name": "Cirrus Vision Jet",
+      "family": "Cirrus",
+      "category": "bizJet"
+    },
+    "BE9L": {
+      "name": "Beechcraft King Air 90",
+      "family": "King Air",
+      "category": "turboprop"
+    },
+    "BE30": {
+      "name": "Beechcraft Super King Air 300",
+      "family": "King Air",
+      "category": "turboprop"
+    },
+    "B350": {
+      "name": "Beechcraft King Air 350",
+      "family": "King Air",
+      "category": "turboprop"
+    },
+    "TBM7": {
+      "name": "Daher TBM 700",
+      "category": "turboprop"
+    },
+    "P46T": {
+      "name": "Piper PA-46 Meridian",
+      "family": "PA-46",
+      "category": "turboprop"
+    },
+    "S22T": {
+      "name": "Cirrus SR22T",
+      "family": "Cirrus",
+      "category": "light"
+    },
+    "C72R": {
+      "name": "Cessna 172RG Cutlass",
+      "category": "light"
+    },
+    "T206": {
+      "name": "Cessna T206 Turbo Stationair",
+      "category": "light"
+    },
+    "T210": {
+      "name": "Cessna T210 Turbo Centurion",
+      "category": "light"
+    },
+    "C402": {
+      "name": "Cessna 402",
+      "category": "light"
+    },
+    "PA23": {
+      "name": "Piper PA-23 Aztec",
+      "category": "light"
+    },
+    "PA32": {
+      "name": "Piper PA-32 Cherokee Six",
+      "category": "light"
+    },
+    "P32R": {
+      "name": "Piper PA-32R Saratoga",
+      "category": "light"
+    },
+    "PA44": {
+      "name": "Piper PA-44 Seminole",
+      "category": "light"
+    },
+    "PA46": {
+      "name": "Piper PA-46 Malibu",
+      "family": "PA-46",
+      "category": "light"
+    },
+    "BE33": {
+      "name": "Beechcraft Bonanza 33",
+      "family": "Bonanza",
+      "category": "light"
+    },
+    "BE58": {
+      "name": "Beechcraft Baron 58",
+      "category": "light"
+    },
+    "BE95": {
+      "name": "Beechcraft Travel Air",
+      "category": "light"
+    },
+    "AA5": {
+      "name": "Grumman AA-5 Traveler",
+      "category": "light"
+    },
+    "C42": {
+      "name": "Comco Ikarus C42",
+      "category": "light"
+    },
+    "RV7": {
+      "name": "Van's RV-7",
+      "family": "Van's RV",
+      "category": "light"
+    },
+    "RV9": {
+      "name": "Van's RV-9",
+      "family": "Van's RV",
+      "category": "light"
+    },
+    "RV10": {
+      "name": "Van's RV-10",
+      "family": "Van's RV",
+      "category": "light"
+    },
+    "RV12": {
+      "name": "Van's RV-12",
+      "family": "Van's RV",
+      "category": "light"
+    },
+    "C82T": {
+      "name": "Cessna TR182 Turbo Skylane RG",
+      "category": "light"
+    },
+    "C82S": {
+      "name": "Cessna T182 Turbo Skylane",
+      "category": "light"
+    },
+    "NG5": {
+      "name": "BRM Aero Bristell",
+      "category": "light"
+    },
+    "CRUZ": {
+      "name": "CSA SportCruiser",
+      "category": "light"
+    },
+    "ULAC": {
+      "name": "Ultralight",
+      "category": "light"
+    },
+    "GLID": {
+      "name": "Glider",
+      "category": "glider"
     }
   }
 }

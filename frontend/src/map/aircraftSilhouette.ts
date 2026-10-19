@@ -12,8 +12,8 @@ export type AircraftShape =
 
 // The shape for a type, from its category in the catalog (aircraftTypes.ts).
 // A four-engine wide-body gets the quad shape. Business jets, light aircraft,
-// helicopters and unknown codes get the narrow-body default until they have
-// shapes of their own.
+// gliders, helicopters and unknown codes get the narrow-body default until
+// they have shapes of their own.
 export function aircraftShape(code: string | null): AircraftShape {
   const type = aircraftType(code)
   switch (type?.category) {
