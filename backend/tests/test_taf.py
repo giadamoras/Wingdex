@@ -21,7 +21,7 @@ from app.awc_taf import (
 )
 from app.main import app
 from app.mock_flights import AIRPORTS
-from app.mock_taf import get_mock_taf
+from app.mock_taf import HOUR, get_mock_taf, surface_hazards
 from app.models import Taf
 from app.providers import ProviderError
 
@@ -268,3 +268,70 @@ def test_the_endpoint_serves_a_mock_taf() -> None:
 @pytest.mark.parametrize("icao", ["KPDX", "LHR", "EG-LL"])
 def test_the_endpoint_answers_404_without_a_taf(icao: str) -> None:
     assert TestClient(app).get(f"/airports/{icao}/taf").status_code == 404
+
+
+def test_an_airport_under_a_mock_hazard_area_forecasts_that_weather() -> None:
+    # The map and the forecast agree: Singapore and Nice sit in mock thunderstorm areas,
+    # Jakarta in the volcanic ash one.
+    for icao in ["WSSS", "LFMN"]:
+        taf = get_mock_taf(icao, now=START)
+        assert taf is not None
+        storm = [p for p in taf.periods if p.weather == "TSRA" and p.probability is None]
+        assert storm and storm[0].start == taf.valid_from
+        assert "TSRA" in taf.raw and "CB" in taf.raw
+    jakarta = get_mock_taf("WIII", now=START)
+    assert jakarta is not None and jakarta.periods[0].weather == "VA"
+
+
+def test_hazards_only_count_where_they_reach_the_ground() -> None:
+    assert surface_hazards(AIRPORTS["SIN"]) == {"thunderstorm"}
+    assert surface_hazards(AIRPORTS["CGK"]) == {"volcanic_ash"}
+    assert surface_hazards(AIRPORTS["LHR"]) == set()
+    assert surface_hazards(AIRPORTS["EDI"]) == set()  # under icing, but only from 5,000 ft
+
+
+def _opening_rules(taf: Taf) -> str:
+    """The flight rules of the opening forecast, as the card works them out (tafTicket.ts)."""
+    base = taf.periods[0]
+    ceilings = [c.base_ft or 0 for c in base.clouds if c.cover in ("BKN", "OVC")]
+    if base.vertical_visibility_ft is not None:
+        ceilings.append(base.vertical_visibility_ft)
+    ceiling = min(ceilings, default=100_000)
+    miles = (base.visibility_m or 0) / 1609
+    if ceiling < 500 or miles < 1:
+        return "LIFR"
+    if ceiling < 1000 or miles < 3:
+        return "IFR"
+    return "MVFR" if ceiling <= 3000 or miles <= 5 else "VFR"
+
+
+def test_the_mock_forecasts_show_every_kind_of_sky_and_flight_rules() -> None:
+    tafs = [get_mock_taf(a.icao, now=START) for a in AIRPORTS.values()]
+    assert all(t is not None for t in tafs)
+    rules = [_opening_rules(t) for t in tafs if t is not None]
+    assert {"VFR", "MVFR", "IFR", "LIFR"} <= set(rules)
+    assert rules.count("VFR") > len(rules) / 2  # still mostly fine weather
+    raws = " ".join(t.raw for t in tafs if t is not None)
+    for code in [" NSC", " BR ", " FG VV0", " BKN0"]:
+        assert code in raws, code
+
+
+def test_fog_lifts_with_a_new_forecast_a_few_hours_in() -> None:
+    foggy = [
+        taf
+        for a in AIRPORTS.values()
+        if (taf := get_mock_taf(a.icao, now=START)) and taf.periods[0].weather == "FG"
+    ]
+    assert foggy
+    for taf in foggy:
+        lifted = taf.periods[1]
+        assert lifted.change == "FM" and lifted.start == taf.periods[0].end
+        assert 3 * HOUR <= lifted.start - taf.valid_from <= 7 * HOUR
+        assert lifted.vertical_visibility_ft is None and lifted.weather != "FG"
+
+
+def test_no_fog_under_a_hazard_area() -> None:
+    for icao in ["WSSS", "WMKK", "LFMN", "WIII"]:
+        for issue in range(8):  # two days of forecasts
+            taf = get_mock_taf(icao, now=START + issue * 6 * HOUR)
+            assert taf is not None and taf.periods[0].weather != "FG"

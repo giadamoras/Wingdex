@@ -8,6 +8,7 @@ from app.models import Flight, Taf, WeatherArea
 
 class MockFlightProvider:
     name = "mock"
+    looks_up_routes = False
 
     def get_flights(self) -> list[Flight]:
         return get_mock_flights()

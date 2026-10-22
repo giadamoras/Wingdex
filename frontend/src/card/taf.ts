@@ -39,6 +39,10 @@ export const conditionsOf = (p: TafPeriod): Conditions => ({
 function overlay(base: Conditions, change: Conditions): Conditions {
   const windGiven = change.wind_kt !== null || change.wind_variable
   const visibilityGiven = change.visibility_m !== null
+  // Cloud layers and a hidden sky ("VV") are one sky group: either replaces
+  // the other, so fog that lifts to cloud no longer reads "sky hidden".
+  const skyGiven =
+    change.clouds.length > 0 || change.vertical_visibility_ft !== null
   return {
     wind_dir: windGiven ? change.wind_dir : base.wind_dir,
     wind_variable: windGiven ? change.wind_variable : base.wind_variable,
@@ -49,9 +53,10 @@ function overlay(base: Conditions, change: Conditions): Conditions {
       ? change.visibility_or_more
       : base.visibility_or_more,
     weather: change.weather ?? base.weather,
-    clouds: change.clouds.length > 0 ? change.clouds : base.clouds,
-    vertical_visibility_ft:
-      change.vertical_visibility_ft ?? base.vertical_visibility_ft,
+    clouds: skyGiven ? change.clouds : base.clouds,
+    vertical_visibility_ft: skyGiven
+      ? change.vertical_visibility_ft
+      : base.vertical_visibility_ft,
   }
 }
 

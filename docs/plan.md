@@ -4,7 +4,7 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, and the destination forecast. All of it is summarised in `docs/history.md`.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast and the richer mock flights. All of it is summarised in `docs/history.md`.
 - **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
@@ -20,7 +20,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 
 ### Core loop
 
-1. **Explore** a 2D world map of flying aircraft with Google Maps-style pan and zoom. The flight source is swappable: mock data (100 world-wide flights) or OpenSky live.
+1. **Explore** a 2D world map of flying aircraft with Google Maps-style pan and zoom. The flight source is swappable: mock data (200 world-wide flights: airliners, business jets, light aircraft, helicopters and gliders) or OpenSky live.
 2. **One daily quest**, on the player's own local day (not a shared global challenge), picked from 23 parameterized templates: altitude ("above 36,000 ft"), aircraft category, region, weather, time of day, flight length, climb or descent, speed, single airlines and airline kinds (cargo, low-cost, holiday). A quest that no current flight can match is skipped.
 3. **Featured flights**, a few ringed on the map each session, so there is always something worth catching.
 4. **Catch** a flight: its card shows labelled boarding-pass details and **one** fact, picked from tagged pools by the flight's own attributes: aircraft type, family and category, airline, altitude band, flight phase, region, time of day and weather. Aircraft and airline facts are preferred about 2 times in 3. There are no airport facts; airports appear only as the route's ends.
@@ -57,7 +57,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 - **Catching.** A flight can be caught once per local day. Quest completion is derived from _today's_ Journal, judging each catch at its own `caughtAt` time (the "personal day" rule). Only `{day, questId}` is saved for the quest; a weather quest counts as done when the saved `questId` matches or the quest still matches.
 - **Live flights.** One shared snapshot is refreshed on demand (90 s, never faster than 60 s) behind a credit guard, so no visitors means no credits spent; never run live mode with `--reload` (`docs/opensky-credit-guard.md`). The whole world is served, with a uniform hash-of-id sample only above a 15,000 safety ceiling; a random pick each refresh was rejected because planes would flicker.
 - **Drawing.** At most 800 planes in view (`VIEW_CAP`, 300 on touch screens), thinned by a stable id hash. Selected, featured and onboarding-target planes are always drawn, and quest picks use the full feed. The densest-view limit is rendering cost, not data.
-- **Unknown fields.** `aircraft_type`, `duration_min` and the route are null when a source does not know them; the long-haul quest can only match mock data, and the phase facts only live data (mock flights have no climb rate).
+- **Unknown fields.** `aircraft_type`, `duration_min` and the route are null when a source does not know them; the long-haul quest can only match mock data. Mock light aircraft, helicopters and gliders show no route or duration, as most such planes do live, and mock mode never asks adsbdb for a route (`looks_up_routes`).
 - **adsbdb route data.** Kept in memory only, never written to disk (its terms restrict copying). The route is checked against the plane's position on every lookup, because a callsign can be flown on another leg later in the day. The cache holds 2,000 entries and drops the one closest to expiring when full; after a failed lookup new requests pause for 15 s; at most 8 requests run at once. The frontend waits 250 ms after a tap, reuses an answer for 30 minutes and cancels a lookup when the plane is deselected.
 - **AWC weather.** The request is `?format=json` and nothing else (undocumented parameters are an error), with a custom User-Agent, cached at least 60 s. Only the backend calls it (no cross-origin access). Recount the raw JSON, not a summary.
 - **Motion in the zoomed layer.** Anything that moves continuously inside it uses `transform: translate(...)`, not `left/top` percentages, which browsers round before the zoom is applied.
@@ -70,10 +70,9 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **Richer mock flights (M).** Without API keys the app should still show what it can do, but the mock (`backend/app/mock_flights.py`) lags behind the catalogs: 46 of the 80 airlines, 11 of the 178 types (no regional jets but the E190, no business jets, light aircraft, helicopters or gliders, so the new silhouettes never appear), every plane at cruise with no climb rate (the phase facts and the climb and descent quests can't match), no registered country, and airports without city or country. Add the missing airlines and a spread of types with flights that suit them: light aircraft, helicopters and gliders on short, low, slow local hops rather than airline routes; some planes climbing out or descending in, with a vertical rate. Keep the seed, so the mock stays the same from one run to the next.
-2. **Destination time on the forecast (S).** The forecast pop-up shows every time in UTC for now. The summary side should use the destination's own time instead ("Landing ~22:10 Leipzig time"; "tomorrow" meaning the destination's tomorrow), while the code side stays in UTC as pilots read it. Airports carry only a position, so this needs a position-to-time-zone lookup: `@photostructure/tz-lookup` in the frontend (small, offline, loaded only when the pop-up opens), formatted with the browser's `Intl` (summer time included), works for mock and live airports alike.
-3. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
-4. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+1. **Destination time on the forecast (S).** The forecast pop-up shows every time in UTC for now. The summary side should use the destination's own time instead ("Landing ~22:10 Leipzig time"; "tomorrow" meaning the destination's tomorrow), while the code side stays in UTC as pilots read it. Airports carry only a position, so this needs a position-to-time-zone lookup: `@photostructure/tz-lookup` in the frontend (small, offline, loaded only when the pop-up opens), formatted with the browser's `Intl` (summer time included), works for mock and live airports alike.
+2. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
+3. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 

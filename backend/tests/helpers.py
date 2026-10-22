@@ -19,6 +19,7 @@ class StubProvider:
     `known` is the one flight (and its icao24) that `find_flight` can find."""
 
     name = "stub"
+    looks_up_routes = True
 
     def __init__(self, error: bool = False, known: tuple[Flight, str | None] | None = None) -> None:
         self.error = error

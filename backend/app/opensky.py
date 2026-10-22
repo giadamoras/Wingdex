@@ -209,6 +209,7 @@ def request_cost(bbox: tuple[float, float, float, float] | None) -> int:
 
 class OpenSkyProvider:
     name = "opensky"
+    looks_up_routes = True
 
     def __init__(
         self,

@@ -30,6 +30,7 @@ class LoadingProvider:
     """A live feed that has not delivered its first snapshot."""
 
     name = "loading"
+    looks_up_routes = True
 
     def find_flight(self, flight_id: str) -> tuple[Flight, str | None] | None:
         raise ProviderError("No flight data loaded yet")

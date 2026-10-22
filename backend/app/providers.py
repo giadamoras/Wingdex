@@ -21,6 +21,9 @@ class RateLimited(ProviderError):
 
 class FlightProvider(Protocol):
     name: str  # shown by /health, e.g. "mock" or "opensky"
+    # False when the feed's own routes are all there is (the mock): a flight without one
+    # then has no route, and its made-up callsign is never sent to adsbdb.
+    looks_up_routes: bool
 
     def get_flights(self) -> list[Flight]: ...
 

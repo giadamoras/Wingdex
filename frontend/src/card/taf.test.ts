@@ -106,6 +106,39 @@ test('the main forecast follows FM and completed BECMG changes, not spells', () 
   expect(prevailingAt(TAF, T0 - H)).toBeNull()
 })
 
+test('fog becoming cloud no longer hides the sky, and cloud becoming fog does', () => {
+  const fog = period({
+    end: T0 + 26 * H,
+    visibility_m: 200,
+    weather: 'FG',
+    vertical_visibility_ft: 100,
+  })
+  const lifting = period({
+    start: T0 + 2 * H,
+    end: T0 + 26 * H,
+    change: 'BECMG',
+    becoming_by: T0 + 4 * H,
+    visibility_m: 6000,
+    weather: 'BR',
+    clouds: [{ cover: 'OVC', base_ft: 800, cumulonimbus: false }],
+  })
+  const lifted = prevailingAt({ ...TAF, periods: [fog, lifting] }, T0 + 5 * H)!
+  expect(lifted.vertical_visibility_ft).toBeNull()
+  expect(lifted.clouds[0].cover).toBe('OVC')
+
+  const cloud = period({
+    end: T0 + 26 * H,
+    clouds: [{ cover: 'BKN', base_ft: 900, cumulonimbus: false }],
+  })
+  const fogging = { ...lifting, clouds: [], vertical_visibility_ft: 200 }
+  const fogged = prevailingAt(
+    { ...TAF, periods: [cloud, fogging] },
+    T0 + 5 * H,
+  )!
+  expect(fogged.vertical_visibility_ft).toBe(200)
+  expect(fogged.clouds).toEqual([])
+})
+
 test.each([
   ['-SHRA', 'light rain showers'],
   ['+RA', 'heavy rain'],

@@ -155,6 +155,8 @@ def flight_route(flight_id: str, provider: Flights, route_service: Routes) -> Fl
     if found is None:
         raise HTTPException(status_code=404, detail="Unknown flight")
     flight, icao24 = found
+    if not provider.looks_up_routes and flight.origin is None:
+        raise HTTPException(status_code=404, detail="No route known")
     try:
         route = route_service.lookup(flight, icao24)
     except LookupUnavailable as error:

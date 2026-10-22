@@ -13,7 +13,7 @@ class Airport(BaseModel):
     name: str
     latitude: float = Field(ge=-90, le=90)  # degrees
     longitude: float = Field(ge=-180, le=180)  # degrees
-    # Only a live route lookup knows these.
+    # A live route lookup and the mock's airports have these; OpenSky's feed does not.
     city: str | None = None  # e.g. "London"
     country: str | None = None  # e.g. "United Kingdom"
 
@@ -35,8 +35,7 @@ class Flight(BaseModel):
     duration_estimated: bool = False  # True when worked out from the route, not scheduled
     origin: Airport | None = None
     destination: Airport | None = None
-    # Live feed only (the mock has neither): feet per minute, + climbing / - descending,
-    # and the country the plane is registered in.
+    # Feet per minute, + climbing / - descending, and the country the plane is registered in.
     vertical_rate_fpm: int | None = None
     registered_country: str | None = None
 
