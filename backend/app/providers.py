@@ -4,7 +4,7 @@ import os
 from collections.abc import Mapping
 from typing import Protocol
 
-from app.models import Flight, WeatherArea
+from app.models import Flight, Taf, WeatherArea
 
 
 class ProviderError(Exception):
@@ -45,6 +45,11 @@ class WeatherProvider(Protocol):
     name: str  # shown by /health, e.g. "mock" or "awc"
 
     def get_weather(self) -> list[WeatherArea]: ...
+
+    def get_taf(self, icao: str) -> Taf | None:
+        """The airport's forecast (TAF), or None when it issues none. Raises ProviderError
+        when the source is down and nothing is cached."""
+        ...
 
     def status(self) -> dict[str, str | int | None]:
         """Extra facts for /health (empty when there is nothing to report)."""

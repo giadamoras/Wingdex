@@ -293,10 +293,10 @@ def test_an_unexpected_body_is_a_failure() -> None:
 def test_status_reports_what_is_held() -> None:
     fake, clock = FakeAwc(), Clock(START)
     provider = make_provider(fake, clock)
-    assert provider.status() == {"areas": None, "age_s": None}
+    assert provider.status() == {"areas": None, "age_s": None, "tafs": 0}
     provider.get_weather()
     clock.now += 42
-    assert provider.status() == {"areas": 13, "age_s": 42}
+    assert provider.status() == {"areas": 13, "age_s": 42, "tafs": 0}
 
 
 def test_mock_weather_is_the_default_source() -> None:

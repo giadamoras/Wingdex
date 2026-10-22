@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { BADGES } from './badges'
-import { DetailDialog } from './DetailDialog'
+import { DetailDialog } from '../shared-ui/DetailDialog'
 
 // Every badge as a medallion: its icon and name only, so the grid stays light.
 // Locked ones show their own icon faded to grey, a hint of what's to come,

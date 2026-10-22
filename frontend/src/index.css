@@ -5,6 +5,7 @@
 @import './styles/base.css';
 @import './styles/shell.css';
 @import './styles/stamp.css';
+@import './styles/dialog.css';
 @import './styles/quest.css';
 @import './styles/map.css';
 @import './styles/planes.css';

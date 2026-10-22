@@ -13,6 +13,7 @@ import {
 } from '../shared-lib/format'
 import { springIn } from '../shared-lib/springIn'
 import { Stamp } from '../shared-ui/Stamp'
+import { WeatherOnArrival } from './WeatherOnArrival'
 import type { RouteStatus } from './useFlightRoute'
 
 // Passport-page card for the selected flight: labelled fields in plain words,
@@ -67,6 +68,8 @@ export function FlightCard({
       {...springIn({ scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1 })}
     >
       <p className="passport-strip">Wingdex · Flight Passport</p>
+      {/* A sticker on the card's top corner (positioned in card.css). */}
+      <WeatherOnArrival flight={flight} />
       {/* Flight and route side by side, each with its passport label. */}
       <header className="card-head">
         <div>

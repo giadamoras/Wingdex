@@ -100,6 +100,47 @@ export interface WeatherArea {
   name?: string | null
 }
 
+// Mirrors the backend TafCloud model: one cloud layer.
+export interface TafCloud {
+  cover: string // FEW, SCT, BKN, OVC; NSC, SKC, CLR or NCD mean no cloud
+  base_ft: number | null // above the airport
+  cumulonimbus: boolean // a thundercloud ("CB")
+}
+
+// How a period relates to the ones before it (see TafChange in models.py).
+export type TafChange = 'base' | 'FM' | 'BECMG' | 'TEMPO' | 'PROB'
+
+// Mirrors the backend TafPeriod model. A TEMPO or PROB period only lists what
+// changes; null means "carries on from before".
+export interface TafPeriod {
+  start: number // Unix seconds
+  end: number // Unix seconds
+  change: TafChange
+  becoming_by: number | null // BECMG only: when the change is complete
+  probability: number | null // PROB30, PROB40
+  wind_dir: number | null // degrees it blows from
+  wind_variable: boolean
+  wind_kt: number | null
+  gust_kt: number | null
+  visibility_m: number | null
+  visibility_or_more: boolean // at least visibility_m ("9999")
+  weather: string | null // codes as written, e.g. "-RA BR"
+  clouds: TafCloud[]
+  vertical_visibility_ft: number | null // sky hidden, seen up to this height
+}
+
+// Mirrors the backend Taf model (GET /airports/{icao}/taf): an airport's
+// forecast, as periods and as the code pilots read.
+export interface Taf {
+  icao: string
+  name: string | null
+  issued: number // Unix seconds
+  valid_from: number
+  valid_to: number
+  raw: string
+  periods: TafPeriod[]
+}
+
 // Where the backend gets its data from, as /health reports it ("mock",
 // "opensky", "awc", ...). Decides which credits are shown.
 export interface DataSources {

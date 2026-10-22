@@ -9,7 +9,7 @@ import { COUNTRY_NAMES } from '../shared-lib/countries'
 import { navigate, pick, useFullPath } from '../shared-lib/usePath'
 import { PlaneIcon } from '../map/PlaneIcon'
 import { Flag } from '../shared-ui/Flag'
-import { DetailDialog } from './DetailDialog'
+import { DetailDialog } from '../shared-ui/DetailDialog'
 import {
   otherTypes,
   questStreak,

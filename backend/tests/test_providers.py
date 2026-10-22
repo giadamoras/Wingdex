@@ -61,6 +61,11 @@ class StubWeather:
             raise ProviderError("down")
         return []
 
+    def get_taf(self, icao: str) -> None:
+        if self.error:
+            raise ProviderError("down")
+        return None
+
     def status(self) -> dict[str, str | int | None]:
         return {"areas": 0}
 
@@ -76,3 +81,8 @@ def test_weather_endpoint_uses_the_provider() -> None:
 def test_weather_endpoint_answers_503_when_the_provider_fails() -> None:
     app.dependency_overrides[get_weather_provider] = lambda: StubWeather(error=True)
     assert TestClient(app).get("/weather").status_code == 503
+
+
+def test_taf_endpoint_answers_503_when_the_provider_fails() -> None:
+    app.dependency_overrides[get_weather_provider] = lambda: StubWeather(error=True)
+    assert TestClient(app).get("/airports/EGLL/taf").status_code == 503

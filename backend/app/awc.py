@@ -1,4 +1,5 @@
-"""Live weather from the Aviation Weather Center's international SIGMET feed.
+"""Live weather from the Aviation Weather Center's international SIGMET feed (and, through
+awc_taf.py, its airport forecasts).
 
 https://aviationweather.gov/data/api/ (free, no key; 100 requests/min, at most 400 entries
 per query, a custom User-Agent is asked for). One shared snapshot is fetched on demand and
@@ -14,7 +15,8 @@ from typing import Any
 import httpx
 from pydantic import ValidationError
 
-from app.models import Hazard, LatLon, WeatherArea
+from app.awc_taf import AwcTafService
+from app.models import Hazard, LatLon, Taf, WeatherArea
 from app.providers import ProviderError, RateLimited
 from app.snapshot import SnapshotCache
 
@@ -226,6 +228,8 @@ class AwcWeatherProvider:
             failure_backoff_s=FAILURE_BACKOFF_S,
             clock=clock,
         )
+        # Airport forecasts come from the same service, one airport at a time.
+        self._tafs = AwcTafService(self._http, user_agent, clock)
 
     @classmethod
     def from_env(cls, env: Mapping[str, str]) -> "AwcWeatherProvider":
@@ -245,11 +249,15 @@ class AwcWeatherProvider:
         return {
             "areas": None if snapshot is None else len(snapshot),
             "age_s": None if snapshot is None else round(self._clock() - self._cache.fetched_at),
+            "tafs": self._tafs.cached,  # airports whose forecast is held
         }
 
     def get_weather(self) -> list[WeatherArea]:
         snapshot, _ = self._cache.get()
         return list(snapshot)
+
+    def get_taf(self, icao: str) -> Taf | None:
+        return self._tafs.get(icao)
 
     def _fetch(self) -> list[WeatherArea]:
         # format=json is the only query parameter: undocumented ones are an error for AWC.

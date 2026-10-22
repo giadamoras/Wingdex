@@ -4,6 +4,7 @@ import type {
   Flight,
   FlightRoute,
   JournalEntry,
+  Taf,
   WeatherArea,
 } from './types'
 
@@ -76,6 +77,37 @@ export function isWeatherArea(v: unknown): v is WeatherArea {
     Array.isArray(v.polygon) &&
     v.polygon.length >= 4 &&
     v.polygon.every(isPoint)
+  )
+}
+
+const TAF_CHANGES: ReadonlySet<unknown> = new Set([
+  'base',
+  'FM',
+  'BECMG',
+  'TEMPO',
+  'PROB',
+])
+
+// One period of a forecast: its times and kind are needed to place it; every
+// condition is optional, but a present cloud list must be a list.
+const isTafPeriod = (v: unknown): boolean =>
+  isRecord(v) &&
+  isNumber(v.start) &&
+  isNumber(v.end) &&
+  TAF_CHANGES.has(v.change) &&
+  Array.isArray(v.clouds)
+
+// An airport forecast from /airports/{icao}/taf. A period that doesn't fit
+// fails the whole forecast: it is shown as "no forecast" rather than half.
+export function isTaf(v: unknown): v is Taf {
+  return (
+    isRecord(v) &&
+    isString(v.icao) &&
+    isString(v.raw) &&
+    isNumber(v.valid_from) &&
+    isNumber(v.valid_to) &&
+    Array.isArray(v.periods) &&
+    v.periods.every(isTafPeriod)
   )
 }
 

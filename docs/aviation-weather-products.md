@@ -1,6 +1,6 @@
 # Aviation weather products: METAR, TAF and SIGMET
 
-Why the app uses SIGMETs (the Aviation Weather Center's `isigmet` feed) for its weather.
+Why the app uses SIGMETs (the Aviation Weather Center's `isigmet` feed) for its map weather, and TAFs for the destination forecast on the flight card.
 
 | | **METAR** | **TAF** | **SIGMET** |
 |---|---|---|---|
@@ -21,6 +21,17 @@ The AWC site says SIGMET bulletins are "issued hourly at Hour+55" with a forecas
 
 ## Why SIGMETs fit this app
 
-The map shows weather as areas with altitude bands, and the game asks "is this plane inside a hazard?". That needs a polygon plus a floor and a ceiling, which is exactly what a SIGMET carries. METAR and TAF are point data at airports: they would answer "what is the weather at this airport", which is a different feature (a possible future idea, not planned).
+The map shows weather as areas with altitude bands, and the game asks "is this plane inside a hazard?". That needs a polygon plus a floor and a ceiling, which is exactly what a SIGMET carries. METAR and TAF are point data at airports: they answer "what is the weather at this airport", which is a different feature.
 
 PIREPs (pilot reports) were also considered for turbulence, but the AWC covers them "primarily US and North Atlantic" only. Global SIGMETs already include plenty of turbulence.
+
+## TAFs on the flight card (2026-10-22)
+
+The card shows the destination's TAF, because a forecast for the airport the plane is heading to is what a pilot reads before the flight, and it's a way to learn to read one. It comes from AWC's `taf` endpoint (`?ids=EGLL&format=json`), the same free service as the SIGMETs. That endpoint already splits each TAF into decoded periods (`fcstChange`: none for the opening forecast, `FM`, `BECMG`, `TEMPO` or `PROB`, plus `probability`, wind, visibility in statute miles with "6+" for 9999 or P6SM, `wxString` and cloud layers with a `CB` type), so the app never parses the raw code. Things learned from the live feed:
+
+- An airport with no TAF answers 200 with an empty list, not a 404; `visib` can be an empty string; the wind direction can be `"VRB"`.
+- A `BECMG` period carries the full conditions after the change, not just what changes; a `TEMPO` or `PROB` period lists only what changes.
+- `PROB30 TEMPO` comes as `fcstChange: "TEMPO"` with `probability: 30`; a lone `PROB30` as `fcstChange: "PROB"`.
+- A TAF also carries forecast temperatures (`TX`, `TN`), which the app doesn't show.
+
+The backend caches each airport for 30 minutes (an hour for "none") and sends at most 60 TAF requests a minute, under AWC's 100 a minute for all requests. How the periods combine and are worded is in `frontend/src/card/taf.ts`.

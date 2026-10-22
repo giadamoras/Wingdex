@@ -211,58 +211,6 @@
   text-align: center;
 }
 
-/* The pop-up a badge or aircraft tile opens (DetailDialog): a paper card in
-   the middle of a dimmed page. The body fills the dialog edge to edge, so a
-   click on the dialog element itself is a click on the backdrop. */
-.detail-dialog {
-  width: min(360px, calc(100vw - 32px));
-  max-height: calc(100dvh - 32px); /* scrolls only if it really can't fit */
-  padding: 0;
-  background: var(--paper-light);
-  color: var(--ink);
-  border: 3px solid var(--ink);
-  border-radius: 18px;
-  box-shadow: 6px 6px 0 var(--ink-35);
-}
-
-.detail-dialog[open] {
-  animation: pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.detail-dialog::backdrop {
-  background: color-mix(in srgb, var(--ink) 45%, transparent);
-}
-
-.detail-dialog-body {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 22px 22px 18px;
-  text-align: center;
-}
-
-.detail-dialog-icon {
-  display: grid;
-  place-items: center;
-  width: 80px;
-  height: 80px;
-  font-size: 2.6rem;
-}
-
-.detail-dialog-icon .plane-icon {
-  width: 64px;
-  height: 64px;
-}
-
-.detail-dialog h2 {
-  font-size: 1.3rem;
-}
-
-.detail-dialog p {
-  margin: 0;
-}
-
 .detail-dialog-status {
   font-family: var(--font-display);
   font-size: 0.8rem;
@@ -296,20 +244,6 @@
 
 .detail-dialog-list li.seen {
   font-weight: 700;
-}
-
-/* The Catch button's coral pill. */
-.detail-dialog-ok {
-  margin-top: 8px;
-  padding: 8px 32px;
-  background: var(--accent);
-  color: var(--on-accent);
-  border: 3px solid var(--ink);
-  border-radius: 999px;
-  box-shadow: 3px 3px 0 var(--ink);
-  font-family: var(--font-display);
-  font-size: 1rem;
-  cursor: pointer;
 }
 
 /* A catch's pop-up (CatchDetails): the radio callsign, then boarding-pass

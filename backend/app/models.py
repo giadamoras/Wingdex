@@ -1,4 +1,4 @@
-"""The shapes the API sends: airports, flights, routes and weather areas."""
+"""The shapes the API sends: airports, flights, routes, weather areas and forecasts."""
 
 from typing import Literal
 
@@ -95,6 +95,60 @@ class WeatherArea(BaseModel):
     # Display only, never used by quests or facts. Live data only (the mock has neither).
     severity: str | None = None  # e.g. "Severe", "Embedded"
     name: str | None = None  # the volcano or storm, e.g. "Mt Dukono", "Koguma"
+
+
+CloudCover = Literal["FEW", "SCT", "BKN", "OVC", "NSC", "SKC", "CLR", "NCD"]
+
+# How a TAF period relates to the ones before it: "base" is the opening forecast, "FM"
+# replaces everything from its start, "BECMG" is a gradual change complete by
+# `becoming_by`, "TEMPO" is temporary spells on top, and "PROB" a chance of them.
+TafChange = Literal["base", "FM", "BECMG", "TEMPO", "PROB"]
+
+
+class TafCloud(BaseModel):
+    """One cloud layer: how much of the sky it covers, and how high its base is."""
+
+    cover: CloudCover  # FEW 1-2 eighths, SCT 3-4, BKN 5-7, OVC 8; NSC/SKC/CLR/NCD: none
+    base_ft: int | None = Field(default=None, ge=0)  # above the airport; none for "no cloud"
+    cumulonimbus: bool = False  # a thundercloud ("CB")
+
+
+class TafPeriod(BaseModel):
+    """One part of a TAF: the conditions forecast between `start` and `end`.
+
+    A TEMPO or PROB period only lists what changes; the rest carries on from before.
+    """
+
+    start: int  # Unix seconds
+    end: int  # Unix seconds
+    change: TafChange
+    becoming_by: int | None = None  # BECMG only: when the change is complete
+    probability: int | None = Field(default=None, ge=0, le=100)  # PROB30, PROB40
+    wind_dir: int | None = Field(default=None, ge=0, le=360)  # degrees it blows from
+    wind_variable: bool = False  # "VRB": no steady direction
+    wind_kt: int | None = Field(default=None, ge=0)
+    gust_kt: int | None = Field(default=None, ge=0)
+    visibility_m: int | None = Field(default=None, ge=0)
+    visibility_or_more: bool = False  # "9999" / "P6SM": at least `visibility_m`
+    weather: str | None = None  # the codes as written, e.g. "-RA BR"; the frontend words them
+    clouds: list[TafCloud] = []
+    vertical_visibility_ft: int | None = None  # sky hidden (fog), seen up to this height
+
+
+class Taf(BaseModel):
+    """An airport's forecast: the stable contract served by GET /airports/{icao}/taf.
+
+    Modelled on the Aviation Weather Center's TAF feed, which already splits the
+    forecast into periods, but with our own field names.
+    """
+
+    icao: str
+    name: str | None = None  # the airport, as the forecast names it
+    issued: int  # Unix seconds
+    valid_from: int  # Unix seconds
+    valid_to: int  # Unix seconds
+    raw: str  # the forecast as pilots read it
+    periods: list[TafPeriod]
 
 
 class Health(BaseModel):

@@ -14,8 +14,15 @@ test('catch a plane and find it in the Journal', async ({ page }) => {
   const callsign = await target.getAttribute('aria-label')
   expect(callsign).toBeTruthy()
 
-  // Tapping it opens the card; catching turns the button into a stamp.
+  // Tapping it opens the card. Its weather button opens the destination's
+  // forecast (an invented one: the backend runs on mock weather). Catching
+  // turns the Catch button into a stamp.
   await target.click()
+  await page.getByRole('button', { name: /Weather on arrival/ }).click()
+  const forecast = page.getByRole('dialog', { name: /^Weather at / })
+  await expect(forecast).toContainText('Landing ~')
+  await forecast.getByRole('button', { name: 'OK' }).click()
+  await expect(forecast).toBeHidden()
   await page.getByRole('button', { name: 'Catch', exact: true }).click()
   await expect(page.getByText('Caught today ✓')).toBeVisible()
 

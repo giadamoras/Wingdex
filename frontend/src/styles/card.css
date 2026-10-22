@@ -1,6 +1,7 @@
 /* Fixed-position ticket panel below the map. Its entrance is FlightCard.tsx's
    Framer Motion spring, not CSS. */
 .card {
+  position: relative; /* for the weather sticker on its corner */
   margin-top: 16px;
   padding: 14px 18px;
   background: var(--paper-light);
@@ -272,4 +273,244 @@
 /* "Caught today" stamp in the card, where the Catch button would be. */
 .card .stamp {
   margin: 4px 0 2px 6px;
+}
+
+/* "Weather on arrival" (WeatherOnArrival.tsx): a round paper sticker stuck
+   over the card's top-right corner, tilted like a luggage label: a teaser
+   with the landing weather's emoji, the destination and one fact. */
+.weather-btn {
+  position: absolute;
+  top: -24px; /* high enough to clear the route's label below it */
+  right: -12px;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  background: var(--paper-light);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 3px 3px 0 var(--ink-25);
+  transform: rotate(8deg);
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.weather-btn:hover {
+  transform: rotate(0deg) scale(1.08);
+}
+
+.weather-btn-icon {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+.weather-btn-code {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+}
+
+/* The pop-up it opens: a weather ticket, left-aligned inside the centred
+   dialog. */
+.detail-dialog .ticket-where {
+  margin: -4px 0 4px;
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.ticket-hero {
+  display: flex;
+  align-self: stretch;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: color-mix(in srgb, var(--sea) 45%, var(--paper-light));
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  text-align: left;
+}
+
+.ticket-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.ticket-when {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.ticket-summary {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  line-height: 1.2;
+}
+
+/* Three numbers side by side. */
+.ticket-stats {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  align-self: stretch;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ticket-stats li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px;
+  border: 2px solid var(--ink-20);
+  border-radius: 10px;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+.ticket-stats li > span {
+  font-size: 1.2rem;
+}
+
+.ticket-stats strong {
+  font-size: 1.05rem;
+}
+
+/* Later changes: when on top (a column wrapped the longer spans over three
+   lines), then an icon and what; dotted rules like the card's rows. */
+.ticket-later {
+  align-self: stretch;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  font-size: 0.85rem;
+}
+
+.ticket-later li {
+  display: grid;
+  grid-template-columns: 1.6rem 1fr;
+  align-items: baseline;
+  padding: 5px 0;
+  border-bottom: 1px dotted var(--ink-35);
+}
+
+.ticket-later-when {
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.ticket-note {
+  font-size: 0.75rem;
+  font-style: italic;
+  opacity: 0.7;
+  overflow-wrap: anywhere;
+}
+
+/* "Show the code pilots read" / "Show the forecast summary": a plain
+   underlined line that turns the card over. */
+.ticket-turn {
+  margin: 4px 0 0;
+  padding: 2px;
+  background: none;
+  color: var(--ink);
+  border: none;
+  font: 700 0.85rem var(--font-body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* The code on one line, as pilots see it: it scrolls sideways. */
+.code-line {
+  align-self: stretch;
+  overflow-x: auto;
+  padding: 6px 8px;
+  background: var(--ink);
+  color: var(--paper);
+  border-radius: 8px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.code-line code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.78rem;
+}
+
+/* The code side: the opening and one block per group, each word in a
+   monospace chip on the left and what it means on the right; the landing's
+   block on a pale mustard highlight. */
+.code-side {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 8px;
+  text-align: left;
+}
+
+.code-block {
+  padding: 6px 10px;
+  border: 2px solid var(--ink-20);
+  border-radius: 10px;
+}
+
+.code-block.at-landing {
+  background: color-mix(in srgb, var(--highlight) 30%, transparent);
+  border-color: var(--ink);
+}
+
+.code-landing {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.code-block dl {
+  margin: 0;
+}
+
+.code-word {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, auto) 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 3px 0;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.code-word.lead {
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+.code-word + .code-word {
+  border-top: 1px dotted var(--ink-35);
+}
+
+.code-word dd {
+  margin: 0;
+}
+
+.code-word code {
+  display: inline-block;
+  padding: 1px 6px;
+  background: var(--ink-6);
+  border-radius: 6px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.78rem;
+  white-space: nowrap;
 }

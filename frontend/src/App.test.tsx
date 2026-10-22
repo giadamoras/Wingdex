@@ -217,9 +217,10 @@ test('a live flight is looked up when tapped, and the card fills in', async () =
   expect(cardField('Flight time')).toBe('About 1h 35m')
   expect(screen.getByRole('button', { name: 'See the journey' })).toBeTruthy()
   expect(container.querySelector('.route-flown')).toBeTruthy()
-  expect(String(fetchMock.mock.calls.at(-1)?.[0])).toMatch(
-    /\/flights\/f1\/route$/,
-  )
+  const urls = fetchMock.mock.calls.map(([url]) => String(url))
+  expect(urls.some((u) => /\/flights\/f1\/route$/.test(u))).toBe(true)
+  // Once the destination is known, its forecast is asked for too.
+  expect(urls.some((u) => /\/airports\/LFPG\/taf$/.test(u))).toBe(true)
 })
 
 test('the route is kept: reselecting a flight does not look it up again', async () => {
@@ -713,6 +714,9 @@ test('catching more matching flights after the quest is done does not scroll aga
 })
 
 test('catching a flight for the first time unlocks a badge popup', async () => {
+  // Midday UTC, so the catch is in daylight and only First Catch unlocks
+  // (at night Night Owl would pop up after it).
+  vi.setSystemTime(Date.UTC(2026, 8, 28, 12))
   reducedMotion()
   vi.stubGlobal('fetch', vi.fn(ok))
   renderApp()
@@ -728,6 +732,9 @@ test('catching a flight for the first time unlocks a badge popup', async () => {
 })
 
 test('a badge popup auto-dismisses, and a seen badge does not pop up again on reload', async () => {
+  // Midday UTC, so the catch is in daylight and only First Catch unlocks
+  // (at night Night Owl would pop up after it).
+  vi.setSystemTime(Date.UTC(2026, 8, 28, 12))
   reducedMotion()
   vi.stubGlobal('fetch', vi.fn(ok))
   renderApp()

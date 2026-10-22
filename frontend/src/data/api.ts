@@ -1,8 +1,15 @@
-import type { DataSources, Flight, FlightRoute, WeatherArea } from './types'
+import type {
+  DataSources,
+  Flight,
+  FlightRoute,
+  Taf,
+  WeatherArea,
+} from './types'
 import {
   isDataSources,
   isFlight,
   isFlightRoute,
+  isTaf,
   isWeatherArea,
   keepValid,
 } from './validate'
@@ -78,6 +85,21 @@ export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
     const data = await getJson('/weather', s)
     if (!Array.isArray(data)) throw new Error('GET /weather: expected a list')
     return keepValid(data, isWeatherArea, 'weather areas')
+  })
+}
+
+// An airport's forecast (TAF). null means the airport issues none (404);
+// anything else that goes wrong throws.
+export function fetchTaf(
+  icao: string,
+  signal?: AbortSignal,
+): Promise<Taf | null> {
+  return withTimeout(signal, async (s) => {
+    const path = `/airports/${encodeURIComponent(icao)}/taf`
+    const data = await getJson(path, s, 'null')
+    if (data === null) return null
+    if (!isTaf(data)) throw new Error('GET taf: unexpected shape')
+    return data
   })
 }
 

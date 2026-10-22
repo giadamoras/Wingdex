@@ -1,4 +1,5 @@
-"""The API: /flights, /weather, /flights/{id}/route and /health, plus CORS, gzip and startup."""
+"""The API: /flights, /weather, /flights/{id}/route, /airports/{icao}/taf and /health, plus
+CORS, gzip and startup."""
 
 import logging
 import os
@@ -11,7 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 
-from app.models import Flight, FlightRoute, Health, WeatherArea
+from app.models import Flight, FlightRoute, Health, Taf, WeatherArea
 from app.providers import (
     FlightProvider,
     ProviderError,
@@ -172,3 +173,18 @@ def weather(weather_provider: Weather) -> list[WeatherArea]:
         raise HTTPException(
             status_code=503, detail="Weather data temporarily unavailable"
         ) from error
+
+
+@app.get("/airports/{icao}/taf")
+def airport_taf(icao: str, weather_provider: Weather) -> Taf:
+    """An airport's forecast; 404 when it issues none, 503 when the source is down."""
+    code = icao.strip().upper()
+    if not (len(code) == 4 and code.isalnum()):  # not an ICAO airport code: nothing to ask
+        raise HTTPException(status_code=404, detail="No forecast for this airport")
+    try:
+        taf = weather_provider.get_taf(code)
+    except ProviderError as error:
+        raise HTTPException(status_code=503, detail="Forecasts temporarily unavailable") from error
+    if taf is None:
+        raise HTTPException(status_code=404, detail="No forecast for this airport")
+    return taf

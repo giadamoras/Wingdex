@@ -4,6 +4,7 @@ import {
   isFlight,
   isFlightRoute,
   isJournalEntry,
+  isTaf,
   isWeatherArea,
   keepValid,
 } from './validate'
@@ -189,4 +190,24 @@ test('the source names from /health must both be text', () => {
   expect(isDataSources({ source: 'mock' })).toBe(false)
   expect(isDataSources({ source: 1, weather_source: 'mock' })).toBe(false)
   expect(isDataSources(null)).toBe(false)
+})
+
+const taf = {
+  icao: 'EGLL',
+  raw: 'TAF EGLL ...',
+  valid_from: 1,
+  valid_to: 2,
+  periods: [{ start: 1, end: 2, change: 'TEMPO', clouds: [] }],
+}
+
+test('a forecast needs its code, times and well-formed periods', () => {
+  expect(isTaf(taf)).toBe(true)
+  expect(isTaf({ ...taf, periods: [] })).toBe(true)
+  expect(isTaf({ ...taf, raw: undefined })).toBe(false)
+  expect(
+    isTaf({ ...taf, periods: [{ ...taf.periods[0], change: 'INTER' }] }),
+  ).toBe(false)
+  expect(
+    isTaf({ ...taf, periods: [{ ...taf.periods[0], clouds: null }] }),
+  ).toBe(false)
 })

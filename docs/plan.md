@@ -4,7 +4,7 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, and the collection dex, streak and badges. All of it is summarised in `docs/history.md`.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, and the destination forecast. All of it is summarised in `docs/history.md`.
 - **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
@@ -41,10 +41,10 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 - **Backend responsibility boundary:** the backend owns _world/flight data_ only, serving it (mock or live) through a stable domain model. The frontend owns everything user-scoped (Journal, badges, quest state), consistent with local-only persistence.
 - **Backend data model** (pydantic, `models.py`):
   - `Flight`: `id`, `callsign`, `latitude`/`longitude` (degrees), `altitude_ft`, `heading` (0-360), `speed_kt`, and optional `aircraft_type`, `duration_min` (with `duration_estimated`), `origin`/`destination` (`Airport`: `icao`, `iata`, `name`, `latitude`, `longitude`, optional `city` and `country`), `vertical_rate_fpm` and `registered_country`. The optional fields are null when a source does not know them. OpenSky reports metres and m/s, so the provider converts to these units.
-  - `WeatherArea` and `FlightRoute` (the `/route` response).
+  - `WeatherArea`, `FlightRoute` (the `/route` response) and `Taf` (an airport forecast: issue and validity times, the raw code, and its periods with change kind, wind, visibility, weather codes and cloud).
   - Richer models are deferred until a feature needs them.
-- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. Swapping sources changes only the backend, never the `/flights` or `/weather` contract.
-- **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it) and `/health`. No POST endpoints: the backend stores nothing user-specific.
+- **Flight source:** `FlightProvider` (`providers.py`) with two implementations, mock and OpenSky, chosen by `FLIGHT_SOURCE`. Weather has the same shape: `WeatherProvider` with mock and AWC, chosen by `WEATHER_SOURCE`. The weather provider also serves airport forecasts (`get_taf`): AWC's TAFs, cached per airport, or invented ones for the mock's airports. Swapping sources changes only the backend, never the `/flights`, `/weather` or `/taf` contract.
+- **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it), `GET /airports/{icao}/taf` (the destination's forecast, asked for by the card) and `/health`. No POST endpoints: the backend stores nothing user-specific.
 - **Content:** static JSON bundled into the frontend, in `frontend/src/content/`: `facts.json` (130 facts), the type catalog `aircraft-types.json` (178 ICAO types in 35 families, with category and engine count) the airline catalog `airlines.json` (80 airlines with radio callsign and kind) and `icao-prefixes.json` (ICAO code prefix to country, for the Dex's destination stamps). Every entry is checked by tests, since the JSON is only cast to its type. Content grows by hand when a gap shows, and every new fact is checked, with a source for anything that isn't standard teaching.
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
 - **Tooling:** the frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; the backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. CI runs all of them. Commands are in the root `README.md`.
@@ -70,9 +70,10 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **Destination forecast (M).** The destination's TAF, the airport forecast pilots read before every flight, on the card in plain words ("light rain after 15:00, wind 15 kt") with the raw code shown small underneath, so players learn to read one. From AWC, like the SIGMETs: backend only, cached, no credits. Decoding the change groups (BECMG, TEMPO, PROB30) needs care; mock flights get none unless the mock invents them; only airports that issue TAFs have one.
-2. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
-3. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+1. **Richer mock flights (M).** Without API keys the app should still show what it can do, but the mock (`backend/app/mock_flights.py`) lags behind the catalogs: 46 of the 80 airlines, 11 of the 178 types (no regional jets but the E190, no business jets, light aircraft, helicopters or gliders, so the new silhouettes never appear), every plane at cruise with no climb rate (the phase facts and the climb and descent quests can't match), no registered country, and airports without city or country. Add the missing airlines and a spread of types with flights that suit them: light aircraft, helicopters and gliders on short, low, slow local hops rather than airline routes; some planes climbing out or descending in, with a vertical rate. Keep the seed, so the mock stays the same from one run to the next.
+2. **Destination time on the forecast (S).** The forecast pop-up shows every time in UTC for now. The summary side should use the destination's own time instead ("Landing ~22:10 Leipzig time"; "tomorrow" meaning the destination's tomorrow), while the code side stays in UTC as pilots read it. Airports carry only a position, so this needs a position-to-time-zone lookup: `@photostructure/tz-lookup` in the frontend (small, offline, loaded only when the pop-up opens), formatted with the browser's `Intl` (summer time included), works for mock and live airports alike.
+3. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
+4. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 
@@ -100,7 +101,7 @@ Once deployed:
 - **3D aircraft models.** No consistent, freely licensed set (each model would need its own licence check), 1-10 MB per model plus three.js, a clash with the flat poster style, and a large effort for something seen once per type. Aircraft pictures ("Now") cover the same wish.
 - **Content in a database.** Facts are already data files, and the Journal stores the fact text it showed, so editing the pool never rewrites history. A database would only pay off if someone other than the developer edited content; it would add infrastructure, a network dependency for content that works offline, and make the backend own content.
 - **Accounts, social features and rankings.** Progress stays local.
-- **Weather simulation or our own forecasting.** Only official reports and forecasts (SIGMETs today, TAFs in "Now").
+- **Weather simulation or our own forecasting.** Only official reports and forecasts (SIGMETs and TAFs).
 - **A learning path or encyclopedia.** Outside Wingdex's scope; facts and quest lessons stay the way it teaches.
 - **Canvas rendering, per-view server requests (`/flights?bbox=`).** Only if phones or the whole-world feed ever prove too slow.
 

@@ -1,8 +1,9 @@
 """The providers that serve the built-in mock data (the default when no live source is set)."""
 
 from app.mock_flights import get_mock_flights
+from app.mock_taf import get_mock_taf
 from app.mock_weather import get_mock_weather
-from app.models import Flight, WeatherArea
+from app.models import Flight, Taf, WeatherArea
 
 
 class MockFlightProvider:
@@ -29,6 +30,9 @@ class MockWeatherProvider:
 
     def get_weather(self) -> list[WeatherArea]:
         return get_mock_weather()
+
+    def get_taf(self, icao: str) -> Taf | None:
+        return get_mock_taf(icao)
 
     def status(self) -> dict[str, str | int | None]:
         return {}

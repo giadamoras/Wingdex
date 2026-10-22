@@ -7,7 +7,7 @@ import {
 } from '../shared-lib/format'
 import { HAZARD_NAMES } from '../map/weatherIcons'
 import { PlaneIcon } from '../map/PlaneIcon'
-import { DetailDialog } from './DetailDialog'
+import { DetailDialog } from '../shared-ui/DetailDialog'
 import type { Airport, JournalEntry } from '../data/types'
 
 const airportLine = (a: Airport) => `${a.name} (${a.iata})`
