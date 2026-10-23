@@ -1,9 +1,9 @@
 import {
+  clockRange,
+  clockTime,
   compassWord,
   conditionsOf,
   isMain,
-  utcRange,
-  utcTime,
   prevailingAt,
   spellWords,
   takesEffect,
@@ -254,13 +254,15 @@ export interface LaterLine {
 }
 
 // What changes after time `from` (Unix seconds), one short line each, in time
-// order: changes to the main forecast and the spells still to come.
+// order: changes to the main forecast and the spells still to come. Times are
+// on `timeZone`'s clock (the destination's).
 export function laterLines(
   taf: Taf,
   from: number,
+  timeZone = 'UTC',
   now = Date.now(),
 ): LaterLine[] {
-  const at = (s: number) => utcTime(s, now)
+  const at = (s: number) => clockTime(s, timeZone, now)
   const lines: (LaterLine & { key: number })[] = []
   for (const p of taf.periods) {
     if (isMain(p)) {
@@ -288,7 +290,7 @@ export function laterLines(
         when:
           p.start <= from
             ? `Until ${at(p.end)}`
-            : capitalise(utcRange(p.start, p.end, now)),
+            : capitalise(clockRange(p.start, p.end, timeZone, now)),
         icon,
         what: spellLine(p),
       })

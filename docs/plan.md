@@ -4,7 +4,7 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast and the richer mock flights. All of it is summarised in `docs/history.md`.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast, the richer mock flights and the destination's time on the forecast. All of it is summarised in `docs/history.md`.
 - **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
@@ -47,6 +47,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 - **API surface:** `GET /flights`, `GET /weather`, `GET /flights/{id}/route` (route, type, estimated duration and detail of one live flight, looked up when a player taps it), `GET /airports/{icao}/taf` (the destination's forecast, asked for by the card) and `/health`. No POST endpoints: the backend stores nothing user-specific.
 - **Content:** static JSON bundled into the frontend, in `frontend/src/content/`: `facts.json` (130 facts), the type catalog `aircraft-types.json` (178 ICAO types in 35 families, with category and engine count) the airline catalog `airlines.json` (80 airlines with radio callsign and kind) and `icao-prefixes.json` (ICAO code prefix to country, for the Dex's destination stamps). Every entry is checked by tests, since the JSON is only cast to its type. Content grows by hand when a gap shows, and every new fact is checked, with a source for anything that isn't standard teaching.
 - **World/map rendering:** a custom illustrated world, decoupled from mechanics. Pan/zoom and lat/lon-to-screen placement are hand-rolled, with no map library.
+- **Time zones:** the forecast pop-up's summary shows the destination's own time. Airports carry only a position, so the zone comes from `@photostructure/tz-lookup` (offline, loaded with `import()` only when the pop-up opens) and is formatted with the browser's `Intl`; the code side stays in UTC.
 - **Tooling:** the frontend uses Vite, npm, oxlint, Prettier, Vitest with Testing Library, Playwright for one end-to-end smoke test, and `tsc`; the backend uses pip with a `pyproject.toml` and virtualenv, pytest, ruff and strict mypy. CI runs all of them. Commands are in the root `README.md`.
 - **Animation:** Framer Motion for the bouncy, springy interactions. GSAP was considered and deferred.
 - **State & persistence:** React Context/hooks + browser localStorage.
@@ -70,9 +71,8 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **Destination time on the forecast (S).** The forecast pop-up shows every time in UTC for now. The summary side should use the destination's own time instead ("Landing ~22:10 Leipzig time"; "tomorrow" meaning the destination's tomorrow), while the code side stays in UTC as pilots read it. Airports carry only a position, so this needs a position-to-time-zone lookup: `@photostructure/tz-lookup` in the frontend (small, offline, loaded only when the pop-up opens), formatted with the browser's `Intl` (summer time included), works for mock and live airports alike.
-2. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
-3. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+1. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
+2. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 

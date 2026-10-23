@@ -226,28 +226,67 @@ export const spellWords = (p: TafPeriod): string =>
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
-// The UTC day of a time, as a number of days since 1970: to compare days.
-const utcDay = (ms: number) => Math.floor(ms / 86_400_000)
-
-// A time in UTC, the forecast's own clock: "16:40", "tomorrow 03:00",
-// "Sat 09:00" ("tomorrow" is the next UTC day). The destination's own time is
-// a later step in docs/plan.md.
-export function utcTime(t: number, now = Date.now()): string {
-  const d = new Date(t * 1000)
-  const hhmm = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
-  const days = utcDay(t * 1000) - utcDay(now)
-  if (days === 0) return hhmm
-  if (days === 1) return `tomorrow ${hhmm}`
-  return `${d.toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })} ${hhmm}`
+// One formatter per time zone (building one is slow), giving a moment's
+// calendar day, clock time and weekday on that zone's wall clock.
+const formatters = new Map<string, Intl.DateTimeFormat>()
+function formatter(timeZone: string): Intl.DateTimeFormat {
+  let f = formatters.get(timeZone)
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      weekday: 'short',
+      hourCycle: 'h23',
+    })
+    formatters.set(timeZone, f)
+  }
+  return f
 }
 
-// A span in UTC, naming the day once when both ends share it:
+// A moment (Unix ms) on a zone's wall clock: its day as a number of days
+// since 1970 (to compare days), "HH:MM" and the weekday ("Sat").
+function wallClock(ms: number, timeZone: string) {
+  const parts: Record<string, string> = {}
+  for (const p of formatter(timeZone).formatToParts(ms)) parts[p.type] = p.value
+  const day = Date.UTC(+parts.year, +parts.month - 1, +parts.day) / 86_400_000
+  return {
+    day,
+    hhmm: `${pad(+parts.hour)}:${parts.minute}`,
+    weekday: parts.weekday,
+  }
+}
+
+// A time on a zone's clock (summer time included): "16:40", "tomorrow 03:00",
+// "Sat 09:00", where "tomorrow" is that zone's next day. The summary uses the
+// destination's zone; UTC, the forecast's own clock, is the default.
+export function clockTime(
+  t: number,
+  timeZone = 'UTC',
+  now = Date.now(),
+): string {
+  const at = wallClock(t * 1000, timeZone)
+  const days = at.day - wallClock(now, timeZone).day
+  if (days === 0) return at.hhmm
+  if (days === 1) return `tomorrow ${at.hhmm}`
+  return `${at.weekday} ${at.hhmm}`
+}
+
+// A span on a zone's clock, naming the day once when both ends share it:
 // "21:00–23:00", "tomorrow 05:00–09:00", "21:00–tomorrow 21:00".
-export function utcRange(a: number, b: number, now = Date.now()): string {
-  const end = new Date(b * 1000)
-  return utcDay(a * 1000) === utcDay(b * 1000)
-    ? `${utcTime(a, now)}–${pad(end.getUTCHours())}:${pad(end.getUTCMinutes())}`
-    : `${utcTime(a, now)}–${utcTime(b, now)}`
+export function clockRange(
+  a: number,
+  b: number,
+  timeZone = 'UTC',
+  now = Date.now(),
+): string {
+  const end = wallClock(b * 1000, timeZone)
+  return wallClock(a * 1000, timeZone).day === end.day
+    ? `${clockTime(a, timeZone, now)}–${end.hhmm}`
+    : `${clockTime(a, timeZone, now)}–${clockTime(b, timeZone, now)}`
 }
 
 export const ordinal = (n: number) =>

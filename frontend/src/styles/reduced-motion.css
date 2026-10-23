@@ -7,6 +7,7 @@
   .journal-entry,
   .detail-dialog[open],
   .flag-frame.loading::after,
+  .ticket-loading::after,
   .plane.jump .plane-icon,
   .plane-icon .rotor {
     animation: none;

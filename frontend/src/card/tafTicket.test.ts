@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { utcRange, type Conditions } from './taf'
+import { clockRange, type Conditions } from './taf'
 import {
   changeIcon,
   flightRules,
@@ -171,17 +171,26 @@ const TAF: Taf = {
 
 test('later lines say briefly what changes, in time order', () => {
   const now = T0 * 1000
-  expect(laterLines(TAF, T0 + H, now).map((l) => l.what)).toEqual([
+  expect(laterLines(TAF, T0 + H, 'UTC', now).map((l) => l.what)).toEqual([
     'At times: light rain',
     'Wind picks up: 22 kt from the southeast, gusts 32',
     'Calmer: 6 kt from the north',
   ])
   // Every time starts with a capital, like "Until …".
   expect(
-    laterLines(TAF, T0 + H, now).every((l) => /^[A-Z0-9]/.test(l.when)),
+    laterLines(TAF, T0 + H, 'UTC', now).every((l) => /^[A-Z0-9]/.test(l.when)),
   ).toBe(true)
   // A spell already running at that moment reads "Until …".
-  expect(laterLines(TAF, T0 + 3 * H, now)[0].when).toMatch(/^Until /)
+  expect(laterLines(TAF, T0 + 3 * H, 'UTC', now)[0].when).toMatch(/^Until /)
+})
+
+test("later lines are on the destination's clock", () => {
+  const now = T0 * 1000
+  // The rain spell, 14:00–17:00 UTC, is 15:00–18:00 in London (summer time).
+  const utc = laterLines(TAF, T0 + H, 'UTC', now)[0].when
+  const london = laterLines(TAF, T0 + H, 'Europe/London', now)[0].when
+  expect(utc).toBe('14:00–17:00')
+  expect(london).toBe('15:00–18:00')
 })
 
 test('the landing falls in the main period in force then', () => {
@@ -205,7 +214,15 @@ test('the ticket shows the landing, or now when it lands after the forecast', ()
 test('a range names the day once', () => {
   const now = Date.UTC(2026, 9, 22, 9)
   const at = (d: number, h: number) => Date.UTC(2026, 9, d, h) / 1000
-  expect(utcRange(at(22, 21), at(22, 23), now)).toBe('21:00–23:00')
-  expect(utcRange(at(23, 5), at(23, 9), now)).toBe('tomorrow 05:00–09:00')
-  expect(utcRange(at(22, 21), at(23, 21), now)).toBe('21:00–tomorrow 21:00')
+  expect(clockRange(at(22, 21), at(22, 23), 'UTC', now)).toBe('21:00–23:00')
+  expect(clockRange(at(23, 5), at(23, 9), 'UTC', now)).toBe(
+    'tomorrow 05:00–09:00',
+  )
+  expect(clockRange(at(22, 21), at(23, 21), 'UTC', now)).toBe(
+    '21:00–tomorrow 21:00',
+  )
+  // 21:00–23:00 UTC runs past midnight in Tokyo (UTC+9).
+  expect(clockRange(at(22, 21), at(22, 23), 'Asia/Tokyo', now)).toBe(
+    'tomorrow 06:00–08:00',
+  )
 })

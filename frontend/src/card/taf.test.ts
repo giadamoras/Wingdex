@@ -1,10 +1,10 @@
 import { expect, test } from 'vitest'
 import {
   arrivalTime,
+  clockTime,
   cloudWords,
   codeTimeExample,
   conditionsWords,
-  utcTime,
   prevailingAt,
   visibilityWords,
   weatherGroupWords,
@@ -234,9 +234,21 @@ test('arrival is the remaining distance at the current ground speed', () => {
 test('UTC times name the day when it is not today (in UTC)', () => {
   const now = Date.UTC(2026, 9, 22, 23, 30) // still the 22nd in UTC
   const at = (d: number, h: number, m = 0) => Date.UTC(2026, 9, d, h, m) / 1000
-  expect(utcTime(at(22, 16, 40), now)).toBe('16:40')
-  expect(utcTime(at(23, 3), now)).toBe('tomorrow 03:00')
-  expect(utcTime(at(24, 9), now)).toBe('Sat 09:00')
+  expect(clockTime(at(22, 16, 40), 'UTC', now)).toBe('16:40')
+  expect(clockTime(at(23, 3), 'UTC', now)).toBe('tomorrow 03:00')
+  expect(clockTime(at(24, 9), 'UTC', now)).toBe('Sat 09:00')
+})
+
+test("a zone's times and days are its own, summer time included", () => {
+  const now = Date.UTC(2026, 9, 22, 23, 30) // 19:30 on the 22nd in New York
+  const at = (d: number, h: number) => Date.UTC(2026, 9, d, h) / 1000
+  // 03:00 UTC tomorrow is still today, 23:00, in New York.
+  expect(clockTime(at(23, 3), 'America/New_York', now)).toBe('23:00')
+  // Already the 23rd (01:30) in Berlin: 05:00 there is today too.
+  expect(clockTime(at(23, 3), 'Europe/Berlin', now)).toBe('05:00')
+  // Berlin leaves summer time on the 25th: UTC+2 before, UTC+1 after.
+  expect(clockTime(at(24, 12), 'Europe/Berlin', now)).toBe('tomorrow 14:00')
+  expect(clockTime(at(26, 12), 'Europe/Berlin', now)).toBe('Mon 13:00')
 })
 
 test('the code-time example reads the forecast start', () => {

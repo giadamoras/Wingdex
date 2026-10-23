@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Flight, Taf } from '../data/types'
 import { DetailDialog } from '../shared-ui/DetailDialog'
-import { arrivalTime, codeTimeExample, prevailingAt, utcTime } from './taf'
+import { arrivalTime, clockTime, codeTimeExample, prevailingAt } from './taf'
 import { decodeTaf } from './tafDecode'
 import {
   landingPeriod,
@@ -11,6 +11,7 @@ import {
   ticketMoment,
   weatherIcon,
 } from './tafTicket'
+import { useAirportZone } from './timeZone'
 import { useTaf } from './useTaf'
 
 // Later changes shown on the summary; all of them are on the code side.
@@ -22,12 +23,15 @@ const MAX_LATER = 4
 // icon and a few words, three numbers, and a short line for each later
 // change. Turned over, the code pilots read, word by word, each word next to
 // what it means. The sticker shows only once the forecast has loaded, so it
-// never opens an empty pop-up.
+// never opens an empty pop-up. The summary's times are on the destination's
+// clock, the code's in UTC as pilots read it.
 export function WeatherOnArrival({ flight }: { flight: Flight }) {
   const [open, setOpen] = useState(false)
   const [side, setSide] = useState<'summary' | 'code'>('summary')
   const destination = flight.destination
   const { taf } = useTaf(destination?.icao ?? null)
+  // Looked up when the pop-up opens; null until then and while loading.
+  const zone = useAirportZone(destination ?? null, open)
   if (!destination || !taf) return null
 
   const arrival = arrivalTime(flight)
@@ -36,7 +40,7 @@ export function WeatherOnArrival({ flight }: { flight: Flight }) {
   if (!main) return null
   const icon = weatherIcon(main)
   // Spells running at the landing are the first of these, "Until …".
-  const allLater = laterLines(taf, moment.t)
+  const allLater = zone ? laterLines(taf, moment.t, zone) : []
   const later = allLater.slice(0, MAX_LATER)
   const more = allLater.length - later.length
   const close = () => {
@@ -68,7 +72,13 @@ export function WeatherOnArrival({ flight }: { flight: Flight }) {
           onClose={close}
           turnKey={side}
         >
-          {side === 'summary' ? (
+          {side === 'summary' && !zone ? (
+            // A spinner until the zone is known (the first open only), so
+            // the times never change under the player's eyes.
+            <p className="ticket-loading" role="status">
+              <span className="visually-hidden">Loading local time…</span>
+            </p>
+          ) : side === 'summary' ? (
             <>
               <div className="ticket-hero">
                 <span className="ticket-icon" aria-hidden="true">
@@ -76,9 +86,10 @@ export function WeatherOnArrival({ flight }: { flight: Flight }) {
                 </span>
                 <div>
                   <p className="ticket-when">
-                    {/* UTC, the forecast's own clock, named once here. */}
+                    {/* The clock is named once here; "UTC" only when the
+                        zone couldn't be found. */}
                     {moment.isArrival
-                      ? `Landing ~${utcTime(moment.t)} UTC`
+                      ? `Landing ~${clockTime(moment.t, zone!)} ${clockName(zone!, destination.city)}`
                       : 'Now · it lands after this forecast ends'}
                   </p>
                   <p className="ticket-summary">{summaryWords(main)}</p>
@@ -125,6 +136,11 @@ export function WeatherOnArrival({ flight }: { flight: Flight }) {
     </>
   )
 }
+
+// The clock the summary's times are on: "Leipzig time", "local time"
+// without a city, "UTC" when the lookup fell back to it.
+const clockName = (zone: string, city: string | null | undefined) =>
+  zone === 'UTC' ? 'UTC' : city ? `${city} time` : 'local time'
 
 // The pop-up's back: the code as pilots read it, split into its opening and
 // one block per group, each word in a chip next to what it means. The block

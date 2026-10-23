@@ -49,7 +49,8 @@
   }
 }
 
-/* A loading ring: the flag placeholder (collection.css). */
+/* A loading ring: the flag placeholder (collection.css) and the forecast
+   pop-up (card.css). */
 @keyframes spin {
   to {
     transform: rotate(360deg);

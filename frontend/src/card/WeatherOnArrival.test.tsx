@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { WeatherOnArrival } from './WeatherOnArrival'
+import { clearZoneCache } from './timeZone'
 import { clearTafCache } from './useTaf'
 import type { Taf } from '../data/types'
 import { makeFlight } from '../testFlight'
@@ -14,6 +15,7 @@ import { makeFlight } from '../testFlight'
 afterEach(() => {
   cleanup()
   clearTafCache()
+  clearZoneCache()
   vi.unstubAllGlobals()
 })
 
@@ -92,9 +94,15 @@ test('the button opens the weather ticket for the landing', async () => {
   expect(button.textContent).toBe('🌦️CDG')
   fireEvent.click(button)
   const dialog = screen.getByRole('dialog', { name: 'Weather at Paris' })
+  // The times wait for the destination's time zone, behind a spinner.
+  expect(screen.getByRole('status').textContent).toBe('Loading local time…')
+  await screen.findByText(/Paris time/)
+  expect(screen.queryByRole('status')).toBeNull()
   expect(dialog.textContent).toContain('Light rain, mostly cloudy')
-  // Every time is UTC, named once in the hero.
-  expect(dialog.textContent).toMatch(/Landing ~(\w+ )?\d{2}:\d{2} UTCLight/)
+  // Every time is Paris time, named once in the hero.
+  expect(dialog.textContent).toMatch(
+    /Landing ~(\w+ )?\d{2}:\d{2} Paris timeLight/,
+  )
   expect(dialog.textContent).not.toContain('issued')
   expect(dialog.textContent).toContain('12 kt') // the wind number
   // The later change, briefly.
@@ -110,7 +118,7 @@ test('the card turns over to the code, word by word, and back', async () => {
   render(<WeatherOnArrival flight={toParis} />)
   fireEvent.click(await screen.findByRole('button', { name: /Weather/ }))
   fireEvent.click(
-    screen.getByRole('button', { name: 'Show the code pilots read' }),
+    await screen.findByRole('button', { name: 'Show the code pilots read' }),
   )
   const dialog = screen.getByRole('dialog')
   expect(dialog.textContent).not.toContain('Landing') // only the code side
@@ -155,4 +163,24 @@ test('an answer is reused by the next card to the same airport', async () => {
   render(<WeatherOnArrival flight={{ ...toParis, id: 'f2' }} />)
   expect(screen.getByRole('button', { name: /Weather/ })).toBeTruthy() // at once
   expect(fetchMock).toHaveBeenCalledTimes(1)
+})
+
+test("the destination's time zone is found once, then shown at once", async () => {
+  vi.stubGlobal('fetch', answer(200, TAF))
+  render(<WeatherOnArrival flight={toParis} />)
+  fireEvent.click(await screen.findByRole('button', { name: /Weather/ }))
+  await screen.findByText(/Paris time/)
+  fireEvent.click(screen.getByRole('button', { name: 'OK' }))
+  fireEvent.click(screen.getByRole('button', { name: /Weather/ }))
+  // No spinner the second time.
+  expect(screen.queryByRole('status')).toBeNull()
+  expect(screen.getByRole('dialog').textContent).toContain('Paris time')
+})
+
+test('an airport without a city reads "local time"', async () => {
+  vi.stubGlobal('fetch', answer(200, TAF))
+  const destination = { ...toParis.destination!, city: null }
+  render(<WeatherOnArrival flight={{ ...toParis, destination }} />)
+  fireEvent.click(await screen.findByRole('button', { name: /Weather/ }))
+  expect(await screen.findByText(/local time/)).toBeTruthy()
 })
