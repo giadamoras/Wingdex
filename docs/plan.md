@@ -4,8 +4,8 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast, the richer mock flights, the destination's time on the forecast, the journey progress on the card, the paused poll and mascot dialogue, and the flight search. All of it is summarised in `docs/history.md`.
-- **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast, the richer mock flights, the destination's time on the forecast, the journey progress on the card, the paused poll and mascot dialogue, the flight search, and the README rewrite. All of it is summarised in `docs/history.md`.
+- **Next.** Nothing scheduled: the "Now" list under "Roadmap" is empty. New items, one at a time, after the user names them.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
 ## Context
@@ -71,7 +71,7 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+Empty for now: every planned item is done. New ones come from the small ideas below or from playing it.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 
@@ -90,13 +90,13 @@ Once deployed:
 1. **Share card (M).** Export a catch as an image. Adds reach and portfolio appeal; needs the public URL.
 2. **GPS "above you" mode (M).** Use the browser's location to find the plane overhead ("look up, that's above you"). High delight; needs HTTPS and a permission prompt, and works best on a phone.
 3. **Installable PWA (S/M).** Dropped from the smoke-test item on 2026-10-16: installing only matters on a phone, which needs the app hosted on HTTPS, and until then a service worker adds caching risk (players stuck on an old version) for no user. When picked up: a hand-written manifest, icons made from `favicon.svg`, and a small service worker that caches the app's files, tries the network first for the page and never caches `/flights`, `/weather` or `/route`.
-4. **Flight photos (S/M).** Planespotters photos of the exact plane, by its transponder address, so live flights only. Their API wants a User-Agent with a contact URL or email, a photographer credit and a link back; the terms are unchecked (see "Photos" in `docs/history.md`, Milestone 7 step 2). Kept here rather than in "Now" because the aircraft pictures cover the wish until then.
+4. **Flight photos (S/M).** Planespotters photos of the exact plane, by its transponder address, so live flights only. Their API wants a User-Agent with a contact URL or email, a photographer credit and a link back; the terms are unchecked (see "Photos" in `docs/history.md`, Milestone 7 step 2). Kept here rather than in "Now" because the type's silhouette and name on the card already say what the plane is.
 5. **Track history foundation (M).** Flight tracking, pattern events, drawing a flight's real flown route and crediting a weather quest to a plane that passed through all need past positions, so a server polling all day. Mind the quota: continuous global polling would use almost the whole 4,000 credits/day (a global request costs 4 credits, every 90 s is about 3,800 a day), so start with an in-memory buffer of recent snapshots and measure its size. If a database is needed, choose it here (a file database on an ephemeral free host loses its data); user progress stays local either way.
 6. **Flight tracking and pattern events (M, built on item 5).** Follow one flight live, even when it is not among the planes drawn. "Follow this flight" from its card or Journal entry. Finding one flight by its number already exists (the map's flight search, 2026-10-23): a single answer flown to, never a list of results or a filter, so it doesn't turn Wingdex into a tracker dashboard. Open questions: whether the camera follows it, how often its position refreshes beyond the shared 90 s snapshot and what that costs in credits, and how it interacts with the density logic, the daily catch rule and the Journal. Pattern events (holding patterns, diversions, weather reroutes) need the track history.
 
 ### Not doing
 
-- **3D aircraft models.** No consistent, freely licensed set (each model would need its own licence check), 1-10 MB per model plus three.js, a clash with the flat poster style, and a large effort for something seen once per type. Aircraft pictures ("Now") cover the same wish.
+- **3D aircraft models.** No consistent, freely licensed set (each model would need its own licence check), 1-10 MB per model plus three.js, a clash with the flat poster style, and a large effort for something seen once per type. Flight photos ("Only if deployed") would cover the same wish.
 - **Content in a database.** Facts are already data files, and the Journal stores the fact text it showed, so editing the pool never rewrites history. A database would only pay off if someone other than the developer edited content; it would add infrastructure, a network dependency for content that works offline, and make the backend own content.
 - **Accounts, social features and rankings.** Progress stays local.
 - **Weather simulation or our own forecasting.** Only official reports and forecasts (SIGMETs and TAFs).

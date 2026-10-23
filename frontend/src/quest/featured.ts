@@ -2,7 +2,7 @@ import { hashString } from '../shared-lib/hash'
 import type { Quest } from './quest'
 import type { Flight, WeatherArea } from '../data/types'
 
-const FEATURED_COUNT = 3
+export const FEATURED_COUNT = 3
 
 // The flights not caught today, in an order shuffled by a hash of flight id
 // and day: stable for the day, but not always the first flight in the list.
