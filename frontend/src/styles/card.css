@@ -194,6 +194,54 @@
   opacity: 0.75;
 }
 
+/* How far along the route: a full row under the cities. The line is dashed
+   ahead and solid where flown, with the plane's silhouette on it (planes.css
+   colours it coral or mint, as on the map). */
+.journey-progress {
+  flex-basis: 100%;
+  margin-top: 4px;
+}
+
+.journey-line {
+  position: relative;
+  height: 24px;
+  margin: 0 12px; /* half the plane, so it never pokes past the card */
+}
+
+/* The track ahead: a dashed line through the middle. */
+.journey-line::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 2px dashed var(--ink-35);
+  transform: translateY(-1px);
+}
+
+/* The part flown: solid ink over the dashes, from the origin to the plane. */
+.journey-flown {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  height: 2px;
+  background: var(--ink);
+  transform: translateY(-1px);
+}
+
+.journey-plane {
+  position: absolute;
+  top: 0;
+  width: 24px;
+  height: 24px;
+  transform: translateX(-50%);
+}
+
+.journey-left {
+  margin: 2px 0 0;
+  font-size: 0.8rem;
+  text-align: right;
+  opacity: 0.75;
+}
+
 .lost {
   margin: 10px 0 0;
   font-style: italic;

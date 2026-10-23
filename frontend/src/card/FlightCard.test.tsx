@@ -139,3 +139,21 @@ test('a model that already names the maker is not repeated', () => {
   card(unknown, { ...details, model: 'Boeing 737-800', manufacturer: 'Boeing' })
   expect(cardField('Type')).toBe('Boeing 737-800')
 })
+
+test('the progress line shows how far along the route the plane is', () => {
+  card(flight, null)
+  const line = screen.getByRole('img', { name: /% of the way there$/ })
+  // Over Wales, between Gatwick and Dublin: a little under halfway (45%).
+  const percent = Number(line.getAttribute('aria-label')!.split('%')[0])
+  expect(percent).toBeGreaterThan(35)
+  expect(percent).toBeLessThan(55)
+  // The time left under it, worked out like the forecast's landing time.
+  expect(document.querySelector('.journey-left')?.textContent).toMatch(
+    /^About \d+m to go$/,
+  )
+  // Not a row of its own any more.
+  expect(cardField('Time left')).toBeNull()
+  cleanup()
+  card({ ...flight, origin: null }, null)
+  expect(screen.queryByRole('img', { name: /of the way/ })).toBeNull()
+})

@@ -1,6 +1,5 @@
 import { expect, test } from 'vitest'
 import {
-  arrivalTime,
   clockTime,
   cloudWords,
   codeTimeExample,
@@ -13,7 +12,6 @@ import {
   type Conditions,
 } from './taf'
 import type { Taf, TafPeriod } from '../data/types'
-import { makeFlight } from '../testFlight'
 
 const H = 3600
 // 2026-10-22 12:00 UTC, the forecast's start.
@@ -209,26 +207,6 @@ test('the main forecast says "dry" when it has no weather, a spell does not', ()
   expect(conditionsWords(TAF.periods[1], true)).toBe(
     'Light rain, visibility 6 km, broken cloud at 1,200 ft',
   )
-})
-
-test('arrival is the remaining distance at the current ground speed', () => {
-  // 60 nm (one degree of latitude) at 480 kt: 7.5 minutes.
-  const flight = makeFlight({
-    latitude: 50,
-    longitude: 0,
-    speed_kt: 480,
-    destination: {
-      icao: 'EGLL',
-      iata: 'LHR',
-      name: 'Heathrow',
-      latitude: 51,
-      longitude: 0,
-    },
-  })
-  const now = T0 * 1000
-  expect(arrivalTime(flight, now)! - T0).toBeCloseTo(450, -1)
-  expect(arrivalTime({ ...flight, destination: null }, now)).toBeNull()
-  expect(arrivalTime({ ...flight, speed_kt: 20 }, now)).toBeNull()
 })
 
 test('UTC times name the day when it is not today (in UTC)', () => {

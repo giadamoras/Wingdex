@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { Flight, Taf } from '../data/types'
 import { DetailDialog } from '../shared-ui/DetailDialog'
-import { arrivalTime, clockTime, codeTimeExample, prevailingAt } from './taf'
+import { arrivalTime } from './route'
+import { clockTime, codeTimeExample, prevailingAt } from './taf'
 import { decodeTaf } from './tafDecode'
 import {
   landingPeriod,

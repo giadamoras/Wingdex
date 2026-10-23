@@ -13,6 +13,8 @@ import {
 } from '../shared-lib/format'
 import { springIn } from '../shared-lib/springIn'
 import { Stamp } from '../shared-ui/Stamp'
+import { PlaneIcon } from '../map/PlaneIcon'
+import { journeyProgress, timeLeftWords } from './route'
 import { WeatherOnArrival } from './WeatherOnArrival'
 import type { RouteStatus } from './useFlightRoute'
 
@@ -95,6 +97,7 @@ export function FlightCard({
           </div>
         )}
         {cities && <p className="cities">{cities}</p>}
+        <JourneyProgress flight={flight} />
       </header>
       {/* Boarding-pass small print: a thin coloured band per section, then
           one field per row, label left and value right. Two columns on wider
@@ -141,6 +144,38 @@ export function FlightCard({
         )}
       </div>
     </motion.section>
+  )
+}
+
+// How far along the route the plane is: a line from origin to destination,
+// solid where it has flown and dashed ahead, with the plane's own silhouette
+// on it, and the time left under it. Only when both ends are known. Worked
+// out from where the plane is now, so it moves with each refresh.
+function JourneyProgress({ flight }: { flight: Flight }) {
+  const progress = journeyProgress(flight)
+  if (progress === null) return null
+  const percent = Math.round(progress * 100)
+  const timeLeft = timeLeftWords(flight)
+  return (
+    <div className="journey-progress">
+      <div
+        className="journey-line"
+        role="img"
+        aria-label={`${percent}% of the way there`}
+      >
+        <div className="journey-flown" style={{ width: `${percent}%` }} />
+        <div className="journey-plane" style={{ left: `${percent}%` }}>
+          {/* Pointing right, along the line, whatever its real heading. */}
+          <PlaneIcon heading={90} aircraftType={flight.aircraft_type} />
+        </div>
+      </div>
+      {/* No time for a plane too slow for an estimate (taxiing). */}
+      {timeLeft && (
+        <p className="journey-left">
+          {timeLeft === 'Landing soon' ? timeLeft : `${timeLeft} to go`}
+        </p>
+      )}
+    </div>
   )
 }
 

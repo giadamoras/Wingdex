@@ -1,5 +1,4 @@
-import { angularDistance } from '../map/geo'
-import type { Flight, Taf, TafCloud, TafPeriod } from '../data/types'
+import type { Taf, TafCloud, TafPeriod } from '../data/types'
 
 // Reads an airport forecast (TAF) the way a pilot does, and says it in plain
 // words. The backend hands over AWC's periods; here they are combined at a
@@ -71,21 +70,6 @@ export function prevailingAt(taf: Taf, t: number): Conditions | null {
     }
   }
   return now
-}
-
-// ----------------------------------------------------------------------------
-// Arrival
-
-const EARTH_RADIUS_NM = 3440.065
-const MIN_SPEED_KT = 60 // slower than this (taxiing, a hovering helicopter): no estimate
-
-// When the plane should land, in Unix seconds: the remaining great-circle
-// distance at its current ground speed. Rough (no approach, no wind change),
-// but enough to pick the forecast period. null without a destination or speed.
-export function arrivalTime(flight: Flight, now = Date.now()): number | null {
-  if (!flight.destination || flight.speed_kt < MIN_SPEED_KT) return null
-  const nm = angularDistance(flight, flight.destination) * EARTH_RADIUS_NM
-  return Math.round(now / 1000 + (nm / flight.speed_kt) * 3600)
 }
 
 // ----------------------------------------------------------------------------
