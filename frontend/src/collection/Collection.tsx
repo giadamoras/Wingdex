@@ -4,6 +4,8 @@ import { unlockedBadgeIds } from './badges'
 import { FactList } from './FactList'
 import { JournalList } from './JournalList'
 import { useJournalContext } from './useJournalContext'
+import { collectionLine } from '../mascot/lines'
+import { Mascot } from '../shared-ui/Mascot'
 import { navigate, pick, useFullPath } from '../shared-lib/usePath'
 
 const TABS = [
@@ -45,6 +47,13 @@ export function Collection({ path }: { path: string[] }) {
           </button>
         ))}
       </div>
+      {/* The mascot on each tab but the Journal: a next goal. */}
+      {tab !== 'journal' && (
+        <div className="collection-note">
+          <Mascot className="collection-mascot" />
+          <p>{collectionLine(tab, journal)}</p>
+        </div>
+      )}
       {tab === 'journal' && <JournalList entries={journal} />}
       {tab === 'dex' && <DexView journal={journal} path={path.slice(2)} />}
       {tab === 'badges' && (

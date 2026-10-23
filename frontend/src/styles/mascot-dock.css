@@ -1,8 +1,8 @@
-/* Onboarding (Onboarding.tsx): the mascot docked bottom-left for the whole
-   flow, with a speech bubble beside it (BadgePopup is bottom-right, so a
-   badge unlock never collides). The wrapper ignores clicks so only the mascot
-   and bubble themselves intercept them. */
-.onboarding {
+/* The docked mascot (MascotDock.tsx), used by onboarding and the map's
+   chatter: the cat bottom-left with a speech bubble beside it (BadgePopup is
+   bottom-right, so a badge unlock never collides). The wrapper ignores clicks
+   so only the mascot and bubble themselves intercept them. */
+.dock {
   position: fixed;
   left: 16px;
   bottom: 16px;
@@ -14,11 +14,11 @@
   pointer-events: none;
 }
 
-.onboarding > * {
+.dock > * {
   pointer-events: auto;
 }
 
-.onboarding-mascot {
+.dock-mascot {
   width: 72px;
   height: 72px;
   flex-shrink: 0;
@@ -29,7 +29,7 @@
 }
 
 /* Speech bubble; the tail is two stacked triangles (ink outline + fill). */
-.onboarding-bubble {
+.dock-bubble {
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -43,8 +43,8 @@
   box-shadow: 4px 4px 0 var(--ink-25);
 }
 
-.onboarding-bubble::before,
-.onboarding-bubble::after {
+.dock-bubble::before,
+.dock-bubble::after {
   content: '';
   position: absolute;
   bottom: 14px;
@@ -52,47 +52,47 @@
   border-color: transparent;
 }
 
-.onboarding-bubble::before {
+.dock-bubble::before {
   left: -17px;
   border-width: 9px 14px 9px 0;
   border-right-color: var(--ink);
 }
 
-.onboarding-bubble::after {
+.dock-bubble::after {
   left: -11px;
   border-width: 7px 11px 7px 0;
   border-right-color: var(--paper-light);
 }
 
 /* Card open: a click-through hint, so it can never block the card's buttons. */
-.onboarding > .hint {
+.dock > .hint {
   pointer-events: none;
   max-width: 200px;
 }
 
-.onboarding-body {
+.dock-body {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 8px;
 }
 
-.onboarding-body p {
+.dock-body p {
   margin: 0;
   line-height: 1.4;
 }
 
-.onboarding-pending {
+.dock-pending {
   color: transparent;
 }
 
 /* While the mascot is docked, leave room under the page so a card's buttons
    can scroll clear of it on a short viewport. */
-main.has-onboarding {
+main.has-dock {
   padding-bottom: 110px;
 }
 
-.onboarding-btn {
+.dock-btn {
   padding: 6px 16px;
   background: var(--accent);
   color: var(--on-accent);
@@ -104,12 +104,12 @@ main.has-onboarding {
   box-shadow: 2px 2px 0 var(--ink);
 }
 
-.onboarding-btn:active {
+.dock-btn:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--ink);
 }
 
-.onboarding-close {
+.dock-close {
   margin-left: auto;
   padding: 0 4px;
   background: none;
@@ -121,6 +121,6 @@ main.has-onboarding {
   opacity: 0.6;
 }
 
-.onboarding-close:hover {
+.dock-close:hover {
   opacity: 1;
 }

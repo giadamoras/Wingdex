@@ -11,8 +11,10 @@
      28 px planes pile up into a wall when the whole world is in view. */
   transform: translate(-50%, -50%)
     scale(calc(clamp(0.6, var(--real-zoom, 1) / 4, 1) / var(--zoom, 1)));
-  /* Above the land and weather; the selected route is above this (2) and the
-     selected plane above that (3), so the route reads over the traffic. */
+  /* The map's layers, bottom to top: the traffic (1), featured planes (2),
+     the selected route and the plane the mascot points at (3), the selected
+     plane and the replay's ghost (4), the weather label (5). The land and
+     weather icons are below them all. */
   z-index: 1;
   /* Glide for one poll interval (5 s, POLL_INTERVAL_MS) so movement looks continuous. */
   transition:
@@ -48,7 +50,7 @@
 }
 
 .plane.selected {
-  z-index: 3;
+  z-index: 4;
 }
 
 /* Focus mode (FlightMap's data-focus): with a flight selected the other planes
@@ -106,26 +108,40 @@
   }
 }
 
-/* Featured flight: a dashed ink ring that gently pulses. (Ink, not paper: a
-   paper ring vanished against the cream land.) Sits before the selected rule
-   so a selected featured plane shows the solid mustard ring. */
+/* Featured flight: a solid blue ring that gently pulses. Blue because no
+   plane is blue
+   (airliners are coral, small aircraft mint): a dashed ink ring got lost in a
+   dense live feed and on the night palette. The light halo keeps it readable
+   on the dark night sea; the blue alone carries it on the cream land, where
+   a light ring vanished. Sits before the selected and target rules, so a
+   selected featured plane shows the mustard ring.
+   Featured planes are drawn above the traffic: in a busy spot a neighbour
+   drawn on top took the tap, which selected that plane instead, its mustard
+   ring over the featured one's blue. */
+.plane.featured:not(.selected) {
+  z-index: 2;
+}
+
 .plane.featured::after {
   content: '';
   position: absolute;
   inset: -5px;
-  border: 2px dashed var(--ink);
+  border: 3px solid var(--featured);
   border-radius: 50%;
+  box-shadow: 0 0 0 1.5px var(--paper-light);
   animation: featured-pulse 1.8s ease-in-out infinite;
 }
 
-/* The plane the mascot points at is drawn above the other traffic, so a
-   neighbour can't cover it and take the tap (the selected plane stays on top). */
-.plane.target {
-  z-index: 2;
+/* The plane the mascot points at is drawn above the other traffic and the
+   featured planes, so a neighbour can't cover it and take the tap. Not once
+   selected: then it takes the selected plane's layer, above its route. */
+.plane.target:not(.selected) {
+  z-index: 3;
 }
 
-/* Onboarding target: a bold mustard ring with an ink outline and a ripple, so
-   the plane the mascot points at is unmissable on any map palette. */
+/* The plane the mascot points at (onboarding's target, or the quest hint's
+   plane while the hint shows): a bold mustard ring with an ink outline and a
+   ripple, unmissable on any map palette. */
 .plane.target::after {
   content: '';
   position: absolute;

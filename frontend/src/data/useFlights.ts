@@ -20,7 +20,8 @@ export const RETRY_FEEDBACK_MS = 800
 // While polls keep failing, retries back off (every 10 s, 20 s, then 30 s) so a
 // struggling backend is not hammered; `stalled` is set after STALLED_AFTER
 // failures in a row. `retry` asks again at once, and `retrying` is on while
-// that request is out.
+// that request is out. While the tab is hidden polling pauses (phone battery
+// and data), and it asks again at once when the tab comes back.
 export function useFlights() {
   const [flights, setFlights] = useState<Flight[] | null>(null)
   const [jumped, setJumped] = useState<Set<string>>(new Set())
@@ -79,6 +80,8 @@ export function useFlights() {
     }
 
     const tick = () => {
+      // Nobody is looking: let the tick pass.
+      if (document.hidden) return
       // The feed can be several MB on a slow connection. Skip this tick while the
       // previous request is pending, so an old response never lands after a new one.
       if (pending) return
@@ -98,12 +101,22 @@ export function useFlights() {
       request(true)
     }
 
+    // Back on the tab: the planes are up to minutes old, so ask at once
+    // rather than wait for the next tick (a retry back-off is skipped once).
+    const onVisibility = () => {
+      if (document.hidden || pending) return
+      skipTicks = 0
+      request()
+    }
+
     request()
     const id = setInterval(tick, POLL_INTERVAL_MS)
+    document.addEventListener('visibilitychange', onVisibility)
     return () => {
       pending?.abort() // cancels the request and makes its handlers ignore it
       clearTimeout(retryTimer)
       clearInterval(id)
+      document.removeEventListener('visibilitychange', onVisibility)
     }
   }, [])
 

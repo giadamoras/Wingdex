@@ -103,7 +103,7 @@
   text-align: center;
   white-space: nowrap;
   pointer-events: none;
-  z-index: 4; /* over every plane (1-3) and the route, so busy skies can't hide it */
+  z-index: 5; /* over every plane (1-4) and the route, so busy skies can't hide it */
   transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)))
     translateY(36px);
 }

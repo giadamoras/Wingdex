@@ -7,6 +7,12 @@ import { dayKey } from './shared-lib/dates'
 import { loadJournal, saveJournal } from './collection/journal'
 import { JournalProvider } from './collection/JournalContext'
 import { markOnboardingSeen } from './onboarding/onboardingSeen'
+import {
+  HINT_AFTER_MS,
+  markWelcomed,
+  SAY_MS,
+  WELCOME_MS,
+} from './mascot/useMascotChatter'
 import { QUEST_TEMPLATES } from './quest/quest'
 import type { WeatherArea } from './data/types'
 import { ROUTE_LOOKUP_DELAY_MS } from './card/useFlightRoute'
@@ -78,9 +84,11 @@ beforeEach(() => {
     source: 'mock',
     weather_source: 'mock',
   })
-  // Onboarding is a separate feature (see the dedicated tests near the
-  // bottom of this file), so keep it out of everything else's way.
+  // Onboarding and the mascot's daily welcome are separate features (see the
+  // dedicated tests near the bottom of this file), so keep them out of
+  // everything else's way.
   markOnboardingSeen()
+  markWelcomed()
 })
 afterEach(() => {
   cleanup()
@@ -652,7 +660,8 @@ test("yesterday's quest is replaced by a new pick", async () => {
 
 test('featured flights get a ring until they are caught', async () => {
   pinQuest('long-haul')
-  // TST3 completes the quest; TST2 is the only B748, so the rarest type.
+  // TST2 is the only B748, so the rarest type; TST1 the A320. TST3 (also an
+  // A320) completes the quest, so it is left for the mascot's hint.
   vi.stubGlobal(
     'fetch',
     vi.fn(() =>
@@ -666,9 +675,9 @@ test('featured flights get a ring until they are caught', async () => {
   await act(() => vi.advanceTimersByTimeAsync(0))
   const featured = (title: string) =>
     screen.getByTitle(title).classList.contains('featured')
-  expect(featured('TST3')).toBe(true)
   expect(featured('TST2')).toBe(true)
-  expect(featured('TST1')).toBe(false)
+  expect(featured('TST1')).toBe(true)
+  expect(featured('TST3')).toBe(false)
 
   fireEvent.click(screen.getByTitle('TST2'))
   fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
@@ -901,11 +910,11 @@ test("onboarding turns its bubble into a click-through hint while a card is open
   vi.stubGlobal('fetch', vi.fn(ok))
   const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
-  expect(container.querySelector('.onboarding-bubble')).not.toBeNull()
+  expect(container.querySelector('.dock-bubble')).not.toBeNull()
 
   fireEvent.click(screen.getByTitle('TST1'))
-  expect(container.querySelector('.onboarding-mascot')).not.toBeNull()
-  expect(container.querySelector('.onboarding-bubble.hint')).not.toBeNull()
+  expect(container.querySelector('.dock-mascot')).not.toBeNull()
+  expect(container.querySelector('.dock-bubble.hint')).not.toBeNull()
   expect(screen.getByText(/Hit Catch/)).toBeTruthy()
   expect(screen.queryByRole('button', { name: 'Got it!' })).toBeNull()
   expect(
@@ -914,7 +923,7 @@ test("onboarding turns its bubble into a click-through hint while a card is open
 
   // Deselecting (not catching) brings the normal bubble back.
   fireEvent.click(screen.getByTitle('TST1'))
-  expect(container.querySelector('.onboarding-bubble.hint')).toBeNull()
+  expect(container.querySelector('.dock-bubble.hint')).toBeNull()
   expect(screen.getByRole('button', { name: 'Got it!' })).toBeTruthy()
 })
 
@@ -957,7 +966,8 @@ test('catching a different flight than the highlighted one still completes onboa
         json: () =>
           Promise.resolve([
             flights[0],
-            { ...flights[0], id: 'f2', callsign: 'TST2', latitude: -40 },
+            // In view, but further from the opening view's centre than TST1.
+            { ...flights[0], id: 'f2', callsign: 'TST2', latitude: 40 },
           ]),
       }),
     ),
@@ -1162,4 +1172,131 @@ test('no credit line is shown when the sources cannot be read', async () => {
   const { container } = renderApp()
   await act(() => vi.advanceTimersByTimeAsync(0))
   expect(container.querySelector('.credits')).toBeNull()
+})
+
+// The mascot outside onboarding (mascot/). beforeEach marks today's welcome
+// as said; the first test undoes that.
+test('the mascot welcomes a returning player with a streak, once a day', async () => {
+  reducedMotion()
+  localStorage.clear()
+  markOnboardingSeen()
+  // Yesterday's quest done: a streak to keep.
+  const yesterday = new Date()
+  yesterday.setDate(yesterday.getDate() - 1)
+  saveJournal([
+    {
+      flight: { ...flights[0], id: 'old' },
+      fact: 'A fact.',
+      caughtAt: yesterday.toISOString(),
+      questId: 'long-haul',
+    },
+  ])
+  pinQuest('long-haul')
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(
+    screen.getByText(
+      /, Captain! You did yesterday's quest, make it two in a row! Today: catch a long-haul flight/,
+    ),
+  ).toBeTruthy()
+
+  await act(() => vi.advanceTimersByTimeAsync(WELCOME_MS))
+  expect(screen.queryByText(/Captain!/)).toBeNull()
+
+  // Not again on a reload the same day.
+  cleanup()
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/Captain!/)).toBeNull()
+})
+
+test('without a streak to keep the mascot does not welcome', async () => {
+  reducedMotion()
+  localStorage.clear()
+  markOnboardingSeen()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/Captain!/)).toBeNull()
+})
+
+test('a special catch gets a word from the mascot, which goes away by itself', async () => {
+  reducedMotion()
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  // The first catch pops up First Catch; the mascot names that badge rather
+  // than the aircraft, which is also a new type.
+  const reaction =
+    '🎉 The First Catch badge is yours: you caught your first flight.'
+  expect(screen.getByText(reaction)).toBeTruthy()
+  expect(document.querySelector('.badge-popup')?.textContent).toContain(
+    'First Catch',
+  )
+  // A card is open, so the bubble is a click-through hint.
+  expect(document.querySelector('.dock-bubble.hint')).not.toBeNull()
+
+  await act(() => vi.advanceTimersByTimeAsync(SAY_MS))
+  expect(screen.queryByText(reaction)).toBeNull()
+})
+
+test('after a while the mascot points at the plane that fits the quest', async () => {
+  reducedMotion()
+  pinQuest('long-haul')
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByText(/^Psst!/)).toBeNull()
+  // Not featured (it fits the quest), and not yet the mascot's target.
+  expect(screen.getByTitle('TST3').classList.contains('featured')).toBe(false)
+  const targeted = () => screen.getByTitle('TST3').classList.contains('target')
+  expect(targeted()).toBe(false)
+
+  await act(() => vi.advanceTimersByTimeAsync(HINT_AFTER_MS))
+  // While the hint shows, its plane gets the bold target ring.
+  expect(targeted()).toBe(true)
+  // Where to look and which way it flies (TST3 is at 50N 0E, heading east).
+  expect(
+    screen.getByText(
+      /^Psst! Look over .+: the ringed plane heading east fits today's quest\.$/,
+    ),
+  ).toBeTruthy()
+  const world = () =>
+    (document.querySelector('.map-world') as HTMLElement).style.transform
+  const before = world()
+  fireEvent.click(screen.getByRole('button', { name: 'Show me' }))
+  // The map flies in on it (at once, under reduced motion), the card opens on
+  // that plane, and the hint is gone.
+  expect(world()).not.toBe(before)
+  expect(scrollTo).toHaveBeenCalled()
+  expect(screen.getByRole('heading', { name: 'TST3' })).toBeTruthy()
+  expect(screen.queryByText(/^Psst!/)).toBeNull()
+})
+
+test('the quest strip cheers when the quest is done', async () => {
+  reducedMotion()
+  pinQuest('long-haul')
+  vi.stubGlobal('fetch', vi.fn(withLongHaul))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST3'))
+  fireEvent.click(screen.getByRole('button', { name: 'Catch' }))
+  expect(document.querySelector('.quest-cheer')?.textContent).toMatch(
+    /^(Quest complete|Nicely done)/,
+  )
+})
+
+test('the mascot gives a goal on the Dex, Badges and Facts tabs, not the Journal', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByRole('button', { name: '📘 Collection' }))
+  expect(document.querySelector('.collection-note')).toBeNull()
+  fireEvent.click(screen.getByRole('button', { name: 'Badges' }))
+  expect(
+    screen.getByText('Next up: First Catch. Catch your first flight.'),
+  ).toBeTruthy()
 })

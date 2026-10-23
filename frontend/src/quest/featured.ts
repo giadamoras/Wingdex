@@ -4,10 +4,23 @@ import type { Flight, WeatherArea } from '../data/types'
 
 const FEATURED_COUNT = 3
 
-// Flights worth catching today: one that completes the quest (if any), then
-// the rarest aircraft types in the current feed, one flight per type. Flights
-// already caught today are skipped. Ties are broken by a hash of flight id and
-// day, so the pick is stable but not always the first flight in the list.
+// The flights not caught today, in an order shuffled by a hash of flight id
+// and day: stable for the day, but not always the first flight in the list.
+function candidatesFor(
+  flights: Flight[],
+  caughtTodayIds: Set<string>,
+  day: string,
+): Flight[] {
+  const shuffle = (f: Flight) => hashString(f.id + day)
+  return flights
+    .filter((f) => !caughtTodayIds.has(f.id))
+    .sort((a, b) => shuffle(a) - shuffle(b))
+}
+
+// Flights worth catching today: the rarest aircraft types in the current
+// feed, one flight per type. Flights already caught today are skipped, and
+// so are flights that fit the quest: a ring on them would give the quest
+// away (the mascot's hint points at one later, see pickQuestFlight).
 export function pickFeatured(
   flights: Flight[],
   quest: Quest | null,
@@ -16,15 +29,9 @@ export function pickFeatured(
   now = new Date(),
   weather: WeatherArea[] = [],
 ): string[] {
-  const shuffle = (f: Flight) => hashString(f.id + day)
-  const candidates = flights
-    .filter((f) => !caughtTodayIds.has(f.id))
-    .sort((a, b) => shuffle(a) - shuffle(b))
-
-  const picked: Flight[] = []
-  const questMatch =
-    quest && candidates.find((f) => quest.matches(f, now, weather))
-  if (questMatch) picked.push(questMatch)
+  const candidates = candidatesFor(flights, caughtTodayIds, day).filter(
+    (f) => !quest?.matches(f, now, weather),
+  )
 
   // How many flights of each type are flying (fewer means rarer). A flight with
   // no known type has no rarity, so it is never picked for its type.
@@ -39,12 +46,31 @@ export function pickFeatured(
   const byRarity = [...typed].sort(
     (a, b) => typeCount.get(a.aircraft_type)! - typeCount.get(b.aircraft_type)!,
   )
-  const types = new Set(picked.map((f) => f.aircraft_type))
+  const picked: Flight[] = []
+  const types = new Set<string>()
   for (const f of byRarity) {
     if (picked.length >= FEATURED_COUNT) break
-    if (picked.includes(f) || types.has(f.aircraft_type)) continue
+    if (types.has(f.aircraft_type)) continue
     picked.push(f)
     types.add(f.aircraft_type)
   }
   return picked.map((f) => f.id)
+}
+
+// A flight that completes the quest, for the mascot's hint, or null if none
+// does. Not caught today, and picked in the same stable shuffled order.
+export function pickQuestFlight(
+  flights: Flight[],
+  quest: Quest | null,
+  caughtTodayIds: Set<string>,
+  day: string,
+  now = new Date(),
+  weather: WeatherArea[] = [],
+): string | null {
+  if (!quest) return null
+  return (
+    candidatesFor(flights, caughtTodayIds, day).find((f) =>
+      quest.matches(f, now, weather),
+    )?.id ?? null
+  )
 }

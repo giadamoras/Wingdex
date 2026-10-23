@@ -7,6 +7,7 @@ import {
   centredOn,
   centreOf,
   fitBounds,
+  maxZoom,
   panBy,
   shapeFor,
   type Shape,
@@ -53,6 +54,17 @@ const startView = (shape: Shape) =>
     shape,
   )
 
+// "Show me" (the mascot's hint) flies the camera in this close to the plane.
+// Not scaled by the box's shape like the opening view: a phone held upright
+// would then show as many degrees of longitude as a wide screen, crowded into
+// a third of the width, so it gets the closer look instead (capped on touch
+// screens by maxZoom).
+const FLY_TO_ZOOM = 10
+const flyToView = (flight: Flight, shape: Shape) => {
+  const { x, y } = project(flight.latitude, flight.longitude)
+  return centredOn(x / 100, y / 100, Math.min(FLY_TO_ZOOM, maxZoom()), shape)
+}
+
 // The view that shows a flight's whole route (the curve through the plane).
 function routeView(flight: Flight, shape: Shape) {
   const points = curveThrough(flight.origin!, flight.destination!, flight).map(
@@ -78,7 +90,8 @@ function routeView(flight: Flight, shape: Shape) {
 // it (or deselects it if already selected); clicking the map background
 // deselects. A drag never counts as a click. Weather areas (under the planes)
 // are selected the same way, by clicking one of their icons; selecting a
-// weather area deselects the flight and the other way round.
+// weather area deselects the flight and the other way round. A new `flyTo`
+// request (a fresh `at`) flies the camera in on that flight.
 export function FlightMap({
   flights,
   selectedId,
@@ -88,6 +101,7 @@ export function FlightMap({
   targetId = null,
   replay = null,
   weather = NO_WEATHER,
+  flyTo = null,
   onSelect,
 }: {
   flights: Flight[]
@@ -98,6 +112,7 @@ export function FlightMap({
   targetId?: string | null
   replay?: ReplayState | null
   weather?: WeatherArea[]
+  flyTo?: { id: string; at: number } | null
   onSelect: (id: string | null) => void
 }) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -156,6 +171,16 @@ export function FlightMap({
     // Only on a new replay, not on every animation frame.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replayStart])
+
+  // A "Show me" flies in on its plane, the same smooth move as a replay's.
+  const flyToAt = flyTo?.at
+  useEffect(() => {
+    const flight = flyTo && flights.find((f) => f.id === flyTo.id)
+    if (flight)
+      animateTo(flyToView(flight, shape), prefersReducedMotion() ? 0 : FIT_MS)
+    // Only on a new request, not as the plane moves on.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [flyToAt])
 
   // The layer is WORLD_SCALE times the size the world has at zoom 1 (the box
   // times the shape), so translate (in % of the layer) and scale are divided by

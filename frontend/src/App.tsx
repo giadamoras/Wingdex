@@ -8,6 +8,8 @@ import { isToday } from './shared-lib/dates'
 import { navigate, pick, useFullPath, usePath } from './shared-lib/usePath'
 import { FlightCard } from './card/FlightCard'
 import { FlightMap } from './map/FlightMap'
+import { catchLine, questDoneLine } from './mascot/lines'
+import { MascotDock } from './mascot/MascotDock'
 import { Onboarding } from './onboarding/Onboarding'
 import { flightsForMap } from './map/mapFlights'
 import { isQuestDone, questIdForCatch } from './quest/quest'
@@ -24,6 +26,7 @@ import { useFeatured } from './quest/useFeatured'
 import { useFlightRoute } from './card/useFlightRoute'
 import { useFlights } from './data/useFlights'
 import { useJournalContext } from './collection/useJournalContext'
+import { useMascotChatter } from './mascot/useMascotChatter'
 import { useOnboarding } from './onboarding/useOnboarding'
 import { useWeather } from './data/useWeather'
 
@@ -59,6 +62,9 @@ function App() {
   const path = usePath()
   const view = pick(path, 0, ['map', 'collection'] as const)
   useFullPath(path, view === 'map' ? [] : path)
+
+  // The mascot's "Show me": the map flies in on that plane (see FlightMap).
+  const [flyTo, setFlyTo] = useState<{ id: string; at: number } | null>(null)
 
   // Snapshot of the selected flight, so it survives dropping out of the feed.
   const [selected, setSelected] = useState<Flight | null>(null)
@@ -100,8 +106,40 @@ function App() {
   const questDone =
     quest !== null && isQuestDone(quest, todaysCatches, weatherAreas)
   const caughtToday = todaysCatches.some((e) => e.flight.id === selected?.id)
-  const featuredIds = useFeatured(flights, weatherOrNull, quest, todaysCatches)
+  const { featuredIds, questFlightId } = useFeatured(
+    flights,
+    weatherOrNull,
+    quest,
+    todaysCatches,
+  )
   const mapFlights = flightsForMap(flights, current, lost)
+
+  // A plane that fits the open quest, for the mascot's hint (not ringed
+  // until the hint points at it). Checked again now: a weather quest's
+  // plane can have flown out of its weather.
+  const hintFlight =
+    (quest &&
+      !questDone &&
+      flights?.find(
+        (f) =>
+          f.id === questFlightId && quest.matches(f, new Date(), weatherAreas),
+      )) ||
+    null
+  // The mascot's lines on the map once onboarding is over (useMascotChatter).
+  const chatter = useMascotChatter({
+    enabled: onboarding.step === null && view === 'map',
+    ready: flights !== null && weatherOrNull !== null,
+    quest,
+    questDone,
+    hintFlight,
+    journal,
+    // Show the hinted plane: the map at the top, flying in on it, its card open.
+    onShowHint: (id) => {
+      scrollToTop()
+      setFlyTo({ id, at: Date.now() })
+      select(id)
+    },
+  })
 
   // Catch button: records the flight in the Journal. The card stays open, so
   // the Catch button turns into the "Caught today" stamp right under the
@@ -122,6 +160,21 @@ function App() {
     const hazards = weatherAt(current, weatherAreas, now)
     addCatch(current, fact, questId, hazards)
     if (questId !== undefined) scrollToTop()
+    // A word from the mascot when the catch is special (onboarding has its
+    // own). The entry as the Journal stores it, so new badges can be seen.
+    const reaction =
+      onboarding.step === null &&
+      catchLine(
+        {
+          flight: current,
+          fact,
+          caughtAt: now.toISOString(),
+          questId,
+          ...(hazards.length > 0 && { hazards }),
+        },
+        journal,
+      )
+    if (reaction) chatter.say(reaction)
   }
 
   // What the feed status says. While a retry is out the message goes back to
@@ -143,8 +196,8 @@ function App() {
           : null
 
   return (
-    // has-onboarding leaves room under the page for the docked mascot.
-    <main className={onboarding.step ? 'has-onboarding' : undefined}>
+    // has-dock leaves room under the page for the docked mascot.
+    <main className={onboarding.step || chatter.line ? 'has-dock' : undefined}>
       <div className="app-header">
         <h1>
           {/* The favicon doubles as the logo; decorative, the text names the app. */}
@@ -167,6 +220,7 @@ function App() {
           <QuestBanner
             quest={quest}
             done={questDone}
+            doneLine={questDone ? questDoneLine(journal) : null}
             searching={flights === null || weatherOrNull === null}
             feedDown={loadFailed}
           />
@@ -195,9 +249,11 @@ function App() {
                 jumped={jumped}
                 departed={departed}
                 featuredIds={featuredIds}
-                targetId={onboarding.targetId}
+                // Onboarding's plane, or the quest hint's while it shows.
+                targetId={onboarding.targetId ?? chatter.pointingAt}
                 replay={replay}
                 weather={weatherAreas}
+                flyTo={flyTo}
                 onSelect={select}
               />
               {current && (
@@ -227,6 +283,12 @@ function App() {
               />
             )}
           </AnimatePresence>
+          <MascotDock
+            line={chatter.line}
+            hint={selected !== null}
+            onClose={chatter.dismiss}
+            closeLabel="Dismiss"
+          />
           <Onboarding
             // While a card is open only the mascot stays: the speech bubble
             // could cover the card's own buttons on a short viewport.

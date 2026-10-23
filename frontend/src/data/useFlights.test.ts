@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react'
+import { act, cleanup, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import { fetchFlights } from './api'
 import type { Flight } from './types'
@@ -43,7 +43,11 @@ beforeEach(() => {
   vi.useFakeTimers()
   vi.mocked(fetchFlights).mockReset()
 })
-afterEach(() => vi.useRealTimers())
+// Unmount each test's hook, so its listeners don't answer the next test's events.
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 test('a slow request is not overtaken: ticks are skipped until it finishes', async () => {
   const first = deferred<Flight[]>()
@@ -192,4 +196,34 @@ test('retry replaces a request that is hanging', async () => {
   // The abandoned request finishing late changes nothing.
   await act(async () => hung.resolve([{ ...flight, id: 'old' }]))
   expect(result.current.flights).toEqual([flight])
+})
+
+// Hides or shows the tab, as the browser does when the player switches away.
+function setHidden(hidden: boolean) {
+  Object.defineProperty(document, 'hidden', {
+    configurable: true,
+    get: () => hidden,
+  })
+  document.dispatchEvent(new Event('visibilitychange'))
+}
+
+test('polling pauses while the tab is hidden and resumes at once on return', async () => {
+  vi.mocked(fetchFlights).mockResolvedValue([flight])
+  renderHook(() => useFlights())
+  await advance(0)
+  expect(calls()).toBe(1)
+
+  try {
+    await act(async () => setHidden(true))
+    await advance(POLL_INTERVAL_MS * 10)
+    expect(calls()).toBe(1) // nothing while hidden
+
+    await act(async () => setHidden(false))
+    expect(calls()).toBe(2) // straight away, not at the next tick
+    await advance(POLL_INTERVAL_MS)
+    expect(calls()).toBe(3) // and the usual pace again
+  } finally {
+    // Back to jsdom's own getter (always visible) for the other tests.
+    delete (document as { hidden?: boolean }).hidden
+  }
 })

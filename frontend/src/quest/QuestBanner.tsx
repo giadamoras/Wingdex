@@ -8,15 +8,18 @@ import { Stamp } from '../shared-ui/Stamp'
 // `feedDown` (the first load failed) stops the wait from looking like progress.
 // The mascot delivers the completion fact - a once-a-day "bigger celebration"
 // moment, unlike the per-catch fact on every card, so it doesn't crowd the
-// banner itself (which stays mascot-free).
+// banner itself (which stays mascot-free). `doneLine` is its cheer above the
+// fact ("Quest complete: 3 days in a row!").
 export function QuestBanner({
   quest,
   done,
+  doneLine = null,
   searching,
   feedDown,
 }: {
   quest: Quest | null
   done: boolean
+  doneLine?: string | null
   searching: boolean
   feedDown: boolean
 }) {
@@ -39,7 +42,10 @@ export function QuestBanner({
       {quest && done && (
         <div className="quest-fact-row">
           <Mascot className="quest-mascot" />
-          <p className="quest-fact">{quest.conceptFact}</p>
+          <p className="quest-fact">
+            {doneLine && <strong className="quest-cheer">{doneLine}</strong>}
+            {quest.conceptFact}
+          </p>
         </div>
       )}
     </section>

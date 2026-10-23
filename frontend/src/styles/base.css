@@ -11,6 +11,7 @@
   --accent: #e4572e;
   --highlight: #f2b531;
   --mint: #9ad1b5;
+  --featured: #2f6fc4; /* the featured planes' ring: a colour no plane uses */
   --paper-light: #fffaf0; /* cards, tickets and buttons: a lighter paper */
   --on-accent: #fff; /* text on the coral buttons */
   /* The ink at a few strengths, for flat shadows and faint lines. */

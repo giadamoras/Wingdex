@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { pickFeatured } from './featured'
+import { pickFeatured, pickQuestFlight } from './featured'
 import type { Quest } from './quest'
 import type { Flight } from '../data/types'
 import { makeFlight } from '../testFlight'
@@ -40,25 +40,29 @@ test('a flight with no known type is never featured for its type', () => {
   expect(pickFeatured(mixed, null, none, day)).toEqual(['a1'])
 })
 
-test('a flight with no known type can still be featured for the quest', () => {
-  const quest: Quest = {
-    id: 'q',
-    title: 'q',
-    conceptFact: '',
-    matches: (f) => f.id === 'u1',
-  }
-  const mixed = [flight('u1', null), flight('a1', 'A320')]
-  expect(pickFeatured(mixed, quest, none, day)).toContain('u1')
+const fits = (id: string): Quest => ({
+  id: 'q',
+  title: 'q',
+  conceptFact: '',
+  matches: (f) => f.id === id,
 })
 
-test('includes a flight that completes the quest', () => {
-  const quest: Quest = {
-    id: 'q',
-    title: 'q',
-    conceptFact: '',
-    matches: (f) => f.id === 'a3',
-  }
-  expect(pickFeatured(flights, quest, none, day)).toContain('a3')
+test('a flight that fits the quest is never featured: that would give it away', () => {
+  // b1 is the rarest type, but it completes the quest.
+  const ids = pickFeatured(flights, fits('b1'), none, day)
+  expect(ids).not.toContain('b1')
+  expect(ids).toContain('t1')
+})
+
+test('the quest flight is picked on its own, for the hint', () => {
+  expect(pickQuestFlight(flights, fits('a3'), none, day)).toBe('a3')
+  // A flight with no known type can fit the quest too.
+  const mixed = [flight('u1', null), flight('a1', 'A320')]
+  expect(pickQuestFlight(mixed, fits('u1'), none, day)).toBe('u1')
+  // None fits, there is no quest, or it is already caught today.
+  expect(pickQuestFlight(flights, fits('zz'), none, day)).toBeNull()
+  expect(pickQuestFlight(flights, null, none, day)).toBeNull()
+  expect(pickQuestFlight(flights, fits('a3'), new Set(['a3']), day)).toBeNull()
 })
 
 test('skips flights already caught today', () => {
@@ -78,7 +82,7 @@ test('returns fewer flights when the feed is small', () => {
   expect(pickFeatured([], null, none, day)).toEqual([])
 })
 
-test('a flight inside weather can be featured for a weather quest', () => {
+test('a flight inside weather is the quest flight for a weather quest', () => {
   const areaOverFlight = {
     id: 'w',
     hazard: 'turbulence' as const,
@@ -110,8 +114,9 @@ test('a flight inside weather can be featured for a weather quest', () => {
       ),
   }
   // Only the flight inside the box completes it, so it must be picked.
-  const ids = pickFeatured([outside, inWeather], quest, none, day, new Date(), [
-    areaOverFlight,
-  ])
-  expect(ids[0]).toBe('w1')
+  expect(
+    pickQuestFlight([outside, inWeather], quest, none, day, new Date(), [
+      areaOverFlight,
+    ]),
+  ).toBe('w1')
 })

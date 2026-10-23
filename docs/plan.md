@@ -4,7 +4,7 @@
 
 **Status.**
 
-- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast, the richer mock flights and the destination's time on the forecast. All of it is summarised in `docs/history.md`.
+- **Done.** The MVP (Milestones 1-6), live data (Milestone 7 steps 1-6; its deployment step was postponed, see "Only if deployed") and the post-MVP work so far: the smoke test, the content files and type catalog, the card in plain words, larger facts and quests with the airline catalog, more silhouettes, the collection dex, streak and badges, the destination forecast, the richer mock flights, the destination's time on the forecast, the journey progress on the card, and the paused poll and mascot dialogue. All of it is summarised in `docs/history.md`.
 - **Next.** The "Now" list under "Roadmap", one item at a time, after the user names it.
 - **Postponed.** Deployment and everything that needs it ("Only if deployed").
 
@@ -22,7 +22,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 
 1. **Explore** a 2D world map of flying aircraft with Google Maps-style pan and zoom. The flight source is swappable: mock data (200 world-wide flights: airliners, business jets, light aircraft, helicopters and gliders) or OpenSky live.
 2. **One daily quest**, on the player's own local day (not a shared global challenge), picked from 23 parameterized templates: altitude ("above 36,000 ft"), aircraft category, region, weather, time of day, flight length, climb or descent, speed, single airlines and airline kinds (cargo, low-cost, holiday). A quest that no current flight can match is skipped.
-3. **Featured flights**, a few ringed on the map each session, so there is always something worth catching.
+3. **Featured flights**, a few rare types ringed on the map each session, so there is always something worth catching. Never one that fits the quest: after a while the mascot points at one of those instead.
 4. **Catch** a flight: its card shows labelled boarding-pass details and **one** fact, picked from tagged pools by the flight's own attributes: aircraft type, family and category, airline, altitude band, flight phase, region, time of day and weather. Aircraft and airline facts are preferred about 2 times in 3. There are no airport facts; airports appear only as the route's ends.
 5. **Journal.** Catches are saved in it. Completing the daily quest brings a bigger celebration and a fact that explains the underlying concept, not just trivia.
 6. **Collection**, reached from the map, with four tabs: Journal, Dex (types, families, airlines and destination countries caught out of the catalogs, plus the daily quest streak), Badges (16) and Facts (grouped by subject). Where the player is (map, tab, Dex section and filter) is kept in the URL path (`/collection/dex/airlines/lowCost`, always spelled out in full), so a reload or the back button lands in the same place. A badge unlock shows as a small popup on the map. Progress stays on the player's device: no accounts or cloud sync.
@@ -62,7 +62,7 @@ A first serious AI-assisted coding project and a portfolio piece. The goal is to
 - **adsbdb route data.** Kept in memory only, never written to disk (its terms restrict copying). The route is checked against the plane's position on every lookup, because a callsign can be flown on another leg later in the day. The cache holds 2,000 entries and drops the one closest to expiring when full; after a failed lookup new requests pause for 15 s; at most 8 requests run at once. The frontend waits 250 ms after a tap, reuses an answer for 30 minutes and cancels a lookup when the plane is deselected.
 - **AWC weather.** The request is `?format=json` and nothing else (undocumented parameters are an error), with a custom User-Agent, cached at least 60 s. Only the backend calls it (no cross-origin access). Recount the raw JSON, not a summary.
 - **Motion in the zoomed layer.** Anything that moves continuously inside it uses `transform: translate(...)`, not `left/top` percentages, which browsers round before the zoom is applied.
-- **Layering.** Planes sit above weather icons; the weather label sits above planes (`z-index: 4`).
+- **Layering.** Bottom to top: weather icons, the traffic (1), featured planes (2), the selected route and the mascot's target plane (3), the selected plane and the replay ghost (4), the weather label (5). A rule that lifts a plane skips the selected one (`:not(.selected)`), or its order in the stylesheet can pull the selected plane under its route.
 - **Testing gotchas.** Under Vitest fake timers a `motion` exit can fail to complete; mock `matchMedia` to report reduced motion (the `reducedMotion()` helper in `App.test.tsx`). The journey-replay tests need `prefersReducedMotion()` to read `false`.
 
 ## Roadmap
@@ -71,8 +71,7 @@ Three lists: what to do now (works locally and adds to the app as a portfolio pi
 
 ### Now
 
-1. **Small improvements (S each).** Pause the flight poll while the browser tab is hidden and fetch at once when it returns (phone battery and data); richer mascot dialogue.
-2. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
+1. **README demo (S), last.** Replace the out-of-date GIF and screenshot with ones showing the current app.
 
 **Small ideas, not scheduled.** A "most interesting first" ranking for the draw cap (rare types, extremes, weather); sharing one route lookup between simultaneous taps on the same plane, and stopping the backend's adsbdb call when the browser cancels (today the backend finishes it); the airport-style "recently left the feed" state for mock planes.
 
@@ -109,7 +108,7 @@ Once deployed:
 A small visual foundation slice was pulled ahead of Milestone 1 and the full visual pass was done in Milestone 5; `docs/ui-foundation.md` records the decisions.
 
 - **Overall style: retro travel-poster**: vintage mid-century aviation travel-poster palettes and shapes combined with cuteness, rather than generic cartoon cuteness.
-- **Mascot:** a chibi cat pilot in the same poster style, carrying onboarding and quest prompts.
+- **Mascot:** a chibi cat pilot in the same poster style. It carries onboarding, then on the map a daily welcome, a word on special catches and a hint towards the quest's ringed plane (short, self-dismissing lines, `mascot/`); it also cheers on the quest strip and opens each Collection tab with a line.
 - **Aircraft fidelity:** recognizable, proportionate silhouettes by shape rather than generic icons, which doubles as passive aircraft-recognition learning. Airliners are coral and general aviation mint.
 - **Motion personality:** bouncy, springy animation, deliberately contrasting the flat vintage look with toy-like energy.
 - **Palette strategy:** shifts by context. Time of day is built. A weather shift was tried as a local tint and dropped, and a region shift is a small idea.

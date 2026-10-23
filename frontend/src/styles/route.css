@@ -8,7 +8,7 @@
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  z-index: 2; /* above the other planes (1), under the selected one (3) */
+  z-index: 3; /* above the traffic (1) and featured planes (2), under the selected one (4) */
 }
 
 /* A paper-coloured outline under each route line, so it reads over land and
@@ -54,7 +54,7 @@
 /* Airport at each end of the route: a dot with its code in a small chip. */
 .route-end {
   position: absolute;
-  z-index: 2; /* with the route line */
+  z-index: 3; /* with the route line */
   width: 10px;
   height: 10px;
   transform: translate(-50%, -50%) scale(calc(1 / var(--zoom, 1)));
@@ -84,7 +84,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 3; /* over the route and the other planes */
+  z-index: 4; /* over the route and the other planes */
 }
 
 /* Replay ghost: a see-through copy of the plane. */
