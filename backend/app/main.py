@@ -1,5 +1,5 @@
-"""The API: /flights, /weather, /flights/{id}/route, /airports/{icao}/taf and /health, plus
-CORS, gzip and startup."""
+"""The API: /flights, /weather, /flights/{id}/route, /callsigns/{query},
+/airports/{icao}/taf and /health, plus CORS, gzip and startup."""
 
 import logging
 import os
@@ -164,6 +164,20 @@ def flight_route(flight_id: str, provider: Flights, route_service: Routes) -> Fl
     if route is None:
         raise HTTPException(status_code=404, detail="No route known")
     return route
+
+
+@app.get("/callsigns/{query}")
+def callsigns(query: str, provider: Flights, route_service: Routes) -> list[str]:
+    """The callsigns a searched flight ("MU640", "BA117") may be broadcasting, for the
+    frontend's flight search when the feed has no such callsign itself. Empty when nothing
+    is known, and always for a source that never asks adsbdb (the mock); 503 when adsbdb is
+    down."""
+    if not provider.looks_up_routes:
+        return []
+    try:
+        return route_service.callsigns_for(query)
+    except LookupUnavailable as error:
+        raise HTTPException(status_code=503, detail="Flight search unavailable") from error
 
 
 @app.get("/weather")

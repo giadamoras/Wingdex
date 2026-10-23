@@ -32,3 +32,75 @@
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--ink);
 }
+
+/* The flight search (FlightSearch.tsx): a magnifier, first of the controls,
+   whose small form opens to its left. */
+.flight-search {
+  position: relative;
+}
+
+.flight-search > button svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.flight-search-panel {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 8px);
+  width: min(250px, 60vw);
+  padding: 8px;
+  background: var(--paper-light);
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink-25);
+}
+
+.flight-search-panel form {
+  display: flex;
+  gap: 6px;
+}
+
+.flight-search-panel input {
+  flex: 1;
+  min-width: 0;
+  padding: 4px 8px;
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/* "Find": the coral button, like the card's Catch. Wider than the square
+   controls it otherwise inherits from. */
+.map-controls .flight-search-panel button {
+  width: auto;
+  padding: 0 10px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 0.9rem;
+}
+
+.map-controls .flight-search-panel button:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+/* Why nothing was found; empty (and taking no room) until there is a reason. */
+.flight-search-message {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.flight-search-message:not(:empty) {
+  margin-top: 6px;
+}

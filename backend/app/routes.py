@@ -1,17 +1,23 @@
-"""Route and aircraft type for one flight, looked up on demand from adsbdb (api.adsbdb.com).
+"""Route and aircraft type for one flight, looked up on demand from adsbdb (api.adsbdb.com),
+and the callsigns a searched flight number can stand for.
 
 Live position data has no route, so when a player taps a live flight the backend asks
 adsbdb for it. Only tapped flights are looked up, and results are kept in memory only
 (adsbdb's route data may not be copied into other databases), never written to disk.
 Every failure ends as "unknown": the frontend just hides what it doesn't have.
+
+The feed knows a flight by the callsign it broadcasts (CES640), a passenger by the flight
+number on the ticket (MU640). A search the feed can't match is sent here, and adsbdb turns
+it into the callsigns it may be flown under (see RouteService.callsigns_for).
 """
 
 import logging
+import re
 import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, TypeVar
 from urllib.parse import quote
 
 import httpx
@@ -43,6 +49,30 @@ DETOUR_SLACK_NM = 40.0
 def _escape(value: str) -> str:
     """A feed value made safe for a URL: `/`, `?`, `#` and `..` cannot change the request."""
     return quote(value, safe="").replace(".", "%2E")
+
+
+# A searched text worth asking about: letters and digits, at most 8 (a callsign's length).
+SEARCH_TEXT = re.compile(r"^[A-Z0-9]{3,8}$")
+# A flight number as on a ticket: a 2-character airline designator ("MU", "U2", "9W"), then
+# the number, maybe with a letter ("MU640", "BA2490A").
+FLIGHT_NUMBER = re.compile(r"^([A-Z][A-Z0-9]|[0-9][A-Z])(\d{1,4})([A-Z]?)$")
+
+T = TypeVar("T")
+
+
+def number_forms(digits: str, suffix: str = "") -> list[str]:
+    """The ways a flight number may be written in a callsign: airlines differ on leading
+    zeros (Air France flies AF20 as AFR020, China Eastern MU0640 as CES640), so as typed,
+    without them, and padded to 3 and 4 digits."""
+    bare = digits.lstrip("0") or "0"
+    forms = [digits, bare, bare.zfill(3), bare.zfill(4)]
+    return list(dict.fromkeys(f + suffix for f in forms))
+
+
+def normalise_search(text: str) -> str | None:
+    """A search as a callsign would be written ("mu 640" -> "MU640"), or None if it can't be one."""
+    cleaned = re.sub(r"[\s-]", "", text).upper()
+    return cleaned if SEARCH_TEXT.match(cleaned) else None
 
 
 class LookupUnavailable(ProviderError):
@@ -175,7 +205,8 @@ class RouteService:
         self._down_until = 0.0  # while adsbdb is down: no new requests before this time
         # Guards the cache and _down_until, never held during a request.
         self._lock = threading.Lock()
-        self._cache: dict[str, tuple[float, Found | None]] = {}
+        # Routes (Found | None) and search answers (list[str]), by key; see _cached.
+        self._cache: dict[str, tuple[float, Any]] = {}
 
     def lookup(self, flight: Flight, icao24: str | None) -> FlightRoute | None:
         """The route of this flight: the feed's own if it has one, else what adsbdb knows.
@@ -187,51 +218,79 @@ class RouteService:
         """
         if flight.origin is not None and flight.destination is not None:
             return route_from_feed(flight)  # no request, no cache
-        has_callsign = flight.callsign != NO_CALLSIGN
-        key = f"{icao24 or ''}|{flight.callsign if has_callsign else ''}"
+        callsign = flight.callsign if flight.callsign != NO_CALLSIGN else None
+        found: Found | None = self._cached(
+            f"route|{icao24 or ''}|{callsign or ''}",
+            lambda: self._fetch(icao24 or None, callsign),
+        )
+        return to_route(found, flight) if found else None
+
+    def callsigns_for(self, text: str) -> list[str]:
+        """The callsigns a searched flight may be broadcasting, for the frontend to look for
+        in the feed: adsbdb's own answer for that flight ("BA117" -> "BAW117", which also
+        covers airlines whose callsign is not their flight number), and, for a flight number,
+        the same number under each airline with that designator ("MU640" -> "CES640" and
+        "OTT640": designators get reused). Empty when nothing is known or the text can't be
+        a flight. Cached, limited and paused like lookup; raises LookupUnavailable the same way.
+        """
+        query = normalise_search(text)
+        if query is None:
+            return []
+        answer: list[str] = self._cached(f"search|{query}", lambda: self._search(query))
+        return answer
+
+    def _cached(self, key: str, fetch: Callable[[], T]) -> T:
+        """An answer from the cache, or fetched from adsbdb and cached.
+
+        Raises LookupUnavailable when adsbdb is down. The failure is not cached, but for
+        DOWN_PAUSE_S seconds uncached requests fail at once instead of each waiting for the
+        request timeout. Cached answers are still served during the pause.
+        """
         now = self._clock()
         with self._lock:
             cached = self._cache.get(key)
             down_until = self._down_until
         if cached is not None and cached[0] > now:
-            found = cached[1]
-        else:
-            if now < down_until:
-                raise LookupUnavailable("adsbdb is down, not asking again yet")
-            # At most a few requests to adsbdb at once, so a burst of taps cannot use up every
-            # worker thread. Too busy is not "down": it does not start the pause.
-            if not self._slots.acquire(timeout=self._queue_wait_s):
-                raise LookupUnavailable("too many lookups in progress")
-            try:
-                found = self._fetch(icao24 or None, flight.callsign if has_callsign else None)
-            except LookupUnavailable:
-                with self._lock:
-                    # Counted from when the failure arrived, not from when the request began:
-                    # a timeout alone can take HTTP_TIMEOUT_S.
-                    self._down_until = self._clock() + DOWN_PAUSE_S
-                raise
-            finally:
-                self._slots.release()
+            answer: T = cached[1]
+            return answer
+        if now < down_until:
+            raise LookupUnavailable("adsbdb is down, not asking again yet")
+        # At most a few requests to adsbdb at once, so a burst of taps cannot use up every
+        # worker thread. Too busy is not "down": it does not start the pause.
+        if not self._slots.acquire(timeout=self._queue_wait_s):
+            raise LookupUnavailable("too many lookups in progress")
+        try:
+            answer = fetch()
+        except LookupUnavailable:
             with self._lock:
-                self._down_until = 0.0
-                self._store(key, now, found)
-        return to_route(found, flight) if found else None
+                # Counted from when the failure arrived, not from when the request began:
+                # a timeout alone can take HTTP_TIMEOUT_S.
+                self._down_until = self._clock() + DOWN_PAUSE_S
+            raise
+        finally:
+            self._slots.release()
+        with self._lock:
+            self._down_until = 0.0
+            self._store(key, now, answer)
+        return answer
 
     def close(self) -> None:
         """Release the HTTP connections (at shutdown)."""
         if self._owns_http:
             self._http.close()
 
-    def _store(self, key: str, now: float, found: Found | None) -> None:
-        """Cache an answer. When full: drop what has expired, then the entry closest to expiring."""
+    def _store(self, key: str, now: float, answer: Any) -> None:
+        """Cache an answer: a hit (a route, some callsigns) for a day, a miss for an hour.
+        When full: drop what has expired, then the entry closest to expiring."""
         if key not in self._cache and len(self._cache) >= self._max_entries:
             self._cache = {k: v for k, v in self._cache.items() if v[0] > now}
             if len(self._cache) >= self._max_entries:
                 del self._cache[min(self._cache, key=lambda k: self._cache[k][0])]
-        self._cache[key] = (now + (HIT_TTL_S if found else MISS_TTL_S), found)
+        self._cache[key] = (now + (HIT_TTL_S if answer else MISS_TTL_S), answer)
 
-    def _get(self, path: str) -> dict[str, Any] | None:
-        """One adsbdb request: the "response" object, or None for a 404 (unknown)."""
+    def _response(self, path: str) -> Any:
+        """One adsbdb request: its "response" value (an object, or a list for airlines), or
+        None for a 404 (unknown)."""
         try:
             response = self._http.get(f"{BASE_URL}/{path}")
             if response.status_code == 404:
@@ -241,8 +300,30 @@ class RouteService:
         except (httpx.HTTPError, ValueError) as error:
             log.warning("adsbdb lookup failed (%s)", error)
             raise LookupUnavailable(str(error)) from error
-        inner = body.get("response") if isinstance(body, dict) else None
+        return body.get("response") if isinstance(body, dict) else None
+
+    def _get(self, path: str) -> dict[str, Any] | None:
+        """One adsbdb request whose answer is an object, or None for a 404 (unknown)."""
+        inner = self._response(path)
         return inner if isinstance(inner, dict) else None
+
+    def _search(self, query: str) -> list[str]:
+        """Ask adsbdb what a normalised search can stand for (see callsigns_for)."""
+        found: list[str] = []
+        route = self._get(f"callsign/{_escape(query)}")
+        flightroute = route.get("flightroute") if route else None
+        icao = _text(flightroute, "callsign_icao")
+        if icao:
+            found.append(icao.upper())
+        number = FLIGHT_NUMBER.match(query)
+        if number:
+            designator, digits, suffix = number.groups()
+            airlines = self._response(f"airline/{_escape(designator)}")
+            for airline in airlines if isinstance(airlines, list) else []:
+                code = _text(airline, "icao")
+                if code and len(code) == 3:
+                    found += [code.upper() + form for form in number_forms(digits, suffix)]
+        return list(dict.fromkeys(found))  # without repeats, in order
 
     def _fetch(self, icao24: str | None, callsign: str | None) -> Found | None:
         aircraft: Any = None

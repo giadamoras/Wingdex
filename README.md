@@ -21,7 +21,8 @@ needs a written agreement for public use (see the data terms below), and hosting
 ## How it works
 
 - **`backend/`: Python + FastAPI, world data only.** It serves `/flights`, `/weather`,
-  `/flights/{id}/route` and `/health`. Flights come from built-in mock data or OpenSky, weather from
+  `/flights/{id}/route`, `/callsigns/{query}` (the flight search), `/airports/{icao}/taf` and
+  `/health`. Flights come from built-in mock data or OpenSky, weather from
   mock data or the Aviation Weather Center. Each live feed is one shared, cached snapshot, so any
   number of players cost one upstream request per refresh. A tapped flight's route is looked up from
   adsbdb and kept in memory only.
@@ -144,7 +145,9 @@ Live flights get their aircraft type from a bundled file built from OpenSky's ai
 (`docs/opensky-aircraft-database.md`, which also holds the citation OpenSky asks for), and their
 route when you tap one, looked up from [adsbdb](https://github.com/mrjackwills/adsbdb) by the
 backend (`GET /flights/{id}/route`). Both can be missing, and the card then hides what it doesn't
-know.
+know. The map's flight search (🔍) finds a flight by its callsign in the feed, or by the flight
+number on a ticket: adsbdb turns "MU640" into the callsigns it may fly under (`CES640`), through
+`GET /callsigns/{query}`.
 
 ## Known limits
 

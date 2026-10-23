@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 import App from './App'
-import { fetchDataSources, fetchWeather } from './data/api'
+import { fetchCallsigns, fetchDataSources, fetchWeather } from './data/api'
 import { QUEST_STORAGE_KEY, saveDailyQuest } from './quest/dailyQuest'
 import { dayKey } from './shared-lib/dates'
 import { loadJournal, saveJournal } from './collection/journal'
@@ -27,6 +27,7 @@ vi.mock('./data/api', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./data/api')>()),
   fetchWeather: vi.fn(),
   fetchDataSources: vi.fn(),
+  fetchCallsigns: vi.fn(),
 }))
 
 // Every render needs the Journal Context that main.tsx normally provides.
@@ -80,6 +81,7 @@ beforeEach(() => {
   scrollTo.mockClear()
   window.scrollTo = scrollTo
   vi.mocked(fetchWeather).mockResolvedValue([]) // no weather unless a test adds some
+  vi.mocked(fetchCallsigns).mockReset().mockResolvedValue([]) // the flight search knows nothing
   vi.mocked(fetchDataSources).mockResolvedValue({
     source: 'mock',
     weather_source: 'mock',
@@ -1299,4 +1301,92 @@ test('the mascot gives a goal on the Dex, Badges and Facts tabs, not the Journal
   expect(
     screen.getByText('Next up: First Catch. Catch your first flight.'),
   ).toBeTruthy()
+})
+
+// The flight search (search/). TST2 flies far south, out of the opening view,
+// so it is not drawn until found.
+const farAway = { ...flights[0], id: 'f2', callsign: 'TST2', latitude: -40 }
+const withFarAway = () =>
+  Promise.resolve({
+    ok: true,
+    json: () => Promise.resolve([...flights, farAway]),
+  })
+
+// Opens the search, types `text` and submits it.
+async function searchFor(text: string) {
+  fireEvent.click(screen.getByRole('button', { name: 'Find a flight' }))
+  fireEvent.change(
+    screen.getByRole('textbox', { name: 'Flight number or callsign' }),
+    { target: { value: text } },
+  )
+  fireEvent.submit(screen.getByRole('search'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+}
+
+test('a callsign in the feed is found at once, even a plane not drawn', async () => {
+  reducedMotion()
+  vi.stubGlobal('fetch', vi.fn(withFarAway))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.queryByTitle('TST2')).toBeNull() // out of view: not drawn
+  const world = () =>
+    (document.querySelector('.map-world') as HTMLElement).style.transform
+  const before = world()
+
+  await searchFor('tst 2')
+  // Its card opens, the map flies in on it (drawn now), the form closes.
+  expect(screen.getByRole('heading', { name: 'TST2' })).toBeTruthy()
+  expect(screen.getByTitle('TST2').classList.contains('selected')).toBe(true)
+  expect(world()).not.toBe(before)
+  expect(screen.queryByRole('search')).toBeNull()
+  expect(fetchCallsigns).not.toHaveBeenCalled() // no request for a callsign
+})
+
+test('a flight number is turned into a callsign by the backend', async () => {
+  reducedMotion()
+  vi.mocked(fetchCallsigns).mockResolvedValue(['XYZ9', 'TST2'])
+  vi.stubGlobal('fetch', vi.fn(withFarAway))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  await searchFor('TS2')
+  expect(fetchCallsigns).toHaveBeenCalledWith('TS2', expect.anything())
+  expect(screen.getByRole('heading', { name: 'TST2' })).toBeTruthy()
+})
+
+test('a flight that is not in the sky is explained, and so is a lookup that is down', async () => {
+  vi.mocked(fetchCallsigns).mockResolvedValue([])
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  await searchFor('MU640')
+  expect(screen.getByRole('search').parentElement?.textContent).toContain(
+    'No MU640 in the sky right now.',
+  )
+
+  vi.mocked(fetchCallsigns).mockRejectedValue(new Error('down'))
+  fireEvent.submit(screen.getByRole('search'))
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  expect(screen.getByText(/can’t be looked up right now/)).toBeTruthy()
+
+  // Text that can't be a flight is not sent anywhere.
+  vi.mocked(fetchCallsigns).mockClear()
+  fireEvent.change(
+    screen.getByRole('textbox', { name: 'Flight number or callsign' }),
+    { target: { value: '?' } },
+  )
+  fireEvent.submit(screen.getByRole('search'))
+  expect(screen.getByText(/doesn’t look like a flight/)).toBeTruthy()
+  expect(fetchCallsigns).not.toHaveBeenCalled()
+})
+
+test('using the search does not deselect the flight on the map', async () => {
+  vi.stubGlobal('fetch', vi.fn(ok))
+  renderApp()
+  await act(() => vi.advanceTimersByTimeAsync(0))
+  fireEvent.click(screen.getByTitle('TST1'))
+  fireEvent.click(screen.getByRole('button', { name: 'Find a flight' }))
+  fireEvent.click(
+    screen.getByRole('textbox', { name: 'Flight number or callsign' }),
+  )
+  expect(screen.getByRole('heading', { name: 'TST1' })).toBeTruthy()
 })

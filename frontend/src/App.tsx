@@ -27,6 +27,7 @@ import { useFlightRoute } from './card/useFlightRoute'
 import { useFlights } from './data/useFlights'
 import { useJournalContext } from './collection/useJournalContext'
 import { useMascotChatter } from './mascot/useMascotChatter'
+import { FlightSearch } from './search/FlightSearch'
 import { useOnboarding } from './onboarding/useOnboarding'
 import { useWeather } from './data/useWeather'
 
@@ -93,6 +94,14 @@ function App() {
       behavior: prefersReducedMotion() ? 'auto' : 'smooth',
     })
 
+  // Show one flight (the mascot's hint, the flight search): the map at the
+  // top, flying in on it, its card open.
+  const showFlight = (id: string) => {
+    scrollToTop()
+    setFlyTo({ id, at: Date.now() })
+    select(id)
+  }
+
   // Journey button: the map is at the top, and the card (tall in landscape)
   // can have been scrolled far below it, so bring the map back into view.
   const replayJourney = (flight: Flight) => {
@@ -133,12 +142,7 @@ function App() {
     questDone,
     hintFlight,
     journal,
-    // Show the hinted plane: the map at the top, flying in on it, its card open.
-    onShowHint: (id) => {
-      scrollToTop()
-      setFlyTo({ id, at: Date.now() })
-      select(id)
-    },
+    onShowHint: (id) => showFlight(id),
   })
 
   // Catch button: records the flight in the Journal. The card stays open, so
@@ -254,6 +258,7 @@ function App() {
                 replay={replay}
                 weather={weatherAreas}
                 flyTo={flyTo}
+                search={<FlightSearch flights={flights} onFound={showFlight} />}
                 onSelect={select}
               />
               {current && (

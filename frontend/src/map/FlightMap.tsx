@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import type { CSSProperties, FocusEvent, MouseEvent } from 'react'
+import type { CSSProperties, FocusEvent, MouseEvent, ReactNode } from 'react'
 import { timeOfDay } from '../shared-lib/attributes'
 import { CountryBorders } from './CountryBorders'
 import { curveThrough } from './geo'
@@ -102,6 +102,7 @@ export function FlightMap({
   replay = null,
   weather = NO_WEATHER,
   flyTo = null,
+  search = null,
   onSelect,
 }: {
   flights: Flight[]
@@ -113,6 +114,7 @@ export function FlightMap({
   replay?: ReplayState | null
   weather?: WeatherArea[]
   flyTo?: { id: string; at: number } | null
+  search?: ReactNode // the flight search, first of the map controls
   onSelect: (id: string | null) => void
 }) {
   const mapRef = useRef<HTMLDivElement>(null)
@@ -248,7 +250,9 @@ export function FlightMap({
       role="presentation"
       ref={mapRef}
       onFocus={panToFocus}
-      onClick={() => {
+      onClick={(e) => {
+        // A click in the controls (the flight search's form) is not on the map.
+        if ((e.target as Element).closest('.map-controls')) return
         setWeatherId(null)
         onSelect(null)
       }}
@@ -319,6 +323,7 @@ export function FlightMap({
         })}
       </div>
       <div className="map-controls">
+        {search}
         {/* No switch without weather (not loaded, failed or none): nothing to hide. */}
         {weather.length > 0 && (
           <button

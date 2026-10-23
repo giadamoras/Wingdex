@@ -80,6 +80,21 @@ export function fetchRoute(
   })
 }
 
+// The callsigns a searched flight ("MU640") may be flying under, for the
+// flight search when the feed has no such callsign itself. Empty when nothing
+// is known; a failure (the lookup service down) throws.
+export function fetchCallsigns(
+  query: string,
+  signal?: AbortSignal,
+): Promise<string[]> {
+  return withTimeout(signal, async (s) => {
+    const data = await getJson(`/callsigns/${encodeURIComponent(query)}`, s)
+    if (!Array.isArray(data) || !data.every((c) => typeof c === 'string'))
+      throw new Error('GET callsigns: expected a list of strings')
+    return data
+  })
+}
+
 export function fetchWeather(signal?: AbortSignal): Promise<WeatherArea[]> {
   return withTimeout(signal, async (s) => {
     const data = await getJson('/weather', s)
